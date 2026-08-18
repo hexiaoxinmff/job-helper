@@ -4,7 +4,8 @@
 FROM node:22-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev
+# next build 需要 devDependencies（typescript、tailwindcss 等），必须全量安装
+RUN npm ci
 
 FROM node:22-alpine AS builder
 WORKDIR /app
