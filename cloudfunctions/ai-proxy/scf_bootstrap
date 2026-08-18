@@ -1,0 +1,19 @@
+#!/bin/bash
+set -e
+
+# 定位 node 可执行文件：优先 PATH，否则回退到 SCF 常见绝对路径
+if command -v node >/dev/null 2>&1; then
+  NODE_BIN=$(command -v node)
+else
+  for p in /var/lang/node18/bin/node /var/lang/node16/bin/node /usr/local/bin/node /usr/bin/node; do
+    if [ -x "$p" ]; then NODE_BIN="$p"; break; fi
+  done
+fi
+
+if [ -z "$NODE_BIN" ]; then
+  echo "node not found" >&2
+  exit 1
+fi
+
+echo "using node: $NODE_BIN"
+exec "$NODE_BIN" /var/user/index.js

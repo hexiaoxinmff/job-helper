@@ -12,10 +12,11 @@ import {
 import { toPng } from "html-to-image";
 import KeywordChip from "./KeywordChip";
 import { track } from "@/lib/track";
+import { generateResumeRewrites } from "@/lib/ai-client";
 
 interface Props {
   result: AnalysisResult;
-  resumeFile: File;
+  resumeText: string;
   jdText: string;
   onReset: () => void;
 }
@@ -40,7 +41,7 @@ function scoreLabel(score: number): string {
   return "待改进";
 }
 
-export default function ResultView({ result, resumeFile, jdText, onReset }: Props) {
+export default function ResultView({ result, resumeText, jdText, onReset }: Props) {
   const chartData = result.dimensions.map((d) => ({
     dimension: d.name,
     score: d.score,
@@ -88,19 +89,18 @@ export default function ResultView({ result, resumeFile, jdText, onReset }: Prop
     setRewrites(null);
     track("rewrite_click");
     try {
-      const formData = new FormData();
-      formData.append("resume", resumeFile);
-      formData.append("jd", jdText);
-      const res = await fetch("/api/rewrite", { method: "POST", body: formData });
-      const data = await res.json();
-      if (!res.ok) {
-        setRewriteMsg(data.error || "改写失败，请稍后重试");
-        track("rewrite_error", { reason: data.error?.slice(0, 40) });
+      const rewrites = await generateResumeRewrites(
+        resumeText,
+        jdText,
+        result.missingKeywords
+      );
+      if (!rewrites) {
+        setRewriteMsg("AI 改写暂不可用，请稍后重试");
+        track("rewrite_error", { reason: "null" });
         return;
       }
-      setRewrites(data.rewrites ?? []);
-      if (data.message) setRewriteMsg(data.message);
-      track("rewrite_success", { count: data.rewrites?.length ?? 0 });
+      setRewrites(rewrites);
+      track("rewrite_success", { count: rewrites.length });
     } catch {
       setRewriteMsg("网络错误，请稍后重试");
       track("rewrite_error", { reason: "network" });

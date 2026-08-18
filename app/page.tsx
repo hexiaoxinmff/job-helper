@@ -3,19 +3,22 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { AnalysisResult } from "@/lib/types";
 import ResultView from "@/components/ResultView";
+import { extractTextFromPdf, looksLikePdf } from "@/lib/pdf";
+import { diagnoseResume } from "@/lib/diagnose";
 import { track } from "@/lib/track";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 const PROGRESS_STEPS = [
-  "正在上传简历…",
   "正在解析 PDF…",
   "正在比对 JD 关键词…",
   "AI 正在生成诊断建议…",
+  "即将完成…",
 ];
 
 export default function UploadPage() {
   const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [resumeText, setResumeText] = useState("");
   const [jdText, setJdText] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -65,30 +68,39 @@ export default function UploadPage() {
     stepTimerRef.current = setInterval(() => {
       setProgress((p) => (p < PROGRESS_STEPS.length - 1 ? p + 1 : p));
     }, 1400);
+
     try {
-      const formData = new FormData();
-      formData.append("resume", resumeFile);
-      formData.append("jd", jdText);
-
-      const res = await fetch("/api/analyze", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || "分析失败，请稍后重试");
-        track("diagnose_error", { reason: data.error?.slice(0, 40) });
+      // 1) 浏览器端读取并校验 PDF
+      const buf = new Uint8Array(await resumeFile.arrayBuffer());
+      if (!looksLikePdf(buf)) {
+        setError("文件格式不正确，请上传 PDF 格式的简历");
+        track("diagnose_error", { reason: "not_pdf" });
         return;
       }
-      setResult(data as AnalysisResult);
-      track("diagnose_success", {
-        score: data.overallScore,
-        ai: !!data.aiEnhanced,
-      });
+
+      // 2) 浏览器端解析 PDF 文本
+      let parsed = "";
+      try {
+        parsed = (await extractTextFromPdf(buf)).trim();
+      } catch {
+        setError("PDF 解析失败：可能是扫描件（图片型 PDF），请先转为文字版 PDF 再上传");
+        track("diagnose_error", { reason: "parse_fail" });
+        return;
+      }
+      if (parsed.replace(/\s/g, "").length < 30) {
+        setError("未能从 PDF 中提取到有效文字，请确认是文字版 PDF（而非扫描图片）");
+        track("diagnose_error", { reason: "empty_text" });
+        return;
+      }
+
+      // 3) 规则评分 + AI 增强（浏览器端评分 + ai-proxy 云函数）
+      const analysis = await diagnoseResume(parsed, jdText);
+      setResumeText(parsed);
+      setResult(analysis);
+      track("diagnose_success", { score: analysis.overallScore, ai: !!analysis.aiEnhanced });
     } catch {
-      setError("网络错误，请稍后重试");
-      track("diagnose_error", { reason: "network" });
+      setError("诊断失败，请稍后重试");
+      track("diagnose_error", { reason: "unknown" });
     } finally {
       if (stepTimerRef.current) {
         clearInterval(stepTimerRef.current);
@@ -101,6 +113,7 @@ export default function UploadPage() {
 
   const handleReset = () => {
     setResult(null);
+    setResumeText("");
     setResumeFile(null);
     setJdText("");
     setError("");
@@ -213,13 +226,13 @@ export default function UploadPage() {
           )}
 
           <p className="text-xs text-slate-400 text-center">
-            🔒 隐私承诺：简历仅在内存中处理，分析完成后立即丢弃，不存储、不保留
+            🔒 隐私承诺：简历仅在你的浏览器内解析，分析完成后立即丢弃，不存储、不上传原文
           </p>
         </section>
       ) : (
         <ResultView
           result={result}
-          resumeFile={resumeFile!}
+          resumeText={resumeText}
           jdText={jdText}
           onReset={handleReset}
         />

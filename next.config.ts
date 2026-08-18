@@ -1,9 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // standalone 输出：打包出包含 Node.js 服务端的独立目录（.next/standalone），
-  // 便于 CloudBase 云托管 / Docker 直接运行，无需在容器内再装依赖。
-  output: "standalone",
+  // 静态导出：产出纯静态文件到 out/，可托管到 CloudBase 静态网站（免费、免备案）。
+  // 所有 PDF 解析、评分、AI 调用均在浏览器端 / 云函数完成，无服务端路由。
+  output: "export",
+  // 目录式产物（star/index.html），兼容静态托管的 /star/ 目录服务
+  trailingSlash: true,
 };
 
 export default nextConfig;

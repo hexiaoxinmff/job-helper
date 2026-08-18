@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { track } from "@/lib/track";
+import { generateStarDescription } from "@/lib/ai-client";
 
 interface StarResult {
   star: string;
@@ -38,18 +39,13 @@ export default function StarGenerator() {
     setCopied(false);
     track("star_generate_click");
     try {
-      const res = await fetch("/api/star", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ experience }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setStarMsg(data.error || "生成失败，请稍后重试");
-        track("star_generate_error", { reason: data.error?.slice(0, 40) });
+      const res = await generateStarDescription(experience);
+      if (!res) {
+        setStarMsg("STAR 生成暂不可用，请稍后重试");
+        track("star_generate_error", { reason: "null" });
         return;
       }
-      setStarResult(data as StarResult);
+      setStarResult(res);
       track("star_generate_success");
     } catch {
       setStarMsg("网络错误，请稍后重试");
