@@ -6,6 +6,7 @@ import ResultView from "@/components/ResultView";
 import { extractTextFromPdf, looksLikePdf } from "@/lib/pdf";
 import { diagnoseResume } from "@/lib/diagnose";
 import { track } from "@/lib/track";
+import { JD_LIBRARY } from "@/lib/jd-library";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
@@ -183,9 +184,26 @@ export default function UploadPage() {
 
           {/* JD 输入区 */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              目标岗位 JD（职位描述）
-            </label>
+            <div className="flex items-center justify-between mb-2 gap-3">
+              <label className="block text-sm font-medium text-slate-700">
+                目标岗位 JD（职位描述）
+              </label>
+              <select
+                value=""
+                onChange={(e) => {
+                  const tpl = JD_LIBRARY.find((x) => x.id === e.target.value);
+                  if (tpl) setJdText(tpl.jd);
+                }}
+                className="text-sm rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-slate-600 outline-none focus:border-blue-500"
+              >
+                <option value="">加载示例 JD…</option>
+                {JD_LIBRARY.map((x) => (
+                  <option key={x.id} value={x.id}>
+                    {x.industry} · {x.role}
+                  </option>
+                ))}
+              </select>
+            </div>
             <textarea
               value={jdText}
               onChange={(e) => setJdText(e.target.value)}

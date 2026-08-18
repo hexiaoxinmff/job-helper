@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import NavBar from "@/components/NavBar";
+import { ResumeProvider } from "@/lib/resume-store";
 
 export const metadata: Metadata = {
   title: "求职在线助手 - AI 简历诊断工具",
@@ -12,8 +13,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="zh-CN" className="h-full antialiased">
       <body className="min-h-full flex flex-col md:pl-56">
-        <NavBar />
-        {children}
+        <ResumeProvider>
+          <NavBar />
+          {children}
+        </ResumeProvider>
       </body>
     </html>
   );

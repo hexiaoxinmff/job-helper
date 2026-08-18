@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 
 const NAV_ITEMS = [
   { href: "/", label: "简历诊断" },
+  { href: "/editor", label: "简历编辑器" },
   { href: "/star", label: "STAR 生成器" },
 ];
 
@@ -24,7 +25,7 @@ export default function NavBar() {
   return (
     <>
       {/* 移动端：顶部横条（<768px） */}
-      <nav className="md:hidden sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
+      <nav className="md:hidden sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur print:hidden">
         <div className="max-w-3xl mx-auto px-4 h-12 flex items-center justify-between">
           <Link href="/" className="font-semibold text-slate-900 text-base">
             求职在线助手
@@ -48,7 +49,7 @@ export default function NavBar() {
       </nav>
 
       {/* 桌面端：左侧固定导航栏（≥768px） */}
-      <aside className="hidden md:flex fixed inset-y-0 left-0 w-56 flex-col border-r border-slate-200 bg-white z-30">
+      <aside className="hidden md:flex fixed inset-y-0 left-0 w-56 flex-col border-r border-slate-200 bg-white z-30 print:hidden">
         <div className="px-5 pt-6 pb-4 border-b border-slate-100">
           <Link href="/" className="font-semibold text-slate-900 text-lg block">
             求职在线助手
@@ -65,7 +66,7 @@ export default function NavBar() {
         </nav>
 
         <div className="px-5 py-4 border-t border-slate-100 text-xs text-slate-400 leading-relaxed">
-          🔒 简历仅在内存中处理
+          简历仅在浏览器内处理
           <br />
           分析完立即删除
         </div>

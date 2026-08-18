@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { track } from "@/lib/track";
 import { generateStarDescription } from "@/lib/ai-client";
+import { useResume } from "@/lib/resume-store";
 
 interface StarResult {
   star: string;
@@ -23,6 +24,8 @@ export default function StarGenerator() {
   const [starResult, setStarResult] = useState<StarResult | null>(null);
   const [starMsg, setStarMsg] = useState("");
   const [copied, setCopied] = useState(false);
+  const [added, setAdded] = useState(false);
+  const { setResume } = useResume();
 
   useEffect(() => {
     track("star_page_view");
@@ -65,6 +68,32 @@ export default function StarGenerator() {
     } catch {
       // 剪贴板不可用静默
     }
+  };
+
+  const addToResume = () => {
+    if (!starResult) return;
+    setResume((prev) => {
+      const line = starResult.star;
+      const projects = prev.projects.length
+        ? prev.projects.map((p, i) =>
+            i === 0 ? { ...p, bullets: [...p.bullets, line] } : p
+          )
+        : [
+            {
+              id: `p-${Date.now()}`,
+              name: "STAR 生成的经历",
+              role: "",
+              link: "",
+              startDate: "",
+              endDate: "",
+              bullets: [line],
+            },
+          ];
+      return { ...prev, projects };
+    });
+    setAdded(true);
+    setTimeout(() => setAdded(false), 1800);
+    track("star_add_to_resume");
   };
 
   const copyPart = async (text: string) => {
@@ -124,12 +153,20 @@ export default function StarGenerator() {
           <div className="rounded-2xl bg-white border border-slate-200 p-6">
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-semibold text-slate-800">可直接粘贴进简历</h2>
-              <button
-                onClick={copy}
-                className="text-sm text-purple-600 hover:underline"
-              >
-                {copied ? "已复制 ✓" : "复制"}
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={copy}
+                  className="text-sm text-purple-600 hover:underline"
+                >
+                  {copied ? "已复制 ✓" : "复制"}
+                </button>
+                <button
+                  onClick={addToResume}
+                  className="text-sm text-purple-600 hover:underline"
+                >
+                  {added ? "已加入 ✓" : "加入简历"}
+                </button>
+              </div>
             </div>
             <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
               <p className="text-sm text-slate-800 leading-relaxed">{starResult.star}</p>
@@ -168,7 +205,7 @@ export default function StarGenerator() {
           {/* 使用建议 */}
           {starResult.tips.length > 0 && (
             <div className="rounded-2xl bg-amber-50 border border-amber-200 p-6">
-              <h2 className="font-semibold text-amber-800 mb-2">💡 使用建议</h2>
+              <h2 className="font-semibold text-amber-800 mb-2">使用建议</h2>
               <ul className="space-y-1.5 text-sm text-amber-900">
                 {starResult.tips.map((t, i) => (
                   <li key={i}>{t}</li>
@@ -181,7 +218,7 @@ export default function StarGenerator() {
 
       {!starResult && !starMsg && (
         <p className="text-xs text-slate-400 text-center">
-          🔒 输入的内容只用于本次生成，不存储
+          输入的内容只用于本次生成，不存储
         </p>
       )}
     </div>

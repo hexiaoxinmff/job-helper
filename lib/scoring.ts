@@ -146,29 +146,50 @@ export function analyzeResume(
   const hasStructure = /\n\s*\n/.test(resumeText) || resumeText.split("\n").length > 8;
   const hasPunct = /[，。；、]/.test(resumeText);
   const isTooShort = resumeText.replace(/\s/g, "").length < 200;
+  const isTooLong = resumeText.replace(/\s/g, "").length > 3000;
   if (hasStructure) formatScore += 20;
   if (hasPunct) formatScore += 15;
   if (!isTooShort) formatScore += 15;
   if (isTooShort) formatScore -= 20;
+  if (isTooLong) formatScore -= 15;
   dimensions.push({
     name: "表达规范",
     score: Math.max(0, Math.min(100, formatScore)),
     description: isTooShort
       ? "简历内容过短（<200 字），可能信息不完整"
-      : hasStructure
-        ? "结构清晰（分段明确）"
-        : "建议增加分段，让结构更清晰",
+      : isTooLong
+        ? "简历偏长（>3000 字），建议精简，突出与岗位最相关的经历"
+        : hasStructure
+          ? "结构清晰（分段明确）"
+          : "建议增加分段，让结构更清晰",
   });
 
   // 3. 总体分（加权）
   // 维度权重与顺序：技能匹配 / 关键词覆盖 / 经历与成果 / 教育背景 / 表达规范
-  const weights = [0.35, 0.2, 0.2, 0.1, 0.15];
+  // 校准：下调纯关键词命中的「技能匹配」权重，上调真正体现简历价值的「经历与成果」，
+  // 避免 JD 未识别到技能词时分数虚高/虚低、整体波动过大。
+  const weights = [0.3, 0.2, 0.25, 0.1, 0.15];
   const overallScore = Math.round(
     dimensions.reduce((sum, d, i) => sum + d.score * weights[i], 0)
   );
 
   // 4. 规则化建议（按缺失项生成）
   const suggestions = buildRuleSuggestions(resumeText, jdText, missing);
+
+  // 维度感知的针对性建议（规则增强：无 AI 时也能给出可操作方向）
+  const dimScore = (n: string) => dimensions.find((d) => d.name === n)?.score ?? 100;
+  if (dimScore("技能匹配") < 60) {
+    suggestions.push("技能匹配度偏低：把 JD 最看重的技能放到简历靠前位置，并在项目/工作中用具体产出证明，而非只列名词。");
+  }
+  if (dimScore("经历与成果") < 50) {
+    suggestions.push("经历与成果偏弱：用 STAR 结构（情境-任务-行动-结果）重写经历，每条写成「动词+对象+量化结果」。");
+  }
+  if (dimScore("关键词覆盖") < 50) {
+    suggestions.push("关键词覆盖不足：把 JD 高频词自然融入项目与职责描述，避免生硬堆砌。");
+  }
+  if (dimScore("表达规范") < 60) {
+    suggestions.push("表达规范性可提升：分点列出职责与成果，每条以强动词开头（实现/优化/主导），避免大段纯文本。");
+  }
 
   return {
     resumeText: resumeText.slice(0, 500),
