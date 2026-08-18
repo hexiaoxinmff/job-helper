@@ -56,7 +56,7 @@ async function callDeepSeek(systemPrompt, userPrompt, maxTokens) {
 async function actionAnalyze(resumeText, jdText) {
   const trimmedResume = (resumeText || "").slice(0, 6000);
   const trimmedJd = (jdText || "").slice(0, 3000);
-  const prompt = `你是一位资深 HR 和简历优化专家。请分析以下简历与目标岗位 JD 的匹配情况。
+  const prompt = `你是一位资深 HR 与简历优化专家，擅长把模糊的简历诊断转化为可落地动作。请分析以下简历与目标岗位 JD 的匹配情况。
 
 【目标岗位 JD】
 ${trimmedJd}
@@ -64,17 +64,26 @@ ${trimmedJd}
 【简历内容】
 ${trimmedResume}
 
-请严格按以下 JSON 格式输出（不要输出其他内容）：
+输出要求：
+1. overallScore：0-100 整数，综合匹配度。评分要准不要虚高；关键信息（如量化成果、核心技能）缺失应明显扣分。
+2. dimensions：固定 5 个维度（技能匹配 / 关键词覆盖 / 经历与成果 / 教育背景 / 表达规范），每项 score 为 0-100 整数；description 用一句话点出判断依据或证据（引用简历 / JD 中的事实），不要空话。
+3. suggestions：3-5 条中文改进建议，按重要性从高到低排列。每条必须：
+   - 指出简历里具体哪段 / 哪点有问题（引用真实片段或明确位置，不要凭空）；
+   - 给出改法，并尽量提供「改写前 → 改写后」对照句（改写后须真实、不编造）；
+   - 若需要量化，提示应补充哪类数字。
+   严禁出现"建议多补充经历""注意排版"这类空泛话。
+
+严格按以下 JSON 格式输出（不输出其他内容）：
 {
-  "overallScore": 0-100 的整数（整体匹配度）,
+  "overallScore": 0-100,
   "dimensions": [
-    {"name": "技能匹配", "score": 0-100, "description": "一句话说明"},
-    {"name": "关键词覆盖", "score": 0-100, "description": "一句话说明"},
-    {"name": "经历与成果", "score": 0-100, "description": "一句话说明"},
-    {"name": "教育背景", "score": 0-100, "description": "一句话说明"},
-    {"name": "表达规范", "score": 0-100, "description": "一句话说明"}
+    {"name": "技能匹配", "score": 0-100, "description": "判断依据"},
+    {"name": "关键词覆盖", "score": 0-100, "description": "判断依据"},
+    {"name": "经历与成果", "score": 0-100, "description": "判断依据"},
+    {"name": "教育背景", "score": 0-100, "description": "判断依据"},
+    {"name": "表达规范", "score": 0-100, "description": "判断依据"}
   ],
-  "suggestions": ["3-5 条具体的、可执行的中文改进建议，每条一句话"]
+  "suggestions": ["建议1（含改写前→改写后）", "建议2", "建议3"]
 }`;
 
   const content = await callDeepSeek("你只输出合法的 JSON，不做任何解释。", prompt, 2000);
@@ -191,19 +200,21 @@ ${list.join("、")}
 
 async function actionStar(experience) {
   const text = (experience || "").slice(0, 1000);
-  const prompt = `你是一位简历优化专家。请把下面这段经历描述扩写为 STAR 句式（情境 Situation、任务 Task、行动 Action、结果 Result），用于写入简历。
+  const prompt = `你是一位资深简历优化专家。请把下面这段经历描述扩写为可直接写进简历的 STAR 句式（情境 Situation、任务 Task、行动 Action、结果 Result）。
 
 【经历描述】
 ${text}
 
-要求：
-1. 情境(S)、任务(T)简洁，行动(A)具体（含方法/工具），结果(R)尽量量化；无量化数据时用「提升约 X%」占位并提示用户填真实数字。
-2. 完整成句，可直接粘贴进简历，总长不超过 120 字。
-3. 严格按 JSON 输出（不要输出其他内容）：
+输出要求：
+1. star：完整一句，≤110 字。必须以强动词开头（实现 / 主导 / 设计 / 搭建 / 优化 / 推动 / 构建 等）；结构为「情境+任务一句话带过 → 行动（含具体方法 / 工具 / 分工）→ 结果（量化产出，无真实数字用『提升约 X%』并标注待补真实值）」；不要写公司背景铺垫。
+2. parts：4 段。情境、任务各一句简写；行动写"用了什么方法 / 工具、具体做了什么"；结果写量化产出或明确占位。每条 content 要具体、不空泛。
+3. tips：1-2 条落地建议（如"面试时展开讲行动细节""把占位数字换成真实指标"）。
+
+严格按以下 JSON 格式输出（不输出其他内容）：
 {
-  "star": "完整的一段 STAR 句式",
+  "star": "完整 STAR 句式",
   "parts": [{"label":"情境","content":"..."},{"label":"任务","content":"..."},{"label":"行动","content":"..."},{"label":"结果","content":"..."}],
-  "tips": ["1-2 条使用建议"]
+  "tips": ["建议1","建议2"]
 }`;
 
   const content = await callDeepSeek("你只输出合法的 JSON，不做任何解释。", prompt, 1200);
