@@ -10,6 +10,8 @@ export interface AnalysisResult {
   overallScore: number;
   /** 各维度得分 */
   dimensions: DimensionScore[];
+  /** 各维度权重（与 dimensions 一一对应，0-1，合计为 1） */
+  weights: number[];
   /** 命中关键词（JD 要求且简历已包含） */
   matchedKeywords: string[];
   /** 缺失关键词（JD 要求但简历未包含） */

@@ -110,6 +110,102 @@ ${trimmedResume}
 
 // ========== AI 简历改写 ==========
 
+/** JD 语义解析结果 */
+export interface JdSemantics {
+  /** JD 明确要求的核心技能（岗位常用叫法） */
+  coreSkills: string[];
+  /** 近义/等价表述映射（用于简历匹配时识别语义相关技能） */
+  aliases: { skill: string; terms: string[] }[];
+  /** 一句话概括这个岗位要什么样的人 */
+  jdSummary: string;
+}
+
+/**
+ * 用 AI 语义解析 JD，提取核心技能及其近义表述。
+ * 解决规则引擎"词面匹配"的局限（如 JD 要求"机器学习"、简历写"深度学习"识别不出）。
+ * 返回 null 表示未配置 key 或调用失败（调用方降级为纯规则匹配）。
+ */
+export async function analyzeJdSemantics(
+  jdText: string
+): Promise<JdSemantics | null> {
+  if (!DEEPSEEK_API_KEY) return null;
+
+  const trimmedJd = jdText.slice(0, 3000);
+
+  const prompt = `你是一位资深招聘专家。请从下面的岗位 JD 中提取核心技能要求，并给出这些技能在简历中常见的等价表述。
+
+【目标岗位 JD】
+${trimmedJd}
+
+要求：
+1. coreSkills 只列硬技能/专业能力（如 Python、数据分析、机器学习、沟通协调），5-10 项，用岗位招聘中常用的叫法，不要列"责任心、团队合作"这类过于泛化的词。
+2. aliases 为可选：对每个 coreSkills 中的技能，列出简历中常见的等价/近义表述（2-4 个），例如 机器学习 → ["深度学习","神经网络","NLP","LLM"]；Python → ["python","python3"]。
+3. 严格按以下 JSON 格式输出（不要输出其他内容）：
+{
+  "coreSkills": ["技能1", "技能2"],
+  "aliases": [{"skill": "技能1", "terms": ["等价表述1", "等价表述2"]}],
+  "jdSummary": "一句话概括这个岗位要什么样的人"
+}`;
+
+  try {
+    const res = await fetch(`${DEEPSEEK_BASE_URL}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: DEEPSEEK_MODEL,
+        messages: [
+          { role: "system", content: "你只输出合法的 JSON，不做任何解释。" },
+          { role: "user", content: prompt },
+        ],
+        temperature: 0.3,
+        response_format: { type: "json_object" },
+        max_tokens: 1200,
+      }),
+    });
+
+    if (!res.ok) {
+      console.warn(`[ai] JD semantics API error: ${res.status} ${await res.text()}`);
+      return null;
+    }
+
+    const data = await res.json();
+    const content: string = data?.choices?.[0]?.message?.content ?? "";
+    if (!content) return null;
+
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return null;
+    const parsed = JSON.parse(jsonMatch[0]);
+
+    const coreSkills: string[] = Array.isArray(parsed.coreSkills)
+      ? parsed.coreSkills.filter((s: unknown) => typeof s === "string").slice(0, 10)
+      : [];
+
+    const aliases = Array.isArray(parsed.aliases)
+      ? parsed.aliases
+          .filter((a: unknown) => a && typeof a === "object")
+          .slice(0, 10)
+          .map((a: Record<string, unknown>) => ({
+            skill: String(a.skill ?? ""),
+            terms: Array.isArray(a.terms)
+              ? a.terms.filter((t: unknown) => typeof t === "string").slice(0, 5)
+              : [],
+          }))
+          .filter((a: { skill: string; terms: string[] }) => a.skill)
+      : [];
+
+    const jdSummary = String(parsed.jdSummary ?? "").slice(0, 200);
+
+    if (coreSkills.length === 0) return null;
+    return { coreSkills, aliases, jdSummary };
+  } catch (err) {
+    console.warn("[ai] JD semantics call failed, falling back to keyword match:", err);
+    return null;
+  }
+}
+
 export interface RewriteItem {
   /** 缺失的关键词 */
   keyword: string;

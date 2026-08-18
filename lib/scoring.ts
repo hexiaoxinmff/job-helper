@@ -161,6 +161,7 @@ export function analyzeResume(
   });
 
   // 3. 总体分（加权）
+  // 维度权重与顺序：技能匹配 / 关键词覆盖 / 经历与成果 / 教育背景 / 表达规范
   const weights = [0.35, 0.2, 0.2, 0.1, 0.15];
   const overallScore = Math.round(
     dimensions.reduce((sum, d, i) => sum + d.score * weights[i], 0)
@@ -174,6 +175,7 @@ export function analyzeResume(
     resumeLength: resumeText.length,
     overallScore,
     dimensions,
+    weights,
     matchedKeywords: matched.slice(0, 20),
     missingKeywords: missing.slice(0, 20),
     suggestions,

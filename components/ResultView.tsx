@@ -11,6 +11,7 @@ import {
 } from "recharts";
 import { toPng } from "html-to-image";
 import KeywordChip from "./KeywordChip";
+import { track } from "@/lib/track";
 
 interface Props {
   result: AnalysisResult;
@@ -45,6 +46,8 @@ export default function ResultView({ result, resumeFile, jdText, onReset }: Prop
     score: d.score,
   }));
 
+  const weights = result.weights ?? result.dimensions.map(() => 1 / result.dimensions.length);
+
   // —— 分享卡片 ——
   const reportRef = useRef<HTMLDivElement>(null);
   const [shareLoading, setShareLoading] = useState(false);
@@ -64,8 +67,10 @@ export default function ResultView({ result, resumeFile, jdText, onReset }: Prop
       link.href = dataUrl;
       link.click();
       setShareMsg("报告图片已生成，去分享吧！");
+      track("report_download", { score: result.overallScore });
     } catch {
       setShareMsg("图片生成失败，请重试或直接复制文字报告");
+      track("report_download_error");
     } finally {
       setShareLoading(false);
     }
@@ -81,6 +86,7 @@ export default function ResultView({ result, resumeFile, jdText, onReset }: Prop
     setRewriteLoading(true);
     setRewriteMsg("");
     setRewrites(null);
+    track("rewrite_click");
     try {
       const formData = new FormData();
       formData.append("resume", resumeFile);
@@ -89,12 +95,15 @@ export default function ResultView({ result, resumeFile, jdText, onReset }: Prop
       const data = await res.json();
       if (!res.ok) {
         setRewriteMsg(data.error || "改写失败，请稍后重试");
+        track("rewrite_error", { reason: data.error?.slice(0, 40) });
         return;
       }
       setRewrites(data.rewrites ?? []);
       if (data.message) setRewriteMsg(data.message);
+      track("rewrite_success", { count: data.rewrites?.length ?? 0 });
     } catch {
       setRewriteMsg("网络错误，请稍后重试");
+      track("rewrite_error", { reason: "network" });
     } finally {
       setRewriteLoading(false);
     }
@@ -134,6 +143,7 @@ export default function ResultView({ result, resumeFile, jdText, onReset }: Prop
       "由求职在线助手生成（免费）",
     ];
     await copyText(lines.join("\n"));
+    track("report_copy");
   };
 
   return (
@@ -176,17 +186,25 @@ export default function ResultView({ result, resumeFile, jdText, onReset }: Prop
               </ResponsiveContainer>
             </div>
             <div className="w-full md:w-1/2 space-y-3">
-              {result.dimensions.map((d) => (
+              {result.dimensions.map((d, i) => (
                 <div key={d.name} className="flex items-start gap-3">
                   <span className={`text-lg font-semibold w-14 shrink-0 ${scoreColor(d.score)}`}>
                     {d.score}
                   </span>
-                  <div>
-                    <p className="font-medium text-slate-800 text-sm">{d.name}</p>
+                  <div className="flex-1">
+                    <p className="font-medium text-slate-800 text-sm">
+                      {d.name}
+                      <span className="ml-2 text-xs text-slate-400 font-normal">
+                        权重 {Math.round((weights[i] ?? 0) * 100)}%
+                      </span>
+                    </p>
                     <p className="text-xs text-slate-500 mt-0.5">{d.description}</p>
                   </div>
                 </div>
               ))}
+              <p className="text-xs text-slate-400 pt-2 border-t border-slate-100">
+                总分 = 各维度得分 × 权重 之和（{result.overallScore} 分）
+              </p>
             </div>
           </div>
         </div>

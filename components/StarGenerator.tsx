@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { track } from "@/lib/track";
 
 interface StarResult {
   star: string;
@@ -22,6 +23,10 @@ export default function StarGenerator() {
   const [starMsg, setStarMsg] = useState("");
   const [copied, setCopied] = useState(false);
 
+  useEffect(() => {
+    track("star_page_view");
+  }, []);
+
   const runStar = async () => {
     if (!experience.trim()) {
       setStarMsg("请先输入一段经历描述");
@@ -31,6 +36,7 @@ export default function StarGenerator() {
     setStarMsg("");
     setStarResult(null);
     setCopied(false);
+    track("star_generate_click");
     try {
       const res = await fetch("/api/star", {
         method: "POST",
@@ -40,11 +46,14 @@ export default function StarGenerator() {
       const data = await res.json();
       if (!res.ok) {
         setStarMsg(data.error || "生成失败，请稍后重试");
+        track("star_generate_error", { reason: data.error?.slice(0, 40) });
         return;
       }
       setStarResult(data as StarResult);
+      track("star_generate_success");
     } catch {
       setStarMsg("网络错误，请稍后重试");
+      track("star_generate_error", { reason: "network" });
     } finally {
       setStarLoading(false);
     }
@@ -56,6 +65,7 @@ export default function StarGenerator() {
       await navigator.clipboard.writeText(starResult.star);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
+      track("star_copy");
     } catch {
       // 剪贴板不可用静默
     }

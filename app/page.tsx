@@ -1,10 +1,18 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { AnalysisResult } from "@/lib/types";
 import ResultView from "@/components/ResultView";
+import { track } from "@/lib/track";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
+const PROGRESS_STEPS = [
+  "正在上传简历…",
+  "正在解析 PDF…",
+  "正在比对 JD 关键词…",
+  "AI 正在生成诊断建议…",
+];
 
 export default function UploadPage() {
   const [resumeFile, setResumeFile] = useState<File | null>(null);
@@ -13,7 +21,13 @@ export default function UploadPage() {
   const [error, setError] = useState("");
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [progress, setProgress] = useState(-1);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const stepTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    track("page_view");
+  }, []);
 
   const handleFile = useCallback((file: File | undefined | null) => {
     if (!file) return;
@@ -27,6 +41,7 @@ export default function UploadPage() {
     }
     setError("");
     setResumeFile(file);
+    track("file_uploaded", { sizeMB: +(file.size / 1024 / 1024).toFixed(2) });
   }, []);
 
   const handleSubmit = async () => {
@@ -45,6 +60,11 @@ export default function UploadPage() {
     }
 
     setLoading(true);
+    setProgress(0);
+    track("diagnose_start");
+    stepTimerRef.current = setInterval(() => {
+      setProgress((p) => (p < PROGRESS_STEPS.length - 1 ? p + 1 : p));
+    }, 1400);
     try {
       const formData = new FormData();
       formData.append("resume", resumeFile);
@@ -58,13 +78,24 @@ export default function UploadPage() {
       const data = await res.json();
       if (!res.ok) {
         setError(data.error || "分析失败，请稍后重试");
+        track("diagnose_error", { reason: data.error?.slice(0, 40) });
         return;
       }
       setResult(data as AnalysisResult);
+      track("diagnose_success", {
+        score: data.overallScore,
+        ai: !!data.aiEnhanced,
+      });
     } catch {
       setError("网络错误，请稍后重试");
+      track("diagnose_error", { reason: "network" });
     } finally {
+      if (stepTimerRef.current) {
+        clearInterval(stepTimerRef.current);
+        stepTimerRef.current = null;
+      }
       setLoading(false);
+      setProgress(-1);
     }
   };
 
@@ -161,8 +192,25 @@ export default function UploadPage() {
             disabled={loading}
             className="w-full py-3.5 rounded-xl bg-blue-600 text-white font-medium text-base hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {loading ? "分析中，请稍候…" : "开始诊断"}
+            {loading ? "诊断中…" : "开始诊断"}
           </button>
+
+          {loading && progress >= 0 && (
+            <div className="space-y-2" aria-live="polite">
+              <div className="h-1.5 rounded-full bg-slate-200 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-blue-600 transition-all duration-700"
+                  style={{
+                    width: `${((progress + 1) / PROGRESS_STEPS.length) * 100}%`,
+                  }}
+                />
+              </div>
+              <div className="flex items-center gap-2 justify-center">
+                <span className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                <p className="text-sm text-slate-600">{PROGRESS_STEPS[progress]}</p>
+              </div>
+            </div>
+          )}
 
           <p className="text-xs text-slate-400 text-center">
             🔒 隐私承诺：简历仅在内存中处理，分析完成后立即丢弃，不存储、不保留

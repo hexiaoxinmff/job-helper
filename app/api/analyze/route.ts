@@ -1,11 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
 import { extractTextFromPdf, looksLikePdf } from "@/lib/pdf";
 import { analyzeResume } from "@/lib/scoring";
-import { generateAiSuggestions } from "@/lib/ai";
+import { generateAiSuggestions, analyzeJdSemantics } from "@/lib/ai";
 import type { AnalysisResult } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
+
+/**
+ * 语义技能匹配：对每个核心技能，检查简历是否命中该技能或其近义表述。
+ */
+function matchSemanticSkills(
+  resumeText: string,
+  coreSkills: string[],
+  aliases: { skill: string; terms: string[] }[]
+): { matched: string[]; missing: string[] } {
+  const lower = resumeText.toLowerCase();
+  const matched: string[] = [];
+  const missing: string[] = [];
+  for (const skill of coreSkills) {
+    const alias = aliases.find((a) => a.skill === skill);
+    const terms = [skill, ...(alias?.terms ?? [])];
+    const hit = terms.some((t) => t && lower.includes(t.toLowerCase()));
+    if (hit) matched.push(skill);
+    else missing.push(skill);
+  }
+  return { matched, missing };
+}
 
 /**
  * POST /api/analyze
@@ -83,6 +104,40 @@ export async function POST(req: NextRequest) {
         suggestions: aiResult.suggestions,
         aiEnhanced: true,
       };
+    }
+
+    // AI 语义 JD 解析：识别近义技能（如"机器学习"≈"深度学习"），修正关键词与技能维度
+    const semantics = await analyzeJdSemantics(jdText);
+    if (semantics) {
+      const { matched: sm, missing: smiss } = matchSemanticSkills(
+        resumeText,
+        semantics.coreSkills,
+        semantics.aliases
+      );
+      if (sm.length + smiss.length > 0) {
+        const total = sm.length + smiss.length;
+        const skillDimIndex = result.dimensions.findIndex((d) => d.name === "技能匹配");
+        if (skillDimIndex >= 0) {
+          result.dimensions[skillDimIndex] = {
+            ...result.dimensions[skillDimIndex],
+            score: Math.round((sm.length / total) * 100),
+            description: `AI 语义解析出 ${total} 项核心技能，简历命中 ${sm.length} 项（含近义表达）`,
+          };
+          // 用修正后的维度分重算总分
+          result.overallScore = Math.round(
+            result.dimensions.reduce(
+              (sum, d, i) => sum + d.score * (result.weights[i] ?? 0),
+              0
+            )
+          );
+        }
+        // 语义结果优先，规则结果补充去重
+        result.matchedKeywords = [...sm, ...result.matchedKeywords.filter((k) => !sm.includes(k))]
+          .slice(0, 20);
+        result.missingKeywords = [...smiss, ...result.missingKeywords.filter((k) => !smiss.includes(k))]
+          .slice(0, 20);
+        if (!result.aiEnhanced) result.aiEnhanced = true;
+      }
     }
 
     return NextResponse.json(result);
