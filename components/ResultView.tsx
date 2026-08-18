@@ -11,6 +11,7 @@ import {
 } from "recharts";
 import { toPng } from "html-to-image";
 import KeywordChip from "./KeywordChip";
+import { ErrorBoundary } from "./ErrorBoundary";
 import { track } from "@/lib/track";
 import { generateResumeRewrites } from "@/lib/ai-client";
 
@@ -29,9 +30,9 @@ interface RewriteItem {
 }
 
 function scoreColor(score: number): string {
-  if (score >= 80) return "text-emerald-600";
-  if (score >= 60) return "text-amber-600";
-  return "text-red-600";
+  if (score >= 80) return "text-emerald-600 dark:text-emerald-400";
+  if (score >= 60) return "text-amber-600 dark:text-amber-400";
+  return "text-red-600 dark:text-red-400";
 }
 
 function scoreLabel(score: number): string {
@@ -151,16 +152,16 @@ export default function ResultView({ result, resumeText, jdText, onReset }: Prop
       {/* 可导出的报告区 */}
       <div ref={reportRef} className="space-y-6 p-1">
         {/* 总分 */}
-        <div className="rounded-2xl bg-white border border-slate-200 p-6 text-center">
-          <p className="text-sm text-slate-500">整体匹配度</p>
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center dark:border-slate-800 dark:bg-slate-900">
+          <p className="text-sm text-slate-500 dark:text-slate-400">整体匹配度</p>
           <p className={`text-5xl font-bold mt-2 ${scoreColor(result.overallScore)}`}>
             {result.overallScore}
-            <span className="text-xl text-slate-400 font-normal"> /100</span>
+            <span className="text-xl text-slate-400 font-normal dark:text-slate-500"> /100</span>
           </p>
-          <p className="mt-2 text-sm text-slate-600">
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
             {scoreLabel(result.overallScore)}
             {result.aiEnhanced && (
-              <span className="ml-2 inline-block px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 text-xs">
+              <span className="ml-2 inline-block rounded-full bg-purple-100 px-2 py-0.5 text-xs text-purple-700 dark:bg-purple-950 dark:text-purple-300">
                 AI 增强
               </span>
             )}
@@ -168,41 +169,56 @@ export default function ResultView({ result, resumeText, jdText, onReset }: Prop
         </div>
 
         {/* 雷达图 + 维度明细 */}
-        <div className="rounded-2xl bg-white border border-slate-200 p-6">
-          <h2 className="font-semibold text-slate-800 mb-4">维度评分</h2>
-          <div className="flex flex-col md:flex-row gap-6">
-            <div className="w-full md:w-1/2 h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <RadarChart data={chartData} outerRadius="70%">
-                  <PolarGrid />
-                  <PolarAngleAxis dataKey="dimension" tick={{ fontSize: 13, fill: "#334155" }} />
-                  <Radar
-                    dataKey="score"
-                    stroke="#2563eb"
-                    fill="#2563eb"
-                    fillOpacity={0.4}
-                  />
-                </RadarChart>
-              </ResponsiveContainer>
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+          <h2 className="mb-4 font-semibold text-slate-800 dark:text-slate-100">维度评分</h2>
+          <div className="flex flex-col gap-6 md:flex-row">
+            <div className="h-64 w-full md:w-1/2">
+              <ErrorBoundary
+                fallback={(error, reset) => (
+                  <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
+                    <p className="text-sm text-slate-500 dark:text-slate-400">图表加载失败</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500">{error.message}</p>
+                    <button
+                      onClick={reset}
+                      className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-700"
+                    >
+                      重试
+                    </button>
+                  </div>
+                )}
+              >
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadarChart data={chartData} outerRadius="70%">
+                    <PolarGrid stroke="var(--chart-grid)" />
+                    <PolarAngleAxis dataKey="dimension" tick={{ fontSize: 13, fill: "var(--chart-axis)" }} />
+                    <Radar
+                      dataKey="score"
+                      stroke="var(--chart-stroke)"
+                      fill="var(--chart-stroke)"
+                      fillOpacity={0.4}
+                    />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </ErrorBoundary>
             </div>
-            <div className="w-full md:w-1/2 space-y-3">
+            <div className="w-full space-y-3 md:w-1/2">
               {result.dimensions.map((d, i) => (
                 <div key={d.name} className="flex items-start gap-3">
-                  <span className={`text-lg font-semibold w-14 shrink-0 ${scoreColor(d.score)}`}>
+                  <span className={`w-14 shrink-0 text-lg font-semibold ${scoreColor(d.score)}`}>
                     {d.score}
                   </span>
                   <div className="flex-1">
-                    <p className="font-medium text-slate-800 text-sm">
+                    <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
                       {d.name}
-                      <span className="ml-2 text-xs text-slate-400 font-normal">
+                      <span className="ml-2 text-xs font-normal text-slate-400 dark:text-slate-500">
                         权重 {Math.round((weights[i] ?? 0) * 100)}%
                       </span>
                     </p>
-                    <p className="text-xs text-slate-500 mt-0.5">{d.description}</p>
+                    <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{d.description}</p>
                   </div>
                 </div>
               ))}
-              <p className="text-xs text-slate-400 pt-2 border-t border-slate-100">
+              <p className="border-t border-slate-100 pt-2 text-xs text-slate-400 dark:border-slate-800 dark:text-slate-500">
                 总分 = 各维度得分 × 权重 之和（{result.overallScore} 分）
               </p>
             </div>
@@ -211,14 +227,14 @@ export default function ResultView({ result, resumeText, jdText, onReset }: Prop
 
         {/* 关键词 */}
         {(result.matchedKeywords.length > 0 || result.missingKeywords.length > 0) && (
-          <div className="rounded-2xl bg-white border border-slate-200 p-6">
-            <div className="flex items-baseline justify-between mb-3">
-              <h2 className="font-semibold text-slate-800">关键词对比</h2>
-              <span className="text-xs text-slate-400">点击带 ⓘ 的关键词可查看含义</span>
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+            <div className="mb-3 flex items-baseline justify-between">
+              <h2 className="font-semibold text-slate-800 dark:text-slate-100">关键词对比</h2>
+              <span className="text-xs text-slate-400 dark:text-slate-500">点击带 ⓘ 的关键词可查看含义</span>
             </div>
             {result.matchedKeywords.length > 0 && (
               <div className="mb-3">
-                <p className="text-xs text-slate-500 mb-1.5">✅ 已命中</p>
+                <p className="mb-1.5 text-xs text-slate-500 dark:text-slate-400">✅ 已命中</p>
                 <div className="flex flex-wrap gap-1.5">
                   {result.matchedKeywords.map((kw) => (
                     <KeywordChip key={kw} keyword={kw} variant="matched" />
@@ -228,7 +244,7 @@ export default function ResultView({ result, resumeText, jdText, onReset }: Prop
             )}
             {result.missingKeywords.length > 0 && (
               <div>
-                <p className="text-xs text-slate-500 mb-1.5">❌ 缺失</p>
+                <p className="mb-1.5 text-xs text-slate-500 dark:text-slate-400">❌ 缺失</p>
                 <div className="flex flex-wrap gap-1.5">
                   {result.missingKeywords.map((kw) => (
                     <KeywordChip key={kw} keyword={kw} variant="missing" />
@@ -240,12 +256,12 @@ export default function ResultView({ result, resumeText, jdText, onReset }: Prop
         )}
 
         {/* 建议 */}
-        <div className="rounded-2xl bg-white border border-slate-200 p-6">
-          <h2 className="font-semibold text-slate-800 mb-4">改进建议</h2>
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+          <h2 className="mb-4 font-semibold text-slate-800 dark:text-slate-100">改进建议</h2>
           <ol className="space-y-3">
             {result.suggestions.map((s, i) => (
-              <li key={i} className="flex gap-3 text-sm text-slate-700 leading-relaxed">
-                <span className="shrink-0 w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-semibold">
+              <li key={i} className="flex gap-3 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-semibold text-blue-700 dark:bg-blue-950 dark:text-blue-300">
                   {i + 1}
                 </span>
                 {s}
@@ -256,12 +272,12 @@ export default function ResultView({ result, resumeText, jdText, onReset }: Prop
       </div>
 
       {/* AI 简历改写 */}
-      <div className="rounded-2xl bg-white border border-slate-200 p-6">
-        <div className="flex items-center justify-between mb-1">
-          <h2 className="font-semibold text-slate-800">AI 简历改写</h2>
-          <span className="px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 text-xs">P0</span>
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+        <div className="mb-1 flex items-center justify-between">
+          <h2 className="font-semibold text-slate-800 dark:text-slate-100">AI 简历改写</h2>
+          <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs text-purple-700 dark:bg-purple-950 dark:text-purple-300">P0</span>
         </div>
-        <p className="text-sm text-slate-500 mb-4">
+        <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
           针对缺失关键词，基于你简历的既有经历生成可直接粘贴的改写句（不虚构、不编造）
         </p>
 
@@ -269,14 +285,14 @@ export default function ResultView({ result, resumeText, jdText, onReset }: Prop
           <button
             onClick={runRewrite}
             disabled={rewriteLoading}
-            className="w-full py-3 rounded-xl bg-purple-600 text-white font-medium hover:bg-purple-700 disabled:opacity-50 transition-colors"
+            className="w-full rounded-xl bg-purple-600 py-3 font-medium text-white transition-colors hover:bg-purple-700 disabled:opacity-50"
           >
             {rewriteLoading ? "AI 改写中…" : "一键生成改写建议"}
           </button>
         )}
 
         {rewriteMsg && (
-          <p className="text-sm text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 mb-3">
+          <p className="mb-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
             {rewriteMsg}
           </p>
         )}
@@ -284,27 +300,27 @@ export default function ResultView({ result, resumeText, jdText, onReset }: Prop
         {rewrites && rewrites.length > 0 && (
           <div className="space-y-4">
             {rewrites.map((item) => (
-              <div key={item.keyword} className="border border-slate-200 rounded-xl p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="inline-block px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-medium">
+              <div key={item.keyword} className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="inline-block rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-950 dark:text-red-300">
                     +{item.keyword}
                   </span>
                   <button
                     onClick={() => copyRewrite(item)}
-                    className="text-xs text-blue-600 hover:underline"
+                    className="text-xs text-blue-600 hover:underline dark:text-blue-400"
                   >
                     {copiedKw === item.keyword ? "已复制 ✓" : "复制改写句"}
                   </button>
                 </div>
                 {item.original && (
-                  <p className="text-xs text-slate-400 mb-1.5">
+                  <p className="mb-1.5 text-xs text-slate-400 dark:text-slate-500">
                     原文：{item.original}
                   </p>
                 )}
-                <p className="text-sm text-slate-800 leading-relaxed bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
+                <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm leading-relaxed text-slate-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-slate-100">
                   {item.rewritten}
                 </p>
-                <p className="text-xs text-slate-500 mt-1.5">💡 {item.reason}</p>
+                <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">💡 {item.reason}</p>
               </div>
             ))}
             <button
@@ -312,7 +328,7 @@ export default function ResultView({ result, resumeText, jdText, onReset }: Prop
                 setRewrites(null);
                 setRewriteMsg("");
               }}
-              className="text-sm text-slate-500 hover:text-slate-700"
+              className="text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
             >
               ← 重新生成
             </button>
@@ -320,36 +336,36 @@ export default function ResultView({ result, resumeText, jdText, onReset }: Prop
         )}
 
         {rewrites && rewrites.length === 0 && !rewriteMsg && (
-          <p className="text-sm text-slate-500">没有可改写的缺失关键词。</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">没有可改写的缺失关键词。</p>
         )}
       </div>
 
       {/* STAR 已拆为独立页面（顶部导航可进入），此处不再展示 */}
 
       {/* 操作 */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row">
         <button
           onClick={downloadReport}
           disabled={shareLoading}
-          className="flex-1 py-3 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
+          className="flex-1 rounded-xl bg-blue-600 py-3 font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
         >
           {shareLoading ? "生成图片中…" : "保存报告图片"}
         </button>
         <button
           onClick={copyReport}
-          className="flex-1 py-3 rounded-xl bg-white border border-slate-300 text-slate-700 font-medium hover:bg-slate-50 transition-colors"
+          className="flex-1 rounded-xl border border-slate-300 bg-white py-3 font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
         >
           复制文字报告
         </button>
         <button
           onClick={onReset}
-          className="flex-1 py-3 rounded-xl bg-white border border-slate-300 text-slate-700 font-medium hover:bg-slate-50 transition-colors"
+          className="flex-1 rounded-xl border border-slate-300 bg-white py-3 font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
         >
           再测一份
         </button>
       </div>
 
-      {shareMsg && <p className="text-sm text-emerald-600 text-center">{shareMsg}</p>}
+      {shareMsg && <p className="text-center text-sm text-emerald-600 dark:text-emerald-400">{shareMsg}</p>}
     </section>
   );
 }

@@ -6,7 +6,7 @@ import ResultView from "@/components/ResultView";
 import { extractTextFromPdf, looksLikePdf } from "@/lib/pdf";
 import { diagnoseResume } from "@/lib/diagnose";
 import { track } from "@/lib/track";
-import { JD_LIBRARY } from "@/lib/jd-library";
+import { JD_LIBRARY, JD_LOCALES, getJdById, type JdLocale } from "@/lib/jd-library";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
@@ -21,6 +21,8 @@ export default function UploadPage() {
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [resumeText, setResumeText] = useState("");
   const [jdText, setJdText] = useState("");
+  const [jdLocale, setJdLocale] = useState<JdLocale>("zh-CN");
+  const [selectedJdId, setSelectedJdId] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<AnalysisResult | null>(null);
@@ -117,6 +119,7 @@ export default function UploadPage() {
     setResumeText("");
     setResumeFile(null);
     setJdText("");
+    setSelectedJdId("");
     setError("");
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
@@ -124,8 +127,8 @@ export default function UploadPage() {
   return (
     <main className="flex-1 w-full max-w-3xl mx-auto px-4 py-10">
       <header className="text-center mb-10">
-        <h1 className="text-3xl font-bold text-slate-900">简历诊断</h1>
-        <p className="mt-3 text-slate-600">
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">简历诊断</h1>
+        <p className="mt-3 text-slate-600 dark:text-slate-300">
           上传简历 PDF + 粘贴目标岗位 JD，AI 帮你诊断匹配度，给出可执行的改进建议
         </p>
       </header>
@@ -136,10 +139,10 @@ export default function UploadPage() {
           <div
             className={`border-2 border-dashed rounded-2xl p-8 text-center transition-colors cursor-pointer ${
               isDragging
-                ? "border-blue-500 bg-blue-50"
+                ? "border-blue-500 bg-blue-50 dark:bg-blue-950/40"
                 : resumeFile
-                  ? "border-emerald-400 bg-emerald-50"
-                  : "border-slate-300 bg-white hover:border-blue-400"
+                  ? "border-emerald-400 bg-emerald-50 dark:bg-emerald-950/40"
+                  : "border-slate-300 bg-white hover:border-blue-400 dark:border-slate-700 dark:bg-slate-900"
             }`}
             onClick={() => fileInputRef.current?.click()}
             onDragOver={(e) => {
@@ -165,17 +168,17 @@ export default function UploadPage() {
             </div>
             {resumeFile ? (
               <div>
-                <p className="font-medium text-emerald-700">{resumeFile.name}</p>
-                <p className="text-sm text-slate-500 mt-1">
+                <p className="font-medium text-emerald-700 dark:text-emerald-300">{resumeFile.name}</p>
+                <p className="text-sm text-slate-500 mt-1 dark:text-slate-400">
                   {(resumeFile.size / 1024 / 1024).toFixed(2)} MB · 点击可重新选择
                 </p>
               </div>
             ) : (
               <div>
-                <p className="font-medium text-slate-700">
+                <p className="font-medium text-slate-700 dark:text-slate-200">
                   点击选择或拖拽简历 PDF 到此处
                 </p>
-                <p className="text-sm text-slate-400 mt-1">
+                <p className="text-sm text-slate-400 mt-1 dark:text-slate-500">
                   仅支持文字版 PDF（扫描件无法解析）· 10MB 以内
                 </p>
               </div>
@@ -184,36 +187,64 @@ export default function UploadPage() {
 
           {/* JD 输入区 */}
           <div>
-            <div className="flex items-center justify-between mb-2 gap-3">
-              <label className="block text-sm font-medium text-slate-700">
+            <div className="flex flex-wrap items-center justify-between mb-2 gap-3">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                 目标岗位 JD（职位描述）
               </label>
-              <select
-                value=""
-                onChange={(e) => {
-                  const tpl = JD_LIBRARY.find((x) => x.id === e.target.value);
-                  if (tpl) setJdText(tpl.jd);
-                }}
-                className="text-sm rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-slate-600 outline-none focus:border-blue-500"
-              >
-                <option value="">加载示例 JD…</option>
-                {JD_LIBRARY.map((x) => (
-                  <option key={x.id} value={x.id}>
-                    {x.industry} · {x.role}
-                  </option>
-                ))}
-              </select>
+              <div className="flex items-center gap-2">
+                <select
+                  value={jdLocale}
+                  onChange={(e) => {
+                    const loc = e.target.value as JdLocale;
+                    setJdLocale(loc);
+                    if (selectedJdId) {
+                      const tpl = getJdById(selectedJdId);
+                      if (tpl) setJdText(tpl.jd[loc]);
+                    }
+                  }}
+                  aria-label="JD 语言"
+                  className="text-sm rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-slate-600 outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                >
+                  {JD_LOCALES.map((l) => (
+                    <option key={l.id} value={l.id}>
+                      {l.label}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={selectedJdId}
+                  onChange={(e) => {
+                    const tpl = JD_LIBRARY.find((x) => x.id === e.target.value);
+                    if (tpl) {
+                      setSelectedJdId(tpl.id);
+                      setJdText(tpl.jd[jdLocale]);
+                    }
+                  }}
+                  className="text-sm rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-slate-600 outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                >
+                  <option value="">加载示例 JD…</option>
+                  {JD_LIBRARY.map((x) => (
+                    <option key={x.id} value={x.id}>
+                      {x.industry[jdLocale]} · {x.role[jdLocale]}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
             <textarea
               value={jdText}
               onChange={(e) => setJdText(e.target.value)}
-              placeholder={"粘贴招聘 JD，例如：\n岗位职责：负责数据分析和报表开发…\n任职要求：熟练使用 Python、SQL，有机器学习经验者优先…"}
-              className="w-full h-40 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+              placeholder={
+                jdLocale === "zh-CN"
+                  ? "粘贴招聘 JD，例如：\n岗位职责：负责数据分析和报表开发…\n任职要求：熟练使用 Python、SQL，有机器学习经验者优先…"
+                  : "Paste a job description, e.g.:\nResponsibilities: data analysis and reporting…\nRequirements: proficient in Python, SQL, machine learning preferred…"
+              }
+              className="w-full h-40 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
             />
           </div>
 
           {error && (
-            <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+            <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3 dark:bg-red-950/40 dark:border-red-900 dark:text-red-400">
               {error}
             </p>
           )}
@@ -228,7 +259,7 @@ export default function UploadPage() {
 
           {loading && progress >= 0 && (
             <div className="space-y-2" aria-live="polite">
-              <div className="h-1.5 rounded-full bg-slate-200 overflow-hidden">
+              <div className="h-1.5 rounded-full bg-slate-200 overflow-hidden dark:bg-slate-800">
                 <div
                   className="h-full rounded-full bg-blue-600 transition-all duration-700"
                   style={{
@@ -238,12 +269,12 @@ export default function UploadPage() {
               </div>
               <div className="flex items-center gap-2 justify-center">
                 <span className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-                <p className="text-sm text-slate-600">{PROGRESS_STEPS[progress]}</p>
+                <p className="text-sm text-slate-600 dark:text-slate-300">{PROGRESS_STEPS[progress]}</p>
               </div>
             </div>
           )}
 
-          <p className="text-xs text-slate-400 text-center">
+          <p className="text-xs text-slate-400 text-center dark:text-slate-500">
             🔒 隐私承诺：简历仅在你的浏览器内解析，分析完成后立即丢弃，不存储、不上传原文
           </p>
         </section>

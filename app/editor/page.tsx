@@ -91,13 +91,13 @@ export default function EditorPage() {
     <main className="flex-1 w-full max-w-3xl mx-auto px-4 py-10">
       <header className="flex items-start justify-between mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">简历编辑器</h1>
-          <p className="mt-2 text-slate-600">填写内容，自动保存到本地浏览器</p>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">简历编辑器</h1>
+          <p className="mt-2 text-slate-600 dark:text-slate-300">填写内容，自动保存到本地浏览器</p>
         </div>
         <div className="flex gap-2 print:hidden">
           <Link
             href="/preview"
-            className="inline-flex items-center justify-center rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+            className="inline-flex items-center justify-center rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
           >
             预览 / 导出
           </Link>
@@ -126,7 +126,7 @@ export default function EditorPage() {
             />
           </div>
           <div className="mt-4">
-            <span className="block text-sm font-medium text-slate-700 mb-2">模板样式</span>
+            <span className="block text-sm font-medium text-slate-700 mb-2 dark:text-slate-200">模板样式</span>
             <div className="flex gap-2">
               {TEMPLATES.map((t) => (
                 <button
@@ -135,8 +135,8 @@ export default function EditorPage() {
                   onClick={() => setResume((p) => ({ ...p, template: t.id }))}
                   className={`px-4 py-2 rounded-lg text-sm border transition-colors ${
                     resume.template === t.id
-                      ? "border-blue-500 bg-blue-50 text-blue-700"
-                      : "border-slate-300 text-slate-600 hover:bg-slate-100"
+                      ? "border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+                      : "border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                   }`}
                 >
                   {t.label}
@@ -149,7 +149,7 @@ export default function EditorPage() {
         <Card title="教育经历">
           <div className="space-y-4">
             {resume.education.map((e) => (
-              <div key={e.id} className="rounded-xl border border-slate-200 p-4">
+              <div key={e.id} className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <Field label="学校" value={e.school} onChange={(v) => updateEducation(e.id, { school: v })} />
                   <Field label="学历" value={e.degree} onChange={(v) => updateEducation(e.id, { degree: v })} />
@@ -170,7 +170,7 @@ export default function EditorPage() {
                 <button
                   type="button"
                   onClick={() => removeEducation(e.id)}
-                  className="mt-2 text-sm text-red-600 hover:underline"
+                  className="mt-2 text-sm text-red-600 hover:underline dark:text-red-400"
                 >
                   删除
                 </button>
@@ -185,7 +185,7 @@ export default function EditorPage() {
         <Card title="工作经历">
           <div className="space-y-4">
             {resume.work.map((w) => (
-              <div key={w.id} className="rounded-xl border border-slate-200 p-4">
+              <div key={w.id} className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <Field label="公司" value={w.company} onChange={(v) => updateWork(w.id, { company: v })} />
                   <Field label="职位" value={w.role} onChange={(v) => updateWork(w.id, { role: v })} />
@@ -203,7 +203,7 @@ export default function EditorPage() {
                 <button
                   type="button"
                   onClick={() => removeWork(w.id)}
-                  className="mt-2 text-sm text-red-600 hover:underline"
+                  className="mt-2 text-sm text-red-600 hover:underline dark:text-red-400"
                 >
                   删除
                 </button>
@@ -218,7 +218,7 @@ export default function EditorPage() {
         <Card title="项目经历">
           <div className="space-y-4">
             {resume.projects.map((x) => (
-              <div key={x.id} className="rounded-xl border border-slate-200 p-4">
+              <div key={x.id} className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <Field label="项目名称" value={x.name} onChange={(v) => updateProject(x.id, { name: v })} />
                   <Field label="角色" value={x.role} onChange={(v) => updateProject(x.id, { role: v })} />
@@ -239,7 +239,7 @@ export default function EditorPage() {
                 <button
                   type="button"
                   onClick={() => removeProject(x.id)}
-                  className="mt-2 text-sm text-red-600 hover:underline"
+                  className="mt-2 text-sm text-red-600 hover:underline dark:text-red-400"
                 >
                   删除
                 </button>
@@ -254,7 +254,7 @@ export default function EditorPage() {
         <Card title="技能">
           <div className="space-y-4">
             {resume.skills.map((s) => (
-              <div key={s.id} className="rounded-xl border border-slate-200 p-4">
+              <div key={s.id} className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
                 <Field label="分类" value={s.category} onChange={(v) => updateSkill(s.id, { category: v })} />
                 <div className="mt-3">
                   <Field
@@ -267,7 +267,7 @@ export default function EditorPage() {
                 <button
                   type="button"
                   onClick={() => removeSkill(s.id)}
-                  className="mt-2 text-sm text-red-600 hover:underline"
+                  className="mt-2 text-sm text-red-600 hover:underline dark:text-red-400"
                 >
                   删除
                 </button>
@@ -279,7 +279,7 @@ export default function EditorPage() {
           </div>
         </Card>
 
-        <p className="text-xs text-slate-400 text-center">
+        <p className="text-xs text-slate-400 text-center dark:text-slate-500">
           内容自动保存在本地浏览器，不会上传服务器
         </p>
       </div>

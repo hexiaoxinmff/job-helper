@@ -1,8 +1,23 @@
 @import "tailwindcss";
 
+/* 启用基于 class 的暗色模式（Tailwind v4 语法） */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #f8fafc;
   --foreground: #0f172a;
+  /* 图表配色（随主题切换） */
+  --chart-axis: #334155;
+  --chart-grid: #e2e8f0;
+  --chart-stroke: #2563eb;
+}
+
+.dark {
+  --background: #020617;
+  --foreground: #e2e8f0;
+  --chart-axis: #94a3b8;
+  --chart-grid: #1e293b;
+  --chart-stroke: #60a5fa;
 }
 
 @theme inline {
@@ -13,8 +28,15 @@
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
+html {
+  color-scheme: light;
+}
+html.dark {
+  color-scheme: dark;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: Arial, Helvetica, "PingFang SC", "Microsoft YaHei", sans-serif;
 }

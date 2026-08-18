@@ -21,6 +21,12 @@ AI 简历诊断工具：上传简历 PDF + 粘贴目标岗位 JD，自动解析�
 
 > AI 改写与 STAR 生成依赖 DeepSeek API（需配置 `DEEPSEEK_API_KEY`）；评分与建议在无 key 时自动降级为规则引擎，功能不中断。
 
+## ✨ 本期新增能力
+
+- 🌗 **暗色模式（Dark Mode）**：导航栏一键切换亮 / 暗主题，偏好持久化到本地，首屏前同步应用 **无闪烁（FOUC）**；全站卡片、表单、图表配色随主题自适应。
+- 🌐 **多语言行业 JD 扩库**：示例 JD 库从 6 个扩到 **12 个行业**（互联网 / 数据·AI / 设计 / 市场 / 运营 / 职能等），每个岗位提供 **中文 + English** 双语 JD，顶部「语言」切换后一键加载对应语言。
+- 🛡 **错误边界（Error Boundary）**：路由级 `error.tsx`（首页 / STAR / 编辑器 / 预览 + 根级 `global-error`）与组件级 `ErrorBoundary`（包裹雷达图等易崩模块）双重兜底，单页 / 单图崩溃不影响整站，并提供「重试」恢复。
+
 ## 🛠 技术栈
 
 | 层 | 技术 | 说明 |
@@ -79,23 +85,34 @@ DEEPSEEK_API_KEY=sk-你的key
 ```
 job-helper/
 ├── app/
-│   ├── layout.tsx            # 根布局（含顶部导航）
+│   ├── layout.tsx            # 根布局（导航 + ThemeProvider + 无闪烁主题脚本）
 │   ├── page.tsx              # 首页：简历诊断
 │   ├── star/page.tsx         # 独立页面：STAR 描述生成器
-│   └── api/
-│       ├── analyze/route.ts  # 分析 API（PDF 解析 → 评分 → AI 增强）
-│       ├── rewrite/route.ts  # AI 改写 API（缺失关键词 → 改后文案）
-│       └── star/route.ts     # STAR 生成 API（经历 → STAR 句式）
+│   ├── star/error.tsx        # STAR 路由级错误边界
+│   ├── editor/page.tsx       # 简历编辑器
+│   ├── editor/error.tsx      # 编辑器路由级错误边界
+│   ├── preview/page.tsx      # 简历预览 / 导出
+│   ├── preview/error.tsx     # 预览路由级错误边界
+│   ├── error.tsx             # 根路由级错误边界
+│   └── global-error.tsx      # 根布局级错误边界（自带 html/body）
 ├── components/
-│   ├── NavBar.tsx            # 左侧导航栏（桌面）/ 顶部导航（移动端）
+│   ├── NavBar.tsx            # 导航栏（含暗色切换）
+│   ├── ThemeToggle.tsx       # 亮 / 暗主题切换按钮
+│   ├── ErrorBoundary.tsx     # 通用组件级错误边界（包裹图表等易崩模块）
 │   ├── KeywordChip.tsx       # 可点击展开含义的关键词 chip
 │   ├── StarGenerator.tsx     # STAR 生成器 UI（独立组件，可复用）
-│   └── ResultView.tsx        # 简历诊断结果页
+│   ├── ResultView.tsx        # 简历诊断结果页（雷达图用 ErrorBoundary 包裹）
+│   ├── resume/ResumeDocument.tsx # 简历渲染（3 套模板，导出为白底）
+│   └── ui/                   # Button / Card / Field / Input 基础组件（已适配暗色）
 ├── lib/
 │   ├── pdf.ts                # PDF 文本提取（unpdf）
+│   ├── diagnose.ts           # 诊断编排（浏览器端评分 + AI 增强）
 │   ├── scoring.ts            # 规则评分引擎
-│   ├── ai.ts                 # DeepSeek AI（建议/改写/STAR 三个调用）
-│   ├── keywords.ts           # 关键词库 + 含义字典
+│   ├── ai-client.ts          # DeepSeek AI（建议/改写/STAR 三个调用）
+│   ├── jd-library.ts         # 多语言行业 JD 库（中文 / English，12 个行业）
+│   ├── theme.tsx             # 主题 Context + 无闪烁初始化脚本
+│   ├── resume-store.tsx      # 简历状态（本地持久化）
+│   ├── track.ts              # 轻量埋点
 │   └── types.ts              # 共享类型
 ├── scripts/
 │   ├── make-test-pdf.cjs     # 生成测试 PDF（英文）

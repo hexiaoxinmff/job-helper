@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import NavBar from "@/components/NavBar";
 import { ResumeProvider } from "@/lib/resume-store";
+import { ThemeProvider, THEME_INIT_SCRIPT } from "@/lib/theme";
 
 export const metadata: Metadata = {
   title: "求职在线助手 - AI 简历诊断工具",
@@ -11,12 +12,17 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="zh-CN" className="h-full antialiased">
+    <html lang="zh-CN" className="h-full antialiased" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body className="min-h-full flex flex-col md:pl-56">
-        <ResumeProvider>
-          <NavBar />
-          {children}
-        </ResumeProvider>
+        <ThemeProvider>
+          <ResumeProvider>
+            <NavBar />
+            {children}
+          </ResumeProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
