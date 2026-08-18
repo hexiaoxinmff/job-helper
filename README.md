@@ -77,7 +77,7 @@ DEEPSEEK_API_KEY=sk-你的key
 ## 📁 项目结构
 
 ```
-resume-radar/
+job-helper/
 ├── app/
 │   ├── layout.tsx            # 根布局（含顶部导航）
 │   ├── page.tsx              # 首页：简历诊断
