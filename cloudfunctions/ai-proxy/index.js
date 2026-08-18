@@ -242,7 +242,10 @@ async function dispatch(payload) {
 
 const PORT = 9000;
 const server = http.createServer(async (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  // 注意：不要在此设置 Access-Control-Allow-Origin。
+  // 该函数在网关(WEB_SCF)后面，网关会反射并追加 Origin 作为 ACAO；
+  // 若函数再写 * 会与网关的 Origin 拼成 "origin,*" 被浏览器判非法。
+  // 故 ACAO 完全交给网关处理，这里只声明允许的方法/请求头。
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
   res.setHeader("Content-Type", "application/json; charset=utf-8");
