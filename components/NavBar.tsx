@@ -68,13 +68,10 @@ export default function NavBar() {
         </nav>
 
         <div className="px-5 py-4 border-t border-slate-100 text-xs text-slate-400 leading-relaxed dark:border-slate-800">
-          <div className="flex items-center justify-between gap-2 mb-2">
+          <div className="flex items-center justify-between gap-2">
             <span>外观</span>
             <ThemeToggle className="h-8 w-8" />
           </div>
-          简历仅在浏览器内处理
-          <br />
-          分析完立即删除
         </div>
       </aside>
     </>

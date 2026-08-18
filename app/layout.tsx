@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import NavBar from "@/components/NavBar";
+import PrivacyModal from "@/components/PrivacyModal";
 import { ResumeProvider } from "@/lib/resume-store";
 import { ThemeProvider, THEME_INIT_SCRIPT } from "@/lib/theme";
 
@@ -21,6 +22,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <ResumeProvider>
             <NavBar />
             {children}
+            <PrivacyModal />
           </ResumeProvider>
         </ThemeProvider>
       </body>
