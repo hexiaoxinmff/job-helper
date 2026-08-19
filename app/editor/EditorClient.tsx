@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { useResume } from "@/lib/resume-store";
 import { Card } from "@/components/ui/Card";
 import { Field } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import Link from "next/link";
 import type {
   BasicInfo,
@@ -128,6 +130,7 @@ function EmptyHint({ text }: { text: string }) {
 
 export default function EditorClient() {
   const { resume, hydrated, setResume, reset } = useResume();
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
   const progress = computeProgress(resume);
 
   const patchBasics = (patch: Partial<BasicInfo>) =>
@@ -186,9 +189,12 @@ export default function EditorClient() {
     setResume((p) => ({ ...p, skills: p.skills.filter((s) => s.id !== id) }));
 
   const handleReset = () => {
-    if (window.confirm("确定清空当前简历内容吗？清空后不可恢复。")) {
-      reset();
-    }
+    setResetConfirmOpen(true);
+  };
+
+  const confirmReset = () => {
+    reset();
+    setResetConfirmOpen(false);
   };
 
   // 本地数据回填前渲染骨架，避免空表单一闪而过后才填充（hydration 闪白）
@@ -468,6 +474,16 @@ export default function EditorClient() {
           内容自动保存在本地浏览器，不会上传服务器
         </p>
       </div>
+
+      <ConfirmDialog
+        open={resetConfirmOpen}
+        title="清空当前简历内容？"
+        description="清空后不可恢复，建议先到「预览 / 导出」备份当前 PDF 再操作。"
+        danger
+        okLabel="确认清空"
+        onConfirm={confirmReset}
+        onCancel={() => setResetConfirmOpen(false)}
+      />
     </main>
   );
 }
