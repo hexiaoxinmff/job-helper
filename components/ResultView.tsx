@@ -83,8 +83,15 @@ export default function ResultView({ result, resumeText, jdText, onReset }: Prop
     if (!reportRef.current) return;
     setShareLoading(true);
     setShareMsg("");
+    // 截图捕获态：临时强制亮色主题，保证导出卡片白底深字（分享场景可读）。
+    // 仅捕获阶段生效：追加 export-capture 后 dark: 变体与 .dark 变量块整体失效，
+    // resolveThemeVars() 随即读到亮色值；colorScheme 同步切 light 兜底原生控件。
+    const root = document.documentElement;
+    const prevColorScheme = root.style.colorScheme;
+    root.classList.add("export-capture");
+    root.style.colorScheme = "light";
     try {
-      // 导出背景跟随当前主题（暗色下导出不刺眼）；值来自根 CSS 变量注册表
+      // 捕获态下 --jh-bg 已回退为亮色，无需再按当前主题取值
       const bgColor = resolveThemeVars().bg || "#ffffff";
       const dataUrl = await toPng(reportRef.current, {
         pixelRatio: 2,
@@ -100,6 +107,9 @@ export default function ResultView({ result, resumeText, jdText, onReset }: Prop
       setShareMsg("图片生成失败，请重试或直接复制文字报告");
       track("report_download_error");
     } finally {
+      // 无论成功失败都恢复原主题，避免页面被卡在亮色
+      root.classList.remove("export-capture");
+      root.style.colorScheme = prevColorScheme;
       setShareLoading(false);
     }
   };

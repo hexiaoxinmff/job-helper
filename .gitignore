@@ -49,3 +49,4 @@ next-env.d.ts
 # generated version files (regenerated before every build by scripts/make-version.mjs)
 /lib/version.ts
 /public/version.txt
+/public/version.json

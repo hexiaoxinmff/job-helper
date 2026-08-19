@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { APP_VERSION } from "@/lib/version";
+import { useCheckUpdate, type RemoteVersion } from "@/lib/use-check-update";
 
 const NAV_ITEMS = [
   { href: "/", label: "简历诊断" },
@@ -15,9 +16,51 @@ const NAV_ITEMS = [
   { href: "/campus", label: "高校入口" },
 ];
 
+/** 截断过长更新说明（完整内容在 title 提示中） */
+function clipNote(note?: string, max = 26): string {
+  if (!note) return "";
+  return note.length > max ? note.slice(0, max) + "…" : note;
+}
+
+/** 版本行：检测到新版本时变为可点击的更新提示，点击刷新加载新版本 */
+function VersionLine({
+  inMenu,
+  hasUpdate,
+  latest,
+}: {
+  inMenu?: boolean;
+  hasUpdate: boolean;
+  latest: RemoteVersion | null;
+}) {
+  const base = inMenu ? "px-3 py-2 text-[10px]" : "mt-3 text-[10px]";
+  if (hasUpdate && latest) {
+    return (
+      <button
+        type="button"
+        onClick={() => window.location.reload()}
+        title={`有新版本 ${latest.version}，点击刷新加载${latest.note ? `（${latest.note}）` : ""}`}
+        className={`${base} block w-full rounded-lg bg-accent-50 text-left text-accent-700 transition-colors hover:bg-accent-100 dark:bg-accent-950 dark:text-accent-300 dark:hover:bg-accent-900`}
+      >
+        📦 新版本 {latest.version}
+        {clipNote(latest.note) ? ` · ${clipNote(latest.note)}` : ""}
+        <span className="opacity-70">（点击刷新）</span>
+      </button>
+    );
+  }
+  return (
+    <p
+      className={`${base} text-neutral-300 select-all dark:text-neutral-600`}
+      title="当前线上版本（日期-时间-git提交号）"
+    >
+      版本 {APP_VERSION}
+    </p>
+  );
+}
+
 export default function NavBar() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const { hasUpdate, latest } = useCheckUpdate();
 
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -89,12 +132,7 @@ export default function NavBar() {
                 {item.label}
               </Link>
             ))}
-            <p
-              className="px-3 py-2 text-[10px] text-neutral-300 select-all dark:text-neutral-600"
-              title="当前线上版本（日期-时间-git提交号）"
-            >
-              版本 {APP_VERSION}
-            </p>
+            <VersionLine inMenu hasUpdate={hasUpdate} latest={latest} />
           </div>
         )}
       </nav>
@@ -121,12 +159,7 @@ export default function NavBar() {
             <span>外观</span>
             <ThemeToggle className="h-8 w-8" />
           </div>
-          <p
-            className="mt-3 text-[10px] text-neutral-300 select-all dark:text-neutral-600"
-            title="当前线上版本（日期-时间-git提交号）"
-          >
-            版本 {APP_VERSION}
-          </p>
+          <VersionLine hasUpdate={hasUpdate} latest={latest} />
         </div>
       </aside>
     </>

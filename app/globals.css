@@ -1,7 +1,9 @@
 @import "tailwindcss";
 
-/* 启用基于 class 的暗色模式（Tailwind v4 语法） */
-@custom-variant dark (&:where(.dark, .dark *));
+/* 启用基于 class 的暗色模式（Tailwind v4 语法）
+   截图捕获态（html.export-capture）下 dark: 变体整体失效，
+   用于 html-to-image 导出卡片时强制亮色主题（仅捕获阶段生效） */
+@custom-variant dark (&:where(.dark:not(.export-capture), .dark:not(.export-capture) *));
 
 /* ==========================================================================
    Job-Helper 主题变量（唯一颜色/圆角/阴影/间距来源，禁止组件硬编码 hex）
@@ -158,7 +160,9 @@
   --chart-series-6: #0891b2; /* 表达规范（cyan，同上） */
 }
 
-.dark {
+/* 暗色变量块：截图捕获态（html.export-capture）下整体失效，回退到 :root 亮色值，
+   保证导出卡片背景、文字、图表（--chart-*）统一为亮色系 */
+.dark:not(.export-capture) {
   /* ---- 基础语义（暗色） ---- */
   --jh-bg: #020617;
   --jh-bg-elevated: #0f172a;
@@ -323,7 +327,7 @@
 html {
   color-scheme: light;
 }
-html.dark {
+html.dark:not(.export-capture) {
   color-scheme: dark;
 }
 
