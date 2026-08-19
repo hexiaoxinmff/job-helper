@@ -61,15 +61,38 @@ export interface AnalyzeRequest {
 
 // ===== 结构化简历数据模型（编辑器线使用） =====
 
-/** 可选模板 */
+/** 可选模板（20 套，2026-08 重构后新版式） */
 export type TemplateId =
-  | "classic"
-  | "modern"
-  | "compact"
-  | "sidebar"
-  | "elegant"
-  | "creative"
-  | "timeline";
+  | "timeline"        // ① 时间轴（蓝点，何钊新 PDF 版式）
+  | "minimal-blue"    // ② 单栏极简蓝
+  | "bw-minimal"      // ③ 黑白极简（ATS 友好）
+  | "artistic"        // ④ 留白文艺
+  | "dense"           // ⑤ 紧凑单页
+  | "fresh-green"     // ⑥ 清新绿
+  | "gradient-purple" // ⑦ 渐变紫
+  | "vibrant-orange"  // ⑧ 活力橙
+  | "it-minimal"      // ⑨ 极简 IT
+  | "biz-split"       // ⑩ 简约商务分栏
+  | "edu-blue"        // ⑪ 时尚蓝教育
+  | "dark-biz"        // ⑫ 深色经典商务
+  | "space-grey"      // ⑬ 深空灰
+  | "rose-gold"       // ⑭ 玫瑰金
+  | "classic-red"     // ⑮ 经典红黑
+  | "light-blue"      // ⑯ 浅蓝清新
+  | "sidebar-navy"    // ⑰ 侧栏深蓝
+  | "military-green"  // ⑱ 军绿稳重
+  | "topbar-modern"   // ⑲ 顶部色条
+  | "magazine";       // ⑳ 杂志风
+
+/** 旧模板 id → 新模板映射（旧 localStorage 数据自动迁移） */
+export const LEGACY_TEMPLATE_MAP: Record<string, TemplateId> = {
+  classic: "minimal-blue",
+  modern: "topbar-modern",
+  compact: "dense",
+  sidebar: "sidebar-navy",
+  elegant: "magazine",
+  creative: "gradient-purple",
+};
 
 /** 基本信息 */
 export interface BasicInfo {
@@ -198,7 +221,7 @@ export type SectionKey =
 /** 板块显示开关：缺省视为显示 */
 export type SectionVisibility = Partial<Record<SectionKey, boolean>>;
 
-/** 完整简历数据（v2：新增个人优势/实习/校园/荣誉/语言/作品集板块） */
+/** 完整简历数据（v2：12 板块 + 头像） */
 export interface Resume {
   basics: BasicInfo;
   /** 个人优势，每条一个 bullet */
@@ -214,6 +237,8 @@ export interface Resume {
   portfolio: PortfolioItem[];
   /** 板块显示开关 */
   visibility: SectionVisibility;
+  /** 头像照片（dataURL/base64，可空） */
+  avatar?: string;
   template: TemplateId;
 }
 
@@ -232,6 +257,7 @@ export function createEmptyResume(): Resume {
     awards: [],
     portfolio: [],
     visibility: {},
-    template: "classic",
+    avatar: "",
+    template: "timeline",
   };
 }

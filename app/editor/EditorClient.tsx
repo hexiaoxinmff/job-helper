@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useResume } from "@/lib/resume-store";
 import { Card } from "@/components/ui/Card";
 import { Field } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import ImportDialog from "@/components/ImportDialog";
+import { TEMPLATE_META, type TemplateMeta } from "@/components/resume/template-meta";
 import type { ParsedResumeInput } from "@/lib/resume-import";
 import Link from "next/link";
 import type {
@@ -22,7 +23,6 @@ import type {
   PortfolioItem,
   Resume,
   SectionKey,
-  TemplateId,
 } from "@/lib/types";
 
 const uid = () =>
@@ -30,95 +30,72 @@ const uid = () =>
     ? crypto.randomUUID()
     : Math.random().toString(36).slice(2);
 
-const TEMPLATES: { id: TemplateId; label: string; desc: string }[] = [
-  { id: "classic", label: "经典", desc: "稳重通用，适合大多数岗位" },
-  { id: "modern", label: "现代", desc: "蓝色点缀，干净专业" },
-  { id: "compact", label: "紧凑", desc: "信息密度高，一页装更多" },
-  { id: "sidebar", label: "侧边栏", desc: "分栏布局，突出技能与亮点" },
-  { id: "elegant", label: "优雅", desc: "衬线字体，适合文化/设计类" },
-  { id: "creative", label: "创意", desc: "色块头图，适合技术/创意岗" },
-  { id: "timeline", label: "时间轴", desc: "蓝色时间轴，经典校园简历版式" },
-];
-
 const toLines = (arr: string[]) => arr.join("\n");
 const fromLines = (text: string) =>
   text.split("\n").map((s) => s.trim()).filter(Boolean);
 
-/** 模板缩略预览 */
-function TemplateThumb({ id }: { id: TemplateId }) {
+/** 模板缩略预览（按元数据 accent/layout 配置驱动） */
+function TemplateThumb({ meta }: { meta: TemplateMeta }) {
   const base = "h-16 w-full overflow-hidden rounded-md border border-neutral-200 bg-white";
-  switch (id) {
-    case "classic":
-      return (
-        <div className={`${base} p-2`}>
-          <div className="h-3 w-1/2 rounded bg-neutral-700" />
-          <div className="mt-2 h-1.5 w-3/4 rounded bg-neutral-300" />
-          <div className="mt-1 h-1.5 w-2/3 rounded bg-neutral-200" />
-        </div>
-      );
-    case "modern":
-      return (
-        <div className={base}>
-          <div className="h-1.5 w-full bg-primary-600" />
-          <div className="p-2">
-            <div className="h-2.5 w-1/2 rounded bg-primary-500" />
-            <div className="mt-1.5 h-1.5 w-3/4 rounded bg-neutral-200" />
-          </div>
-        </div>
-      );
-    case "compact":
-      return (
-        <div className={`${base} p-2`}>
-          <div className="h-1.5 w-1/2 rounded bg-neutral-600" />
-          <div className="mt-1 h-1 w-3/4 rounded bg-neutral-200" />
-          <div className="mt-1 h-1 w-2/3 rounded bg-neutral-200" />
-        </div>
-      );
-    case "sidebar":
-      return (
-        <div className={`${base} flex`}>
-          <div className="w-1/3 bg-neutral-800" />
-          <div className="flex-1 space-y-1 p-1.5">
-            <div className="h-1.5 w-1/2 rounded bg-neutral-400" />
-            <div className="h-1 w-3/4 rounded bg-neutral-200" />
-            <div className="h-1 w-2/3 rounded bg-neutral-200" />
-          </div>
-        </div>
-      );
-    case "elegant":
-      return (
-        <div className={`${base} flex flex-col items-center justify-center`}>
-          <div className="h-2.5 w-1/2 rounded bg-neutral-700" />
-          <div className="my-1 h-px w-8 bg-neutral-400" />
-          <div className="h-1 w-2/3 rounded bg-neutral-200" />
-        </div>
-      );
-    case "creative":
-      return (
-        <div className={base}>
-          <div className="h-5 w-full bg-gradient-to-r from-indigo-600 to-violet-600" />
-          <div className="space-y-1 p-1.5">
-            <div className="h-1.5 w-1/2 rounded bg-neutral-300" />
-            <div className="h-1 w-3/4 rounded bg-neutral-200" />
-          </div>
-        </div>
-      );
+  const line = (w: string, i: number) => (
+    <div key={i} className="h-1 rounded" style={{ width: w, background: "#e5e7eb" }} />
+  );
+  switch (meta.layout) {
     case "timeline":
       return (
         <div className={`${base} flex`}>
-          <div className="w-1 bg-primary-600" />
+          <div className="w-1" style={{ background: meta.accent }} />
           <div className="flex-1 p-1.5">
             <div className="flex">
-              <div className="h-2.5 w-1/3 bg-primary-600" />
+              <div className="h-2.5 w-1/3" style={{ background: meta.accent }} />
               <div className="h-2.5 flex-1 bg-neutral-200" />
             </div>
             <div className="mt-1.5 flex items-center gap-1">
-              <div className="size-2 rounded-full border border-white bg-primary-600" />
+              <div className="size-2 rounded-full" style={{ background: meta.accent }} />
               <div className="h-1.5 w-1/2 rounded bg-neutral-300" />
-              <div className="h-px flex-1 bg-neutral-200" />
             </div>
-            <div className="mt-1 h-1 w-3/4 rounded bg-neutral-200" />
-            <div className="mt-1 h-1 w-2/3 rounded bg-neutral-200" />
+            {line("w-3/4", 1)}
+            {line("w-2/3", 2)}
+          </div>
+        </div>
+      );
+    case "split":
+      return (
+        <div className={`${base} flex`}>
+          <div className="w-1/3" style={{ background: meta.accent, opacity: 0.9 }} />
+          <div className="flex-1 space-y-1 p-1.5">
+            {line("w-1/2", 0)}
+            {line("w-3/4", 1)}
+            {line("w-2/3", 2)}
+          </div>
+        </div>
+      );
+    case "banner":
+      return (
+        <div className={base}>
+          <div className="h-5 w-full" style={{ background: meta.accent }} />
+          <div className="space-y-1 p-1.5">
+            {line("w-1/2", 0)}
+            {line("w-3/4", 1)}
+          </div>
+        </div>
+      );
+    case "magazine":
+      return (
+        <div className={`${base} flex flex-col items-center justify-center`}>
+          <div className="h-2.5 w-1/2 rounded" style={{ background: meta.accent }} />
+          <div className="my-1 h-px w-8 bg-neutral-400" />
+          {line("w-2/3", 0)}
+        </div>
+      );
+    default:
+      return (
+        <div className={base}>
+          <div className="h-1.5 w-full" style={{ background: meta.accent }} />
+          <div className="space-y-1 p-1.5">
+            {line("w-1/2", 0)}
+            {line("w-3/4", 1)}
+            {line("w-2/3", 2)}
           </div>
         </div>
       );
@@ -237,7 +214,31 @@ export default function EditorClient() {
   const { resume, hydrated, setResume, reset } = useResume();
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
   const progress = computeProgress(resume);
+
+  /** 头像上传：canvas 压缩到 ~200px 宽转 JPEG dataURL（控制 localStorage 体积） */
+  const handleAvatarFile = (file: File | undefined) => {
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const w = 200;
+      const h = Math.max(1, Math.round((img.height / img.width) * w));
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.drawImage(img, 0, 0, w, h);
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+        setResume((p) => ({ ...p, avatar: dataUrl }));
+      }
+      URL.revokeObjectURL(url);
+    };
+    img.onerror = () => URL.revokeObjectURL(url);
+    img.src = url;
+  };
 
   const patchBasics = (patch: Partial<BasicInfo>) =>
     setResume((p) => ({ ...p, basics: { ...p.basics, ...patch } }));
@@ -478,7 +479,7 @@ export default function EditorClient() {
           选择一套版式，内容填写不受模板影响，可随时切换。
         </p>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {TEMPLATES.map((t) => (
+          {TEMPLATE_META.map((t) => (
             <button
               key={t.id}
               type="button"
@@ -489,7 +490,7 @@ export default function EditorClient() {
                   : "border-neutral-200 hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-800"
               }`}
             >
-              <TemplateThumb id={t.id} />
+              <TemplateThumb meta={t} />
               <span className="mt-2 text-sm font-medium text-neutral-800 dark:text-neutral-100">
                 {t.label}
               </span>
@@ -507,6 +508,45 @@ export default function EditorClient() {
               💡 求职意向写<strong>具体岗位名</strong>（如「前端开发工程师」），比「工程师」更精准；
               个人简介用 2–3 句话概括你的核心优势与求职方向。
             </Tip>
+            {/* 头像上传 */}
+            <div className="mb-4 flex items-center gap-4 rounded-xl border border-dashed border-neutral-300 p-3 dark:border-neutral-700">
+              {resume.avatar ? (
+                // eslint-disable-next-line @next/next/no-img-element -- 本地 dataURL 头像预览
+                <img
+                  src={resume.avatar}
+                  alt="头像预览"
+                  className="h-20 w-16 rounded-md border border-neutral-200 object-cover dark:border-neutral-700"
+                />
+              ) : (
+                <div className="flex h-20 w-16 items-center justify-center rounded-md border border-dashed border-neutral-300 bg-neutral-50 text-[10px] leading-tight text-neutral-400 dark:border-neutral-700 dark:bg-neutral-800">
+                  头像
+                  <br />
+                  （1-2 寸照）
+                </div>
+              )}
+              <div className="flex-1">
+                <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                  上传证件照会显示在简历模板的头像框里（建议 1-2 寸清晰正装照）。
+                </p>
+                <div className="mt-2 flex gap-2">
+                  <input
+                    ref={avatarInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => handleAvatarFile(e.target.files?.[0])}
+                  />
+                  <Button variant="secondary" onClick={() => avatarInputRef.current?.click()}>
+                    {resume.avatar ? "更换照片" : "上传照片"}
+                  </Button>
+                  {resume.avatar && (
+                    <Button variant="ghost" onClick={() => setResume((p) => ({ ...p, avatar: "" }))}>
+                      移除
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="姓名" placeholder="张三" value={resume.basics.name} onChange={(v) => patchBasics({ name: v })} />
               <Field label="求职意向" placeholder="前端开发工程师" value={resume.basics.title} onChange={(v) => patchBasics({ title: v })} />

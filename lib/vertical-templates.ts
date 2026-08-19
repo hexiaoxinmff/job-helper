@@ -54,9 +54,9 @@ export const VERTICAL_TEMPLATES: VerticalTemplate[] = [
       { jdId: "be", note: "若偏后端，注意补数据库 / 框架项目" },
       { jdId: "fs", note: "前后端都做，适合小项目经历丰富的转码者" },
     ],
-    recommendedTemplate: "modern",
+    recommendedTemplate: "topbar-modern",
     starterResume: starter({
-      template: "modern",
+      template: "topbar-modern",
       basics: {
         name: "（你的姓名）",
         title: "前端开发工程师（转码）",
@@ -117,9 +117,9 @@ export const VERTICAL_TEMPLATES: VerticalTemplate[] = [
       { jdId: "ops", note: "运营对专业限制小，可作过渡" },
       { jdId: "mkt", note: "若擅长内容与表达，市场营销也适配" },
     ],
-    recommendedTemplate: "sidebar",
+    recommendedTemplate: "sidebar-navy",
     starterResume: starter({
-      template: "sidebar",
+      template: "sidebar-navy",
       basics: {
         name: "（你的姓名）",
         title: "产品经理（转行）",
@@ -179,9 +179,9 @@ export const VERTICAL_TEMPLATES: VerticalTemplate[] = [
       { jdId: "da", note: "若数学底子好，数据分析是稳妥方向" },
       { jdId: "hr", note: "职能岗对专业限制小" },
     ],
-    recommendedTemplate: "classic",
+    recommendedTemplate: "minimal-blue",
     starterResume: starter({
-      template: "classic",
+      template: "minimal-blue",
       basics: {
         name: "（你的姓名）",
         title: "（目标岗位，如 运营专员）",
@@ -240,9 +240,9 @@ export const VERTICAL_TEMPLATES: VerticalTemplate[] = [
       { jdId: "da", note: "用课程数据项目补位" },
       { jdId: "qa", note: "测试门槛友好，适合首份工作" },
     ],
-    recommendedTemplate: "elegant",
+    recommendedTemplate: "magazine",
     starterResume: starter({
-      template: "elegant",
+      template: "magazine",
       basics: {
         name: "（你的姓名）",
         title: "（目标岗位，如 前端开发）",
@@ -301,9 +301,9 @@ export const VERTICAL_TEMPLATES: VerticalTemplate[] = [
       { jdId: "pm", note: "有业务经验转产品顺" },
       { jdId: "mkt", note: "有增长 / 投放经验可跳" },
     ],
-    recommendedTemplate: "compact",
+    recommendedTemplate: "dense",
     starterResume: starter({
-      template: "compact",
+      template: "dense",
       basics: {
         name: "（你的姓名）",
         title: "（目标岗位，如 全栈工程师）",
@@ -360,9 +360,9 @@ export const VERTICAL_TEMPLATES: VerticalTemplate[] = [
       { jdId: "mkt", note: "跨境 / 品牌营销适配" },
       { jdId: "da", note: "数据岗语言门槛低、通用性强" },
     ],
-    recommendedTemplate: "creative",
+    recommendedTemplate: "gradient-purple",
     starterResume: starter({
-      template: "creative",
+      template: "gradient-purple",
       basics: {
         name: "（Your Name / 姓名）",
         title: "Product Manager / 产品经理",

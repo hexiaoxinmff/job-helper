@@ -7,6 +7,7 @@ import {
   EducationItem,
   InternshipItem,
   LanguageItem,
+  LEGACY_TEMPLATE_MAP,
   PortfolioItem,
   ProjectItem,
   Resume,
@@ -28,19 +29,33 @@ const ResumeContext = createContext<ResumeContextValue | null>(null);
 const STORAGE_KEY = "job-helper:resume";
 /**
  * 存储结构版本：1 = { version, data } 包装 + 5 板块（basics/education/work/projects/skills）；
- * 2 = 扩展 12 板块（新增 advantages/languages/internships/activities/awards/portfolio + visibility）。
+ * 2 = 扩展 12 板块（新增 advantages/languages/internships/activities/awards/portfolio + visibility）；
+ * 3 = 20 套新版模板 + avatar 头像（2026-08 模板重构，旧 6 个模板 id 自动映射到新模板）。
  * 旧裸 Resume 对象自动迁移。迁移红线：已有字段原样保留，不丢。
  */
-const STORAGE_VERSION = 2;
+const STORAGE_VERSION = 3;
 
 const TEMPLATE_IDS: TemplateId[] = [
-  "classic",
-  "modern",
-  "compact",
-  "sidebar",
-  "elegant",
-  "creative",
   "timeline",
+  "minimal-blue",
+  "bw-minimal",
+  "artistic",
+  "dense",
+  "fresh-green",
+  "gradient-purple",
+  "vibrant-orange",
+  "it-minimal",
+  "biz-split",
+  "edu-blue",
+  "dark-biz",
+  "space-grey",
+  "rose-gold",
+  "classic-red",
+  "light-blue",
+  "sidebar-navy",
+  "military-green",
+  "topbar-modern",
+  "magazine",
 ];
 
 const isObj = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object";
@@ -68,9 +83,17 @@ function sanitizeResume(data: unknown): Resume {
     d.visibility && isObj(d.visibility)
       ? Object.fromEntries(Object.entries(d.visibility).filter(([, v]) => typeof v === "boolean"))
       : {};
-  const template: TemplateId = TEMPLATE_IDS.includes(d.template as TemplateId)
-    ? (d.template as TemplateId)
-    : empty.template;
+  // 模板：新 id 直接用；旧 6 个 id（classic/modern/compact/sidebar/elegant/creative）映射到新模板；其余回退 timeline
+  let template: TemplateId = empty.template;
+  const raw = d.template as string;
+  if (raw) {
+    if (TEMPLATE_IDS.includes(raw as TemplateId)) {
+      template = raw as TemplateId;
+    } else if (LEGACY_TEMPLATE_MAP[raw]) {
+      template = LEGACY_TEMPLATE_MAP[raw];
+    }
+  }
+  const avatar = typeof d.avatar === "string" && d.avatar.length > 0 ? d.avatar.slice(0, 2000000) : "";
 
   return {
     basics,
@@ -85,6 +108,7 @@ function sanitizeResume(data: unknown): Resume {
     awards,
     portfolio,
     visibility,
+    avatar,
     template,
   };
 }

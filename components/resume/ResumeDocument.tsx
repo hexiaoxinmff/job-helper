@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import type { Resume, SectionKey } from "@/lib/types";
 
 /** 板块可见性辅助：visibility 缺省视为显示 */
@@ -5,1070 +6,977 @@ function visible(resume: Resume, key: SectionKey) {
   return resume.visibility[key] !== false;
 }
 
-function Contacts({ resume }: { resume: Resume }) {
-  const b = resume.basics;
-  const items = [
-    { label: "电话", value: b.phone },
-    { label: "邮箱", value: b.email },
-    { label: "城市", value: b.location },
-    { label: "GitHub", value: b.website },
-  ].filter((it) => it.value);
-  if (items.length === 0) return null;
+// ================= 公共组件 =================
+
+/** 头像框：有照片显示图片，无照片显示占位 */
+function AvatarFrame({ resume, style }: { resume: Resume; style?: CSSProperties }) {
+  const base: CSSProperties = {
+    width: 72,
+    height: 90,
+    border: "1.5px dashed #b0b7c3",
+    borderRadius: 6,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "repeating-linear-gradient(45deg,#f5f6f8,#f5f6f8 6px,#eef0f3 6px,#eef0f3 12px)",
+    color: "#9aa3b2",
+    fontSize: 10.5,
+    textAlign: "center",
+    lineHeight: 1.4,
+    flexShrink: 0,
+    overflow: "hidden",
+    ...style,
+  };
+  if (resume.avatar) {
+    return (
+      <div style={{ ...base, border: "1.5px solid #cbd5e1", background: "#fff" }}>
+        {/* eslint-disable-next-line @next/next/no-img-element -- 本地 dataURL 头像，静态导出不适用 next/image */}
+        <img src={resume.avatar} alt="头像" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+      </div>
+    );
+  }
   return (
-    <p className="text-sm text-neutral-500 mt-1">
-      {items.map((it, i) => (
-        <span key={it.label}>
-          {i > 0 && "  ·  "}
-          {it.label}：{it.value}
-        </span>
-      ))}
-    </p>
+    <div style={base}>
+      <span>
+        头像
+        <br />
+        （1-2 寸照）
+      </span>
+    </div>
   );
 }
 
-function Bullets({ items }: { items: string[] }) {
+/** 联系方式（带标签，flex 换行） */
+function ContactLine({ resume, style }: { resume: Resume; style?: CSSProperties }) {
+  const b = resume.basics;
+  const items = [
+    b.phone && `电话：${b.phone}`,
+    b.birth && `出生年月：${b.birth}`,
+    b.email && `邮箱：${b.email}`,
+    b.sex && `性别：${b.sex}`,
+    b.location && `城市：${b.location}`,
+    b.website && `GitHub：${b.website}`,
+  ].filter(Boolean) as string[];
   if (items.length === 0) return null;
   return (
-    <ul className="list-disc pl-5 mt-1 space-y-0.5 text-neutral-700">
+    <div style={{ display: "flex", flexWrap: "wrap", gap: "3px 16px", fontSize: 11, color: "#4b5563", ...style }}>
       {items.map((it, i) => (
-        <li key={i}>{it}</li>
+        <span key={i}>{it}</span>
+      ))}
+    </div>
+  );
+}
+
+/** 章节标题（带色块）+ 内容 */
+function Sec({
+  title,
+  accent,
+  secBg,
+  children,
+}: {
+  title: string;
+  accent: string;
+  secBg?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div style={{ marginTop: 14, ...(secBg ? { padding: "10px 14px", borderRadius: 8, background: secBg } : {}) }}>
+      <h3
+        style={{
+          fontSize: 14,
+          fontWeight: 800,
+          color: accent,
+          marginBottom: 7,
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+        }}
+      >
+        <span style={{ width: 4, height: 14, background: accent, borderRadius: 2, display: "inline-block" }} />
+        {title}
+      </h3>
+      {children}
+    </div>
+  );
+}
+
+/** 通用小字条目行 */
+function Item({ head, time, children }: { head: string; time?: string; children?: React.ReactNode }) {
+  return (
+    <div style={{ marginBottom: 7 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "baseline" }}>
+        <span style={{ fontSize: 12.5, fontWeight: 700 }}>{head}</span>
+        {time && <span style={{ fontSize: 10.5, color: "#6b7280", whiteSpace: "nowrap" }}>{time}</span>}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function Bullets({ items, bulletColor = "#9aa3b2" }: { items: string[]; bulletColor?: string }) {
+  if (items.length === 0) return null;
+  return (
+    <ul style={{ listStyle: "none", marginTop: 2 }}>
+      {items.map((it, i) => (
+        <li key={i} style={{ fontSize: 11, color: "#4b5563", lineHeight: 1.5, paddingLeft: 11, position: "relative" }}>
+          <span style={{ position: "absolute", left: 0, color: bulletColor }}>•</span>
+          {it}
+        </li>
       ))}
     </ul>
   );
 }
 
-/** 个人优势：多条 bullet */
-function AdvantagesBlock({ resume }: { resume: Resume }) {
-  if (!visible(resume, "advantages") || resume.advantages.length === 0) return null;
-  return <Bullets items={resume.advantages} />;
+function Desc({ children }: { children: React.ReactNode }) {
+  return <p style={{ fontSize: 11, color: "#4b5563", marginTop: 2, lineHeight: 1.5 }}>{children}</p>;
 }
 
-/** 实习经历（与工作经历同构） */
-function InternshipsBlock({ resume }: { resume: Resume }) {
-  if (!visible(resume, "internships") || resume.internships.length === 0) return null;
+function Tags({ children, style }: { children: React.ReactNode; style?: CSSProperties }) {
+  return <div style={{ fontSize: 11, color: "#4b5563", lineHeight: 1.7, ...style }}>{children}</div>;
+}
+
+// ================= 内容块 =================
+
+function AdvantagesItems({ resume, bulletColor }: { resume: Resume; bulletColor?: string }) {
+  if (!visible(resume, "advantages") || resume.advantages.length === 0) return null;
+  return <Bullets items={resume.advantages} bulletColor={bulletColor} />;
+}
+
+function EduItems({ resume, join = "　" }: { resume: Resume; join?: string }) {
+  if (!visible(resume, "education") || resume.education.length === 0) return null;
   return (
     <>
-      {resume.internships.map((w) => (
-        <Row key={w.id} left={`${w.company}　${w.role}`} right={`${w.startDate} - ${w.endDate}`}>
-          <Bullets items={w.bullets} />
-        </Row>
+      {resume.education.map((e) => (
+        <Item key={e.id} head={`${e.school}${join}${e.major}${join}${e.degree}`} time={`${e.startDate} - ${e.endDate}`}>
+          {e.description && <Desc>{e.description}</Desc>}
+        </Item>
       ))}
     </>
   );
 }
 
-/** 校园经历 */
-function ActivitiesBlock({ resume }: { resume: Resume }) {
+function ProjectItems({ resume, join = "　" }: { resume: Resume; join?: string }) {
+  if (!visible(resume, "projects") || resume.projects.length === 0) return null;
+  return (
+    <>
+      {resume.projects.map((p) => (
+        <Item key={p.id} head={`${p.name}${join}${p.role}`} time={`${p.startDate} - ${p.endDate}`}>
+          {p.link && <Desc>{p.link}</Desc>}
+          <Bullets items={p.bullets} />
+        </Item>
+      ))}
+    </>
+  );
+}
+
+function ActivityItems({ resume, join = "　" }: { resume: Resume; join?: string }) {
   if (!visible(resume, "activities") || resume.activities.length === 0) return null;
   return (
     <>
       {resume.activities.map((a) => (
-        <Row key={a.id} left={`${a.org}　${a.role}`} right={`${a.startDate} - ${a.endDate}`}>
-          {a.description && <p className="text-sm text-neutral-600 mt-0.5">{a.description}</p>}
-        </Row>
+        <Item key={a.id} head={`${a.org}${join}${a.role}`} time={`${a.startDate} - ${a.endDate}`}>
+          {a.description && <Desc>{a.description}</Desc>}
+        </Item>
       ))}
     </>
   );
 }
 
-/** 荣誉奖项 */
-function AwardsBlock({ resume }: { resume: Resume }) {
-  if (!visible(resume, "awards") || resume.awards.length === 0) return null;
+function SkillsBlock({ resume }: { resume: Resume }) {
+  const has =
+    (visible(resume, "skills") && resume.skills.length > 0) ||
+    (visible(resume, "languages") && resume.languages.length > 0) ||
+    (visible(resume, "awards") && resume.awards.length > 0);
+  if (!has) return null;
   return (
-    <>
-      {resume.awards.map((a) => (
-        <Row key={a.id} left={a.name} right={a.date}>
-          {a.description && <p className="text-sm text-neutral-600 mt-0.5">{a.description}</p>}
-        </Row>
-      ))}
-    </>
+    <Tags>
+      {visible(resume, "skills") &&
+        resume.skills.map((s) => (
+          <div key={s.id}>
+            <b>{s.category}：</b>
+            {s.items.join(" / ")}
+          </div>
+        ))}
+      {visible(resume, "languages") && resume.languages.length > 0 && (
+        <div>
+          <b>语言：</b>
+          {resume.languages.map((l) => `${l.language}（${l.level || "熟练"}）`).join(" / ")}
+        </div>
+      )}
+      {visible(resume, "awards") && resume.awards.length > 0 && (
+        <div>
+          <b>荣誉：</b>
+          {resume.awards.map((a) => `${a.name}${a.date ? `（${a.date}）` : ""}`).join(" / ")}
+        </div>
+      )}
+    </Tags>
   );
 }
 
-/** 语言能力 */
-function LanguagesBlock({ resume }: { resume: Resume }) {
-  if (!visible(resume, "languages") || resume.languages.length === 0) return null;
-  return (
-    <p className="text-sm text-neutral-700">
-      {resume.languages.map((l) => `${l.language}（${l.level || "熟练"}）`).join("　·　")}
-    </p>
-  );
-}
-
-/** 作品集 */
-function PortfolioBlock({ resume }: { resume: Resume }) {
+function PortfolioItems({ resume, join = "　" }: { resume: Resume; join?: string }) {
   if (!visible(resume, "portfolio") || resume.portfolio.length === 0) return null;
   return (
     <>
       {resume.portfolio.map((p) => (
-        <Row key={p.id} left={p.name} right={p.link}>
-          {p.description && <p className="text-sm text-neutral-600 mt-0.5">{p.description}</p>}
-        </Row>
+        <Item key={p.id} head={`${p.name}${join}${p.link}`}>
+          {p.description && <Desc>{p.description}</Desc>}
+        </Item>
       ))}
     </>
   );
 }
 
-function ClassicTemplate({ resume }: { resume: Resume }) {
-  const b = resume.basics;
-  return (
-    <div className="bg-white text-neutral-800 p-10 max-w-3xl mx-auto">
-      <header className="border-b-2 border-neutral-800 pb-3 mb-4">
-        <h1 className="text-3xl font-bold">{b.name || "你的名字"}</h1>
-        {b.title && <p className="text-lg text-neutral-600 mt-1">求职意向：{b.title}</p>}
-        <Contacts resume={resume} />
-      </header>
+// ================= 单栏工厂 =================
 
-      {b.summary && <p className="text-sm text-neutral-700 mb-4">{b.summary}</p>}
-
-      {visible(resume, "advantages") && resume.advantages.length > 0 && (
-        <Section title="个人优势">
-          <AdvantagesBlock resume={resume} />
-        </Section>
-      )}
-
-      {resume.education.length > 0 && (
-        <Section title="教育经历">
-          {resume.education.map((e) => (
-            <Row key={e.id} left={`${e.school}　${e.major}　${e.degree}`} right={`${e.startDate} - ${e.endDate}`}>
-              {e.description && <p className="text-sm text-neutral-600 mt-0.5">{e.description}</p>}
-            </Row>
-          ))}
-        </Section>
-      )}
-
-      {visible(resume, "internships") && resume.internships.length > 0 && (
-        <Section title="实习经历">
-          <InternshipsBlock resume={resume} />
-        </Section>
-      )}
-
-      {resume.work.length > 0 && (
-        <Section title="工作经历">
-          {resume.work.map((w) => (
-            <Row key={w.id} left={`${w.company}　${w.role}`} right={`${w.startDate} - ${w.endDate}`}>
-              <Bullets items={w.bullets} />
-            </Row>
-          ))}
-        </Section>
-      )}
-
-      {resume.projects.length > 0 && (
-        <Section title="项目经历">
-          {resume.projects.map((p) => (
-            <Row key={p.id} left={`${p.name}　${p.role}`} right={`${p.startDate} - ${p.endDate}`}>
-              {p.link && <p className="text-sm text-primary-600 mt-0.5">{p.link}</p>}
-              <Bullets items={p.bullets} />
-            </Row>
-          ))}
-        </Section>
-      )}
-
-      {visible(resume, "activities") && resume.activities.length > 0 && (
-        <Section title="校园经历">
-          <ActivitiesBlock resume={resume} />
-        </Section>
-      )}
-
-      {resume.skills.length > 0 && (
-        <Section title="技能">
-          <div className="space-y-1">
-            {resume.skills.map((s) => (
-              <p key={s.id} className="text-sm">
-                <span className="font-medium text-neutral-800">{s.category}：</span>
-                <span className="text-neutral-600">{s.items.join(" / ")}</span>
-              </p>
-            ))}
-          </div>
-        </Section>
-      )}
-
-      {visible(resume, "languages") && resume.languages.length > 0 && (
-        <Section title="语言能力">
-          <LanguagesBlock resume={resume} />
-        </Section>
-      )}
-
-      {visible(resume, "awards") && resume.awards.length > 0 && (
-        <Section title="荣誉奖项">
-          <AwardsBlock resume={resume} />
-        </Section>
-      )}
-
-      {visible(resume, "portfolio") && resume.portfolio.length > 0 && (
-        <Section title="作品集">
-          <PortfolioBlock resume={resume} />
-        </Section>
-      )}
-    </div>
-  );
+interface SingleOpts {
+  accent: string;
+  titleColor: string;
+  topStyle: CSSProperties;
+  avatarStyle?: CSSProperties;
+  secBg?: string;
+  roleColor?: string;
+  contactColor?: string;
+  bodyPad?: CSSProperties;
+  baseFont?: number;
+  bulletColor?: string;
 }
 
-function ModernTemplate({ resume }: { resume: Resume }) {
+/** 标准单栏模板（头部 + 简介/优势/教育/项目/校园/技能/作品集） */
+function makeSingle({ accent, titleColor, topStyle, avatarStyle, secBg, roleColor, contactColor, bodyPad, baseFont, bulletColor }: SingleOpts) {
+  return function SingleTemplate({ resume }: { resume: Resume }) {
+    const b = resume.basics;
+    const scale = baseFont ? baseFont / 16 : 1;
+    const fs = (n: number) => n * scale;
+    return (
+      <div style={{ padding: "32px 44px 26px", minHeight: "100%", fontSize: baseFont ?? 16 }}>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 18, ...topStyle }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: fs(26), fontWeight: 800, color: titleColor }}>{b.name || "你的名字"}</div>
+            {b.title && (
+              <div style={{ fontSize: fs(12.5), color: roleColor ?? accent, fontWeight: 600, marginTop: 2 }}>
+                求职意向：{b.title}
+              </div>
+            )}
+            <ContactLine resume={resume} style={{ marginTop: 6, color: contactColor, fontSize: fs(11) }} />
+          </div>
+          <AvatarFrame resume={resume} style={avatarStyle} />
+        </div>
+        <div style={bodyPad}>
+          {b.summary && <Sec title="个人简介" accent={accent} secBg={secBg}><Desc>{b.summary}</Desc></Sec>}
+          <Sec title="个人优势" accent={accent} secBg={secBg}>
+            <AdvantagesItems resume={resume} bulletColor={bulletColor} />
+          </Sec>
+          <Sec title="教育背景" accent={accent} secBg={secBg}>
+            <EduItems resume={resume} />
+          </Sec>
+          <Sec title="项目经历" accent={accent} secBg={secBg}>
+            <ProjectItems resume={resume} />
+          </Sec>
+          <Sec title="校园经历" accent={accent} secBg={secBg}>
+            <ActivityItems resume={resume} />
+          </Sec>
+          <Sec title="技能证书" accent={accent} secBg={secBg}>
+            <SkillsBlock resume={resume} />
+            <PortfolioItems resume={resume} />
+          </Sec>
+        </div>
+      </div>
+    );
+  };
+}
+
+// ================= 独立模板 =================
+
+/** ① 时间轴（蓝点时间轴，何钊新 PDF 版式） */
+function TimelineTemplate({ resume }: { resume: Resume }) {
   const b = resume.basics;
   return (
-    <div className="bg-white text-neutral-800 max-w-3xl mx-auto">
-      <div className="h-2 bg-primary-600" />
-      <div className="p-10">
-        <header className="mb-5">
-          <h1 className="text-3xl font-bold text-primary-700">{b.name || "你的名字"}</h1>
-          {b.title && <p className="text-base text-neutral-500 mt-1">求职意向：{b.title}</p>}
-          <Contacts resume={resume} />
-        </header>
-
-        {b.summary && <p className="text-sm text-neutral-700 mb-5">{b.summary}</p>}
-
-        {visible(resume, "advantages") && resume.advantages.length > 0 && (
-          <Section title="个人优势" accent>
-            <AdvantagesBlock resume={resume} />
-          </Section>
-        )}
-
-        {resume.education.length > 0 && (
-          <Section title="教育经历" accent>
-            {resume.education.map((e) => (
-              <Row key={e.id} left={`${e.school}　${e.major}　${e.degree}`} right={`${e.startDate} - ${e.endDate}`}>
-                {e.description && <p className="text-sm text-neutral-600 mt-0.5">{e.description}</p>}
-              </Row>
-            ))}
-          </Section>
-        )}
-
-        {visible(resume, "internships") && resume.internships.length > 0 && (
-          <Section title="实习经历" accent>
-            <InternshipsBlock resume={resume} />
-          </Section>
-        )}
-
-        {resume.work.length > 0 && (
-          <Section title="工作经历" accent>
-            {resume.work.map((w) => (
-              <Row key={w.id} left={`${w.company}　${w.role}`} right={`${w.startDate} - ${w.endDate}`}>
-                <Bullets items={w.bullets} />
-              </Row>
-            ))}
-          </Section>
-        )}
-
-        {resume.projects.length > 0 && (
-          <Section title="项目经历" accent>
-            {resume.projects.map((p) => (
-              <Row key={p.id} left={`${p.name}　${p.role}`} right={`${p.startDate} - ${p.endDate}`}>
-                {p.link && <p className="text-sm text-primary-600 mt-0.5">{p.link}</p>}
-                <Bullets items={p.bullets} />
-              </Row>
-            ))}
-          </Section>
-        )}
-
-        {visible(resume, "activities") && resume.activities.length > 0 && (
-          <Section title="校园经历" accent>
-            <ActivitiesBlock resume={resume} />
-          </Section>
-        )}
-
-        {resume.skills.length > 0 && (
-          <Section title="技能" accent>
-            <div className="space-y-1">
-              {resume.skills.map((s) => (
-                <p key={s.id} className="text-sm">
-                  <span className="font-medium text-primary-700">{s.category}：</span>
-                  <span className="text-neutral-600">{s.items.join(" / ")}</span>
-                </p>
-              ))}
-            </div>
-          </Section>
-        )}
-
-        {visible(resume, "languages") && resume.languages.length > 0 && (
-          <Section title="语言能力" accent>
-            <LanguagesBlock resume={resume} />
-          </Section>
-        )}
-
-        {visible(resume, "awards") && resume.awards.length > 0 && (
-          <Section title="荣誉奖项" accent>
-            <AwardsBlock resume={resume} />
-          </Section>
-        )}
-
-        {visible(resume, "portfolio") && resume.portfolio.length > 0 && (
-          <Section title="作品集" accent>
-            <PortfolioBlock resume={resume} />
-          </Section>
-        )}
+    <div style={{ display: "flex", minHeight: "100%", color: "#1f2937" }}>
+      <div style={{ width: 9, background: "#4f81bd" }} />
+      <div style={{ flex: 1, padding: "0 34px 26px", position: "relative" }}>
+        <div style={{ position: "absolute", left: 20, top: 0, bottom: 0, width: 2, background: "#4f81bd" }} />
+        {/* 顶部双条 */}
+        <div style={{ display: "flex", margin: "14px 0 0 -34px" }}>
+          <div style={{ background: "#4f81bd", color: "#fff", fontWeight: 700, fontSize: 13, padding: "5px 16px 5px 40px" }}>
+            个人简历
+          </div>
+          <div
+            style={{
+              flex: 1,
+              background: "#eee",
+              color: "#4f81bd",
+              fontSize: 9,
+              letterSpacing: "0.4em",
+              padding: "7px 12px",
+              textTransform: "uppercase",
+              fontWeight: 600,
+            }}
+          >
+            PERSONAL RESUME
+          </div>
+        </div>
+        {/* 头部：姓名 + 头像右侧 */}
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 18, marginTop: 16 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 24, fontWeight: 800 }}>{b.name || "你的名字"}</div>
+            {b.title && <div style={{ fontSize: 12, color: "#6b7280", marginTop: 3 }}>求职意向：{b.title}</div>}
+            <ContactLine resume={resume} style={{ marginTop: 7, fontSize: 11.5 }} />
+          </div>
+          <AvatarFrame resume={resume} />
+        </div>
+        {/* 章节 */}
+        <TimelineSec title="个人优势">
+          <AdvantagesItems resume={resume} />
+        </TimelineSec>
+        <TimelineSec title="教育背景">
+          <EduItems resume={resume} />
+        </TimelineSec>
+        <TimelineSec title="项目经历">
+          <ProjectItems resume={resume} />
+        </TimelineSec>
+        <TimelineSec title="校园经历">
+          <ActivityItems resume={resume} />
+        </TimelineSec>
+        <TimelineSec title="技能及证书">
+          <SkillsBlock resume={resume} />
+          <PortfolioItems resume={resume} />
+        </TimelineSec>
       </div>
     </div>
   );
 }
 
-function CompactTemplate({ resume }: { resume: Resume }) {
-  const b = resume.basics;
+function TimelineSec({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-white text-neutral-800 p-8 max-w-3xl mx-auto text-sm leading-snug">
-      <header className="mb-3">
-        <h1 className="text-2xl font-bold">{b.name || "你的名字"}</h1>
-        {b.title && <p className="text-neutral-600">求职意向：{b.title}</p>}
-        <Contacts resume={resume} />
-      </header>
-
-      {b.summary && <p className="text-neutral-700 mb-3">{b.summary}</p>}
-
-      {visible(resume, "advantages") && resume.advantages.length > 0 && (
-        <Section title="个人优势" compact>
-          <AdvantagesBlock resume={resume} />
-        </Section>
-      )}
-
-      {resume.education.length > 0 && (
-        <Section title="教育经历" compact>
-          {resume.education.map((e) => (
-            <Row key={e.id} left={`${e.school} ${e.major} ${e.degree}`} right={`${e.startDate}-${e.endDate}`}>
-              {e.description && <p className="text-neutral-600">{e.description}</p>}
-            </Row>
-          ))}
-        </Section>
-      )}
-
-      {visible(resume, "internships") && resume.internships.length > 0 && (
-        <Section title="实习经历" compact>
-          <InternshipsBlock resume={resume} />
-        </Section>
-      )}
-
-      {resume.work.length > 0 && (
-        <Section title="工作经历" compact>
-          {resume.work.map((w) => (
-            <Row key={w.id} left={`${w.company} ${w.role}`} right={`${w.startDate}-${w.endDate}`}>
-              <Bullets items={w.bullets} />
-            </Row>
-          ))}
-        </Section>
-      )}
-
-      {resume.projects.length > 0 && (
-        <Section title="项目经历" compact>
-          {resume.projects.map((p) => (
-            <Row key={p.id} left={`${p.name} ${p.role}`} right={`${p.startDate}-${p.endDate}`}>
-              {p.link && <p className="text-primary-600">{p.link}</p>}
-              <Bullets items={p.bullets} />
-            </Row>
-          ))}
-        </Section>
-      )}
-
-      {visible(resume, "activities") && resume.activities.length > 0 && (
-        <Section title="校园经历" compact>
-          <ActivitiesBlock resume={resume} />
-        </Section>
-      )}
-
-      {resume.skills.length > 0 && (
-        <Section title="技能" compact>
-          <div className="space-y-0.5">
-            {resume.skills.map((s) => (
-              <p key={s.id}>
-                <span className="font-medium">{s.category}：</span>
-                <span className="text-neutral-600">{s.items.join(" / ")}</span>
-              </p>
-            ))}
-          </div>
-        </Section>
-      )}
-
-      {visible(resume, "languages") && resume.languages.length > 0 && (
-        <Section title="语言能力" compact>
-          <LanguagesBlock resume={resume} />
-        </Section>
-      )}
-
-      {visible(resume, "awards") && resume.awards.length > 0 && (
-        <Section title="荣誉奖项" compact>
-          <AwardsBlock resume={resume} />
-        </Section>
-      )}
-
-      {visible(resume, "portfolio") && resume.portfolio.length > 0 && (
-        <Section title="作品集" compact>
-          <PortfolioBlock resume={resume} />
-        </Section>
-      )}
-    </div>
-  );
-}
-
-function Section({
-  title,
-  children,
-  accent,
-  compact,
-  tone,
-}: {
-  title: string;
-  children: React.ReactNode;
-  accent?: boolean;
-  compact?: boolean;
-  /** 标题色条风格：slate=默认下划线；blue/indigo/emerald=左侧色条（accent 等价于 blue） */
-  tone?: "slate" | "blue" | "indigo" | "emerald";
-}) {
-  const t = tone ?? (accent ? "blue" : "slate");
-  const bar =
-    t === "slate"
-      ? "border-b border-neutral-300 pb-1 text-neutral-800"
-      : `border-l-4 pl-3 ${
-          t === "blue"
-            ? "border-primary-500 text-primary-600"
-            : t === "indigo"
-              ? "border-indigo-500 text-indigo-600"
-              : "border-success-500 text-success-600"
-        }`;
-  return (
-    <section className={compact ? "mb-3" : "mb-5"}>
-      <h2
-        className={`${compact ? "text-base" : "text-lg"} font-semibold mb-2 uppercase tracking-wide ${bar}`}
+    <section style={{ position: "relative", marginTop: 12, paddingLeft: 34 }}>
+      <div
+        style={{
+          position: "absolute",
+          left: 13,
+          top: 3,
+          width: 12,
+          height: 12,
+          borderRadius: "50%",
+          background: "#4f81bd",
+          border: "2.5px solid #fff",
+          boxShadow: "0 0 0 1px #4f81bd",
+        }}
+      />
+      <h3
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          fontSize: 16.5,
+          fontWeight: 700,
+          marginBottom: 7,
+        }}
       >
         {title}
-      </h2>
-      <div className={compact ? "space-y-2" : "space-y-3"}>{children}</div>
+        <span style={{ flex: 1, height: 1, background: "#d9d9d9" }} />
+      </h3>
+      {children}
     </section>
   );
 }
 
-function Row({
-  left,
-  right,
-  children,
-}: {
-  left: string;
-  right?: string;
-  children?: React.ReactNode;
-}) {
+/** ⑨ 极简 IT（等宽字体 + 终端感） */
+function ItMinimalTemplate({ resume }: { resume: Resume }) {
+  const b = resume.basics;
+  const tags = resume.skills.flatMap((s) => s.items);
   return (
-    <div>
-      <div className="flex items-baseline justify-between gap-4">
-        <span className="font-medium text-neutral-800">{left}</span>
-        {right && <span className="text-xs text-neutral-400 whitespace-nowrap">{right}</span>}
+    <div
+      style={{
+        padding: "34px 42px 26px",
+        minHeight: "100%",
+        fontFamily: "'SF Mono',Consolas,'Courier New',monospace",
+        color: "#111",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 18, borderBottom: "2px solid #111", paddingBottom: 12 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 26, fontWeight: 800 }}>{b.name || "你的名字"}</div>
+          {b.title && <div style={{ fontSize: 12, color: "#1a73e8", fontWeight: 600, marginTop: 2 }}>{'// 求职意向：'}{b.title}</div>}
+          <ContactLine resume={resume} style={{ marginTop: 6, fontSize: 10.5, color: "#333" }} />
+        </div>
+        <AvatarFrame resume={resume} style={{ borderColor: "#999", borderRadius: 2 }} />
       </div>
-      {children}
-    </div>
-  );
-}
-
-function SidebarTemplate({ resume }: { resume: Resume }) {
-  const b = resume.basics;
-  const contacts = [b.email, b.phone, b.location, b.website].filter(Boolean);
-  return (
-    <div className="bg-white text-neutral-800 max-w-3xl mx-auto flex min-h-[900px] print:min-h-0">
-      <aside className="w-1/3 bg-neutral-900 text-neutral-100 p-6 print:bg-neutral-900">
-        <h1 className="text-xl font-bold leading-tight">{b.name || "你的名字"}</h1>
-        {b.title && <p className="mt-1 text-sm text-neutral-300">求职意向：{b.title}</p>}
-
-        {contacts.length > 0 && (
-          <div className="mt-4 space-y-1 text-xs text-neutral-300">
-            {contacts.map((c, i) => (
-              <p key={i} className="break-all">
-                {c}
-              </p>
-            ))}
-          </div>
-        )}
-
-        {b.summary && (
-          <p className="mt-4 text-xs leading-relaxed text-neutral-300">{b.summary}</p>
-        )}
-
-        {visible(resume, "advantages") && resume.advantages.length > 0 && (
-          <div className="mt-6">
-            <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-neutral-400">个人优势</h2>
-            <ul className="space-y-1 text-xs text-neutral-300">
-              {resume.advantages.map((a, i) => (
-                <li key={i}>• {a}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {resume.skills.length > 0 && (
-          <div className="mt-6">
-            <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-neutral-400">技能</h2>
-            <div className="space-y-2">
-              {resume.skills.map((s) => (
-                <div key={s.id}>
-                  <p className="text-xs font-medium text-white">{s.category}</p>
-                  <p className="text-xs text-neutral-300">{s.items.join(" · ")}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {visible(resume, "languages") && resume.languages.length > 0 && (
-          <div className="mt-6">
-            <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-neutral-400">语言能力</h2>
-            <p className="text-xs text-neutral-300">
-              {resume.languages.map((l) => `${l.language}（${l.level || "熟练"}）`).join(" · ")}
-            </p>
-          </div>
-        )}
-
-        {visible(resume, "awards") && resume.awards.length > 0 && (
-          <div className="mt-6">
-            <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-neutral-400">荣誉奖项</h2>
-            <ul className="space-y-1 text-xs text-neutral-300">
-              {resume.awards.map((a) => (
-                <li key={a.id}>
-                  {a.name}
-                  {a.date ? `（${a.date}）` : ""}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {visible(resume, "portfolio") && resume.portfolio.length > 0 && (
-          <div className="mt-6">
-            <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-neutral-400">作品集</h2>
-            <ul className="space-y-1 text-xs text-neutral-300">
-              {resume.portfolio.map((p) => (
-                <li key={p.id} className="break-all">
-                  {p.name}: {p.link}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {resume.education.length > 0 && (
-          <div className="mt-6">
-            <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-neutral-400">教育</h2>
-            <div className="space-y-3">
-              {resume.education.map((e) => (
-                <div key={e.id} className="text-xs">
-                  <p className="font-medium text-white">{e.school}</p>
-                  <p className="text-neutral-300">
-                    {e.major}
-                    {e.degree ? ` · ${e.degree}` : ""}
-                  </p>
-                  <p className="text-neutral-400">
-                    {e.startDate} - {e.endDate}
-                  </p>
-                  {e.description && <p className="mt-0.5 text-neutral-300">{e.description}</p>}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </aside>
-
-      <div className="w-2/3 p-8">
-        {visible(resume, "internships") && resume.internships.length > 0 && (
-          <Section title="实习经历">
-            <InternshipsBlock resume={resume} />
-          </Section>
-        )}
-
-        {resume.work.length > 0 && (
-          <Section title="工作经历">
-            {resume.work.map((w) => (
-              <Row key={w.id} left={`${w.company}　${w.role}`} right={`${w.startDate} - ${w.endDate}`}>
-                <Bullets items={w.bullets} />
-              </Row>
-            ))}
-          </Section>
-        )}
-
-        {resume.projects.length > 0 && (
-          <Section title="项目经历">
-            {resume.projects.map((p) => (
-              <Row key={p.id} left={`${p.name}　${p.role}`} right={`${p.startDate} - ${p.endDate}`}>
-                {p.link && <p className="text-sm text-primary-600 mt-0.5">{p.link}</p>}
-                <Bullets items={p.bullets} />
-              </Row>
-            ))}
-          </Section>
-        )}
-
-        {visible(resume, "activities") && resume.activities.length > 0 && (
-          <Section title="校园经历">
-            <ActivitiesBlock resume={resume} />
-          </Section>
-        )}
-
-        {resume.work.length === 0 && resume.projects.length === 0 && resume.internships.length === 0 && (
-          <p className="text-sm text-neutral-400">在右侧添加「实习 / 工作 / 项目」经历。</p>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function ElegantTemplate({ resume }: { resume: Resume }) {
-  const b = resume.basics;
-  const contacts = [b.email, b.phone, b.location, b.website].filter(Boolean);
-  return (
-    <div className="bg-white text-neutral-800 p-10 max-w-3xl mx-auto font-serif">
-      <header className="mb-6 text-center">
-        <h1 className="text-3xl font-semibold tracking-wide">{b.name || "你的名字"}</h1>
-        {b.title && (
-          <p className="mt-1 text-sm uppercase tracking-[0.2em] text-neutral-500">求职意向：{b.title}</p>
-        )}
-        {contacts.length > 0 && (
-          <div className="mt-2 flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs text-neutral-500">
-            {contacts.map((c, i) => (
-              <span key={i}>{c}</span>
-            ))}
-          </div>
-        )}
-        <div className="mx-auto mt-4 h-px w-16 bg-neutral-400" />
-      </header>
-
-      {b.summary && <p className="mb-6 text-center text-sm italic text-neutral-600">{b.summary}</p>}
-
-      {visible(resume, "advantages") && resume.advantages.length > 0 && (
-        <Section title="个人优势">
-          <div className="space-y-1 text-center">
-            {resume.advantages.map((a, i) => (
-              <p key={i} className="text-sm italic text-neutral-700">
-                {a}
-              </p>
-            ))}
-          </div>
-        </Section>
-      )}
-
-      {resume.education.length > 0 && (
-        <Section title="教育背景">
-          {resume.education.map((e) => (
-            <Row key={e.id} left={`${e.school}　${e.major}`} right={`${e.startDate} - ${e.endDate}`}>
-              {e.degree && <p className="text-sm text-neutral-500">{e.degree}</p>}
-              {e.description && <p className="text-sm text-neutral-600 mt-0.5">{e.description}</p>}
-            </Row>
-          ))}
-        </Section>
-      )}
-
-      {visible(resume, "internships") && resume.internships.length > 0 && (
-        <Section title="实习经历">
-          <InternshipsBlock resume={resume} />
-        </Section>
-      )}
-
-      {resume.work.length > 0 && (
-        <Section title="工作经历">
-          {resume.work.map((w) => (
-            <Row key={w.id} left={`${w.company}　${w.role}`} right={`${w.startDate} - ${w.endDate}`}>
-              <Bullets items={w.bullets} />
-            </Row>
-          ))}
-        </Section>
-      )}
-
-      {resume.projects.length > 0 && (
-        <Section title="项目经历">
-          {resume.projects.map((p) => (
-            <Row key={p.id} left={`${p.name}　${p.role}`} right={`${p.startDate} - ${p.endDate}`}>
-              {p.link && <p className="text-sm text-primary-600 mt-0.5">{p.link}</p>}
-              <Bullets items={p.bullets} />
-            </Row>
-          ))}
-        </Section>
-      )}
-
-      {visible(resume, "activities") && resume.activities.length > 0 && (
-        <Section title="校园经历">
-          <ActivitiesBlock resume={resume} />
-        </Section>
-      )}
-
-      {resume.skills.length > 0 && (
-        <Section title="专业技能">
-          <div className="space-y-1">
-            {resume.skills.map((s) => (
-              <p key={s.id} className="text-sm">
-                <span className="font-medium text-neutral-800">{s.category}：</span>
-                <span className="text-neutral-600">{s.items.join(" / ")}</span>
-              </p>
-            ))}
-          </div>
-        </Section>
-      )}
-
-      {(visible(resume, "languages") && resume.languages.length > 0) ||
-      (visible(resume, "awards") && resume.awards.length > 0) ||
-      (visible(resume, "portfolio") && resume.portfolio.length > 0) ? (
-        <Section title="附加信息">
-          <div className="space-y-2">
-            {visible(resume, "languages") && resume.languages.length > 0 && (
-              <p className="text-sm">
-                <span className="font-medium text-neutral-800">语言：</span>
-                <span className="text-neutral-600">
-                  {resume.languages.map((l) => `${l.language}（${l.level || "熟练"}）`).join(" / ")}
-                </span>
-              </p>
-            )}
-            {visible(resume, "awards") && resume.awards.length > 0 && (
-              <p className="text-sm">
-                <span className="font-medium text-neutral-800">荣誉：</span>
-                <span className="text-neutral-600">
-                  {resume.awards.map((a) => `${a.name}${a.date ? `（${a.date}）` : ""}`).join(" / ")}
-                </span>
-              </p>
-            )}
-            {visible(resume, "portfolio") && resume.portfolio.length > 0 && (
-              <p className="text-sm">
-                <span className="font-medium text-neutral-800">作品：</span>
-                <span className="text-neutral-600">
-                  {resume.portfolio.map((p) => `${p.name}（${p.link}）`).join(" / ")}
-                </span>
-              </p>
-            )}
-          </div>
-        </Section>
-      ) : null}
-    </div>
-  );
-}
-
-function CreativeTemplate({ resume }: { resume: Resume }) {
-  const b = resume.basics;
-  const contacts = [b.email, b.phone, b.location, b.website].filter(Boolean);
-  return (
-    <div className="bg-white text-neutral-800 max-w-3xl mx-auto">
-      <header className="bg-indigo-600 p-8 text-white print:bg-indigo-600">
-        <h1 className="text-3xl font-bold">{b.name || "你的名字"}</h1>
-        {b.title && <p className="mt-1 text-indigo-100">求职意向：{b.title}</p>}
-        {contacts.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-indigo-50">
-            {contacts.map((c, i) => (
-              <span key={i} className="break-all">
-                {c}
+      {b.summary && <ItSec title="个人简介"><Desc>{b.summary}</Desc></ItSec>}
+      <ItSec title="个人优势"><AdvantagesItems resume={resume} /></ItSec>
+      <ItSec title="教育背景"><EduItems resume={resume} /></ItSec>
+      <ItSec title="项目经历"><ProjectItems resume={resume} /></ItSec>
+      <ItSec title="校园经历"><ActivityItems resume={resume} /></ItSec>
+      <ItSec title="技能栈">
+        {tags.length > 0 && (
+          <div>
+            {tags.map((t, i) => (
+              <span
+                key={i}
+                style={{
+                  display: "inline-block",
+                  fontSize: 10,
+                  color: "#1a73e8",
+                  border: "1px solid #cfe0fb",
+                  background: "#f2f7ff",
+                  padding: "1px 7px",
+                  borderRadius: 3,
+                  margin: "2px 3px 0 0",
+                }}
+              >
+                {t}
               </span>
             ))}
           </div>
         )}
-        {visible(resume, "advantages") && resume.advantages.length > 0 && (
-          <ul className="mt-4 space-y-1 text-sm text-indigo-50">
-            {resume.advantages.map((a, i) => (
-              <li key={i}>• {a}</li>
-            ))}
-          </ul>
-        )}
-      </header>
-
-      <div className="p-8">
-        {b.summary && <p className="mb-6 text-sm text-neutral-700">{b.summary}</p>}
-
-        {resume.education.length > 0 && (
-          <Section title="教育经历" tone="indigo">
-            {resume.education.map((e) => (
-              <Row key={e.id} left={`${e.school}　${e.major}　${e.degree}`} right={`${e.startDate} - ${e.endDate}`}>
-                {e.description && <p className="text-sm text-neutral-600 mt-0.5">{e.description}</p>}
-              </Row>
-            ))}
-          </Section>
-        )}
-
-        {visible(resume, "internships") && resume.internships.length > 0 && (
-          <Section title="实习经历" tone="indigo">
-            <InternshipsBlock resume={resume} />
-          </Section>
-        )}
-
-        {resume.work.length > 0 && (
-          <Section title="工作经历" tone="indigo">
-            {resume.work.map((w) => (
-              <Row key={w.id} left={`${w.company}　${w.role}`} right={`${w.startDate} - ${w.endDate}`}>
-                <Bullets items={w.bullets} />
-              </Row>
-            ))}
-          </Section>
-        )}
-
-        {resume.projects.length > 0 && (
-          <Section title="项目经历" tone="indigo">
-            {resume.projects.map((p) => (
-              <Row key={p.id} left={`${p.name}　${p.role}`} right={`${p.startDate} - ${p.endDate}`}>
-                {p.link && <p className="text-sm text-indigo-600 mt-0.5">{p.link}</p>}
-                <Bullets items={p.bullets} />
-              </Row>
-            ))}
-          </Section>
-        )}
-
-        {visible(resume, "activities") && resume.activities.length > 0 && (
-          <Section title="校园经历" tone="indigo">
-            <ActivitiesBlock resume={resume} />
-          </Section>
-        )}
-
-        {resume.skills.length > 0 && (
-          <Section title="技能" tone="indigo">
-            <div className="space-y-1">
-              {resume.skills.map((s) => (
-                <p key={s.id} className="text-sm">
-                  <span className="font-medium text-indigo-700">{s.category}：</span>
-                  <span className="text-neutral-600">{s.items.join(" / ")}</span>
-                </p>
-              ))}
-            </div>
-          </Section>
-        )}
-
-        {visible(resume, "languages") && resume.languages.length > 0 && (
-          <Section title="语言能力" tone="indigo">
-            <LanguagesBlock resume={resume} />
-          </Section>
-        )}
-
-        {visible(resume, "awards") && resume.awards.length > 0 && (
-          <Section title="荣誉奖项" tone="indigo">
-            <AwardsBlock resume={resume} />
-          </Section>
-        )}
-
-        {visible(resume, "portfolio") && resume.portfolio.length > 0 && (
-          <Section title="作品集" tone="indigo">
-            <PortfolioBlock resume={resume} />
-          </Section>
-        )}
-      </div>
+      </ItSec>
+      <ItSec title="语言与荣誉">
+        <SkillsBlock resume={resume} />
+      </ItSec>
     </div>
   );
 }
 
-/**
- * 蓝点时间轴模板（参照校园简历经典版式）：
- * 顶部「个人简历」蓝条 + PERSONAL RESUME 灰条、左侧蓝条 + 中间时间线、
- * 章节蓝点 + 灰线标题、条目蓝色小方块 + 右侧时间。
- */
-function TimelineSection({ title, children }: { title: string; children: React.ReactNode }) {
+function ItSec({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="relative">
-      {/* 蓝点：盖住中间时间线 */}
-      <div className="absolute -left-[18px] top-0.5 size-3.5 rounded-full border-2 border-white bg-primary-600" />
-      <div className="flex items-center gap-3">
-        <h2 className="shrink-0 text-lg font-bold text-neutral-900">{title}</h2>
-        <div className="h-px flex-1 bg-neutral-200" />
-      </div>
-      <div className="mt-2.5 space-y-3">{children}</div>
+    <section style={{ marginTop: 14 }}>
+      <h3 style={{ fontSize: 12, fontWeight: 700, color: "#1a73e8", marginBottom: 7, letterSpacing: "0.1em" }}>
+        <span style={{ color: "#111" }}>&gt; </span>
+        {title}
+      </h3>
+      {children}
     </section>
   );
 }
 
-function TimelineItem({
-  head,
-  time,
-  children,
-}: {
-  head: string;
-  time?: string;
-  children?: React.ReactNode;
-}) {
-  return (
-    <div>
-      <div className="flex items-baseline justify-between gap-4">
-        <span className="font-medium text-neutral-800">
-          <span className="mr-1.5 inline-block size-[4px] translate-y-[-2px] rounded-[1px] bg-primary-600" />
-          {head}
-        </span>
-        {time && <span className="shrink-0 text-xs whitespace-nowrap text-neutral-400">{time}</span>}
-      </div>
-      {children}
-    </div>
-  );
-}
-
-function TimelineTemplate({ resume }: { resume: Resume }) {
+/** ⑤ 紧凑单页（高密度小字号） */
+function DenseTemplate({ resume }: { resume: Resume }) {
   const b = resume.basics;
   return (
-    <div className="relative mx-auto max-w-3xl bg-white text-neutral-800">
-      {/* 左侧蓝色细边条 */}
-      <div className="absolute inset-y-0 left-0 w-3 bg-primary-600" />
-      {/* 中间纵向时间线 */}
-      <div className="absolute inset-y-0 left-7 w-[2.5px] bg-primary-600" />
-
-      {/* 顶部双条：蓝色「个人简历」+ 灰色 PERSONAL RESUME */}
-      <div className="relative flex">
-        <div className="bg-primary-600 py-2 pl-12 pr-6 text-white print:bg-primary-600">
-          <span className="text-sm font-bold tracking-wide">个人简历</span>
+    <div style={{ padding: "22px 30px 18px", minHeight: "100%", fontSize: 11 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 14, borderBottom: "2px solid #333", paddingBottom: 8 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 22, fontWeight: 800 }}>{b.name || "你的名字"}</div>
+          {b.title && <div style={{ fontSize: 11.5, color: "#555", marginTop: 2 }}>求职意向：{b.title}</div>}
+          <ContactLine resume={resume} style={{ marginTop: 5, fontSize: 10.5 }} />
         </div>
-        <div className="flex flex-1 items-center bg-neutral-200 px-4 py-2 print:bg-neutral-200">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.35em] text-primary-600">
-            PERSONAL RESUME
-          </span>
-        </div>
+        <AvatarFrame resume={resume} style={{ width: 60, height: 74 }} />
       </div>
+      {b.summary && <DenseSec title="个人简介"><p style={{ fontSize: 10.5, color: "#4b5563", lineHeight: 1.45 }}>{b.summary}</p></DenseSec>}
+      <DenseSec title="个人优势"><AdvantagesItems resume={resume} /></DenseSec>
+      <DenseSec title="教育经历"><EduItems resume={resume} /></DenseSec>
+      <DenseSec title="项目经历"><ProjectItems resume={resume} /></DenseSec>
+      <DenseSec title="校园经历"><ActivityItems resume={resume} /></DenseSec>
+      <DenseSec title="技能证书"><SkillsBlock resume={resume} /><PortfolioItems resume={resume} /></DenseSec>
+    </div>
+  );
+}
 
-      {/* 头部：姓名 / 求职意向 / 联系方式（带标签，对齐何钊新 PDF）/ 简介 */}
-      <div className="relative px-10 pb-2 pt-6">
-        <h1 className="text-3xl font-bold text-neutral-900">{b.name || "你的名字"}</h1>
-        {b.title && <p className="mt-1 text-sm text-neutral-500">求职意向：{b.title}</p>}
-        {(b.phone || b.email || b.birth || b.sex || b.location || b.website) && (
-          <div className="mt-2 flex flex-wrap gap-x-6 gap-y-0.5 text-xs text-neutral-600">
-            {b.phone && <span>电话：{b.phone}</span>}
-            {b.birth && <span>出生年月：{b.birth}</span>}
-            {b.email && <span>邮箱：{b.email}</span>}
-            {b.sex && <span>性别：{b.sex}</span>}
-            {b.location && <span>城市：{b.location}</span>}
-            {b.website && <span>GitHub：{b.website}</span>}
+function DenseSec({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section style={{ marginTop: 9 }}>
+      <h3
+        style={{
+          fontSize: 12,
+          fontWeight: 800,
+          color: "#222",
+          marginBottom: 4,
+          background: "#f0f0f0",
+          padding: "2px 8px",
+          borderLeft: "3px solid #555",
+        }}
+      >
+        {title}
+      </h3>
+      {children}
+    </section>
+  );
+}
+
+/** ⑩ 简约商务分栏 */
+function BizSplitTemplate({ resume }: { resume: Resume }) {
+  const b = resume.basics;
+  return (
+    <div style={{ display: "flex", minHeight: "100%" }}>
+      <div style={{ width: "31%", background: "#f2f3f5", padding: "28px 20px 24px", borderRight: "3px solid #1d3557" }}>
+        <AvatarFrame resume={resume} />
+        <SideHead title="基本信息" />
+        <div style={{ fontSize: 11, color: "#333", lineHeight: 1.7, wordBreak: "break-all" }}>
+          姓名：{b.name}
+          <br />
+          求职意向：{b.title}
+          <br />📞 {b.phone}
+          <br />✉ {b.email}
+          <br />📍 {b.location}
+          <br />🎂 {b.birth} · {b.sex}
+          <br />🔗 {b.website}
+        </div>
+        <SideHead title="技能特长" />
+        {resume.skills.map((s) => (
+          <div key={s.id} style={{ marginBottom: 6 }}>
+            <b style={{ display: "block", fontSize: 10.5, color: "#111" }}>{s.category}</b>
+            <span style={{ fontSize: 10.5, color: "#4b5563" }}>{s.items.join(" / ")}</span>
           </div>
-        )}
-        {b.summary && <p className="mt-3 text-sm leading-relaxed text-neutral-700">{b.summary}</p>}
+        ))}
+        <SideHead title="语言能力" />
+        <div style={{ fontSize: 11, color: "#333", lineHeight: 1.7 }}>{resume.languages.map((l) => `${l.language}（${l.level || "熟练"}）`).join("<br />")}</div>
+        <SideHead title="荣誉奖项" />
+        <div style={{ fontSize: 11, color: "#333", lineHeight: 1.7 }}>{resume.awards.map((a) => `${a.name} · ${a.date}`).join("<br />")}</div>
       </div>
-
-      {/* 章节区（对齐何钊新简历 PDF 顺序：个人优势 → 教育背景 → 经历 → 校园经历 → 技能及证书） */}
-      <div className="relative space-y-5 px-10 pb-8 pt-4">
-        {/* 1. 个人优势 */}
-        {visible(resume, "advantages") && resume.advantages.length > 0 && (
-          <TimelineSection title="个人优势">
-            <ul className="space-y-1 text-sm text-neutral-700">
-              {resume.advantages.map((a, i) => (
-                <li key={i} className="flex">
-                  <span className="mr-2 text-neutral-400">•</span>
-                  <span>{a}</span>
-                </li>
-              ))}
-            </ul>
-          </TimelineSection>
-        )}
-
-        {/* 2. 教育背景 */}
-        {visible(resume, "education") && resume.education.length > 0 && (
-          <TimelineSection title="教育背景">
-            {resume.education.map((e) => (
-              <TimelineItem
-                key={e.id}
-                head={`${e.school}　${e.major}　${e.degree}`}
-                time={`${e.startDate} - ${e.endDate}`}
-              >
-                {e.description && <p className="mt-0.5 text-sm text-neutral-600">{e.description}</p>}
-              </TimelineItem>
-            ))}
-          </TimelineSection>
-        )}
-
-        {/* 3. 实习 / 工作 / 项目经历（沿时间线） */}
-        {visible(resume, "internships") && resume.internships.length > 0 && (
-          <TimelineSection title="实习经历">
-            {resume.internships.map((w) => (
-              <TimelineItem
-                key={w.id}
-                head={`${w.company}　${w.role}`}
-                time={`${w.startDate} - ${w.endDate}`}
-              >
-                <Bullets items={w.bullets} />
-              </TimelineItem>
-            ))}
-          </TimelineSection>
-        )}
-
-        {visible(resume, "work") && resume.work.length > 0 && (
-          <TimelineSection title="工作经历">
-            {resume.work.map((w) => (
-              <TimelineItem
-                key={w.id}
-                head={`${w.company}　${w.role}`}
-                time={`${w.startDate} - ${w.endDate}`}
-              >
-                <Bullets items={w.bullets} />
-              </TimelineItem>
-            ))}
-          </TimelineSection>
-        )}
-
-        {visible(resume, "projects") && resume.projects.length > 0 && (
-          <TimelineSection title="项目经历">
-            {resume.projects.map((p) => (
-              <TimelineItem
-                key={p.id}
-                head={`${p.name}　${p.role}`}
-                time={`${p.startDate} - ${p.endDate}`}
-              >
-                {p.link && <p className="mt-0.5 text-sm text-primary-600">{p.link}</p>}
-                <Bullets items={p.bullets} />
-              </TimelineItem>
-            ))}
-          </TimelineSection>
-        )}
-
-        {/* 4. 校园经历 */}
-        {visible(resume, "activities") && resume.activities.length > 0 && (
-          <TimelineSection title="校园经历">
-            {resume.activities.map((a) => (
-              <TimelineItem
-                key={a.id}
-                head={`${a.org}　${a.role}`}
-                time={`${a.startDate} - ${a.endDate}`}
-              >
-                {a.description && <p className="mt-0.5 text-sm text-neutral-600">{a.description}</p>}
-              </TimelineItem>
-            ))}
-          </TimelineSection>
-        )}
-
-        {/* 5. 技能及证书（技能 + 荣誉 + 语言合并区） */}
-        {(visible(resume, "skills") && resume.skills.length > 0) ||
-        (visible(resume, "awards") && resume.awards.length > 0) ||
-        (visible(resume, "languages") && resume.languages.length > 0) ? (
-          <TimelineSection title="技能及证书">
-            <div className="space-y-1">
-              {visible(resume, "skills") &&
-                resume.skills.map((s) => (
-                  <p key={s.id} className="text-sm">
-                    <span className="font-medium text-neutral-800">{s.category}：</span>
-                    <span className="text-neutral-600">{s.items.join(" / ")}</span>
-                  </p>
-                ))}
-              {visible(resume, "languages") && resume.languages.length > 0 && (
-                <p className="text-sm">
-                  <span className="font-medium text-neutral-800">语言：</span>
-                  <span className="text-neutral-600">
-                    {resume.languages.map((l) => `${l.language}（${l.level || "熟练"}）`).join(" / ")}
-                  </span>
-                </p>
-              )}
-              {visible(resume, "awards") && resume.awards.length > 0 && (
-                <p className="text-sm">
-                  <span className="font-medium text-neutral-800">荣誉：</span>
-                  <span className="text-neutral-600">
-                    {resume.awards.map((a) => `${a.name}${a.date ? `（${a.date}）` : ""}`).join(" / ")}
-                  </span>
-                </p>
-              )}
-            </div>
-          </TimelineSection>
-        ) : null}
-
-        {/* 作品集 */}
-        {visible(resume, "portfolio") && resume.portfolio.length > 0 && (
-          <TimelineSection title="作品集">
-            {resume.portfolio.map((p) => (
-              <TimelineItem key={p.id} head={p.name} time={p.link}>
-                {p.description && <p className="mt-0.5 text-sm text-neutral-600">{p.description}</p>}
-              </TimelineItem>
-            ))}
-          </TimelineSection>
-        )}
+      <div style={{ flex: 1, padding: "28px 26px 24px" }}>
+        <MainHead title="个人简介" />
+        <Desc>{b.summary}</Desc>
+        <MainHead title="个人优势" />
+        <AdvantagesItems resume={resume} bulletColor="#457b9d" />
+        <MainHead title="教育背景" />
+        <EduItems resume={resume} join=" · " />
+        <MainHead title="项目经历" />
+        <ProjectItems resume={resume} join=" · " />
+        <MainHead title="校园经历" />
+        <ActivityItems resume={resume} join=" · " />
       </div>
     </div>
   );
 }
 
+function SideHead({ title }: { title: string }) {
+  return (
+    <h2
+      style={{
+        fontSize: 13,
+        fontWeight: 800,
+        color: "#1d3557",
+        letterSpacing: "0.08em",
+        margin: "16px 0 8px",
+        borderBottom: "2px solid #cbd2dd",
+        paddingBottom: 5,
+      }}
+    >
+      {title}
+    </h2>
+  );
+}
+function MainHead({ title }: { title: string }) {
+  return (
+    <h2
+      style={{
+        fontSize: 14,
+        fontWeight: 800,
+        color: "#1d3557",
+        letterSpacing: "0.06em",
+        margin: "0 0 8px",
+        borderBottom: "2px solid #cbd2dd",
+        paddingBottom: 5,
+      }}
+    >
+      {title}
+    </h2>
+  );
+}
+
+/** ⑰ 侧栏深蓝 */
+function SidebarNavyTemplate({ resume }: { resume: Resume }) {
+  const b = resume.basics;
+  return (
+    <div style={{ display: "flex", minHeight: "100%" }}>
+      <div style={{ width: "32%", background: "#1d3557", color: "#dfe7ee", padding: "28px 20px 24px" }}>
+        <AvatarFrame
+          resume={resume}
+          style={{ borderColor: "#5b7a99", background: "repeating-linear-gradient(45deg,#2a4668,#2a4668 6px,#25405f 6px,#25405f 12px)", color: "#8fa9c2" }}
+        />
+        <NavyHead title="基本信息" />
+        <div style={{ fontSize: 11, color: "#c3ced9", lineHeight: 1.7, wordBreak: "break-all" }}>
+          姓名：{b.name}
+          <br />
+          求职意向：{b.title}
+          <br />📞 {b.phone}
+          <br />✉ {b.email}
+          <br />📍 {b.location}
+          <br />🎂 {b.birth} · {b.sex}
+          <br />🔗 {b.website}
+        </div>
+        <NavyHead title="技能特长" />
+        {resume.skills.map((s) => (
+          <div key={s.id} style={{ marginBottom: 6 }}>
+            <b style={{ display: "block", fontSize: 10.5, color: "#fff" }}>{s.category}</b>
+            <span style={{ fontSize: 10.5, color: "#b9c6d2" }}>{s.items.join(" / ")}</span>
+          </div>
+        ))}
+        <NavyHead title="语言能力" />
+        <div style={{ fontSize: 11, color: "#c3ced9", lineHeight: 1.7 }}>{resume.languages.map((l) => `${l.language}（${l.level || "熟练"}）`).join("<br />")}</div>
+        <NavyHead title="荣誉奖项" />
+        <div style={{ fontSize: 11, color: "#c3ced9", lineHeight: 1.7 }}>{resume.awards.map((a) => `${a.name} · ${a.date}`).join("<br />")}</div>
+      </div>
+      <div style={{ flex: 1, padding: "28px 26px 24px" }}>
+        <MainHead title="个人简介" />
+        <Desc>{b.summary}</Desc>
+        <MainHead title="个人优势" />
+        <AdvantagesItems resume={resume} bulletColor="#457b9d" />
+        <MainHead title="教育背景" />
+        <EduItems resume={resume} join=" · " />
+        <MainHead title="项目经历" />
+        <ProjectItems resume={resume} join=" · " />
+        <MainHead title="校园经历" />
+        <ActivityItems resume={resume} join=" · " />
+      </div>
+    </div>
+  );
+}
+
+function NavyHead({ title }: { title: string }) {
+  return (
+    <h2
+      style={{
+        fontSize: 13,
+        fontWeight: 800,
+        letterSpacing: "0.08em",
+        color: "#fff",
+        margin: "16px 0 8px",
+        borderBottom: "1px solid #4a6480",
+        paddingBottom: 5,
+      }}
+    >
+      {title}
+    </h2>
+  );
+}
+
+/** ⑪ 时尚蓝教育（圆角渐变头图） */
+function EduBlueTemplate({ resume }: { resume: Resume }) {
+  const b = resume.basics;
+  const tags = resume.skills.flatMap((s) => s.items);
+  return (
+    <div style={{ padding: "34px 44px 24px", minHeight: "100%" }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 16,
+          background: "linear-gradient(120deg,#1e88e5,#42a5f5)",
+          color: "#fff",
+          borderRadius: 14,
+          padding: "20px 24px",
+        }}
+      >
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 25, fontWeight: 800 }}>{b.name || "你的名字"}</div>
+          {b.title && <div style={{ fontSize: 12.5, color: "#e3f2fd", fontWeight: 600, marginTop: 2 }}>求职意向：{b.title}</div>}
+          <ContactLine resume={resume} style={{ marginTop: 6, fontSize: 11, color: "#e3f2fd" }} />
+        </div>
+        <AvatarFrame
+          resume={resume}
+          style={{
+            borderRadius: "50%",
+            width: 70,
+            height: 88,
+            borderColor: "#b3d9f8",
+            background: "repeating-linear-gradient(45deg,#2f9ff0,#2f9ff0 6px,#2a94e0 6px,#2a94e0 12px)",
+            color: "#dbeafe",
+          }}
+        />
+      </div>
+      {b.summary && <Sec title="个人简介" accent="#1565c0"><Desc>{b.summary}</Desc></Sec>}
+      <Sec title="个人优势" accent="#1565c0"><AdvantagesItems resume={resume} bulletColor="#42a5f5" /></Sec>
+      <Sec title="教育背景" accent="#1565c0"><EduItems resume={resume} /></Sec>
+      <Sec title="项目经历" accent="#1565c0"><ProjectItems resume={resume} /></Sec>
+      <Sec title="校园经历" accent="#1565c0"><ActivityItems resume={resume} /></Sec>
+      <Sec title="技能证书" accent="#1565c0">
+        {tags.length > 0 && (
+          <div style={{ marginBottom: 4 }}>
+            {tags.map((t, i) => (
+              <span
+                key={i}
+                style={{
+                  display: "inline-block",
+                  fontSize: 10,
+                  color: "#1565c0",
+                  background: "#e8f2fd",
+                  border: "1px solid #c4e0fb",
+                  padding: "2px 9px",
+                  borderRadius: 12,
+                  margin: "2px 4px 0 0",
+                }}
+              >
+                {t}
+              </span>
+            ))}
+          </div>
+        )}
+        <SkillsBlock resume={resume} />
+        <PortfolioItems resume={resume} />
+      </Sec>
+    </div>
+  );
+}
+
+/** ⑫ 深色经典商务 */
+function DarkBizTemplate({ resume }: { resume: Resume }) {
+  const b = resume.basics;
+  return (
+    <div style={{ minHeight: "100%" }}>
+      <div style={{ background: "#14181d", color: "#fff", padding: "26px 42px 22px", display: "flex", alignItems: "center", gap: 18 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 25, fontWeight: 800, letterSpacing: "0.06em" }}>{b.name || "你的名字"}</div>
+          {b.title && <div style={{ fontSize: 12.5, color: "#c3c9cf", fontWeight: 600, marginTop: 2 }}>求职意向：{b.title}</div>}
+          <ContactLine resume={resume} style={{ marginTop: 6, fontSize: 11, color: "#aeb5bd" }} />
+        </div>
+        <AvatarFrame
+          resume={resume}
+          style={{ borderRadius: 2, borderColor: "#5c6773", background: "repeating-linear-gradient(45deg,#262c33,#262c33 6px,#20252b 6px,#20252b 12px)", color: "#8a94a0" }}
+        />
+      </div>
+      <div style={{ padding: "24px 42px 26px" }}>
+        {b.summary && <BizSec title="个人简介"><Desc>{b.summary}</Desc></BizSec>}
+        <BizSec title="个人优势"><AdvantagesItems resume={resume} bulletColor="#8a94a0" /></BizSec>
+        <BizSec title="教育背景"><EduItems resume={resume} /></BizSec>
+        <BizSec title="项目经历"><ProjectItems resume={resume} /></BizSec>
+        <BizSec title="校园经历"><ActivityItems resume={resume} /></BizSec>
+        <BizSec title="技能证书"><SkillsBlock resume={resume} /><PortfolioItems resume={resume} /></BizSec>
+      </div>
+    </div>
+  );
+}
+
+function BizSec({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section style={{ marginBottom: 16 }}>
+      <h3
+        style={{
+          fontSize: 13,
+          fontWeight: 800,
+          color: "#14181d",
+          letterSpacing: "0.12em",
+          marginBottom: 8,
+          borderBottom: "2px solid #d8dde2",
+          paddingBottom: 6,
+        }}
+      >
+        {title}
+      </h3>
+      {children}
+    </section>
+  );
+}
+
+/** ④ 留白文艺 */
+function ArtisticTemplate({ resume }: { resume: Resume }) {
+  const b = resume.basics;
+  return (
+    <div style={{ padding: "44px 52px 30px", minHeight: "100%", position: "relative" }}>
+      <AvatarFrame
+        resume={resume}
+        style={{ position: "absolute", top: 36, right: 52, borderColor: "#c9c2b4", background: "repeating-linear-gradient(45deg,#faf8f4,#faf8f4 6px,#f5f2ea 6px,#f5f2ea 12px)", color: "#b3ab9a" }}
+      />
+      <div style={{ textAlign: "center", borderBottom: "1px solid #d8d2c8", paddingBottom: 16, marginBottom: 18 }}>
+        <div style={{ fontSize: 28, color: "#3a342c", letterSpacing: "0.14em", fontWeight: 700 }}>{b.name || "你的名字"}</div>
+        {b.title && <div style={{ fontSize: 12, color: "#8a8272", letterSpacing: "0.3em", textTransform: "uppercase", marginTop: 5 }}>求职意向 · {b.title}</div>}
+        <ContactLine resume={resume} style={{ fontSize: 11, color: "#6f6758", justifyContent: "center", marginTop: 8 }} />
+      </div>
+      {b.summary && <ArtSec title="个人简介"><p style={{ textAlign: "center", fontSize: 11.5, color: "#5f584c" }}>{b.summary}</p></ArtSec>}
+      <ArtSec title="个人优势">
+        {resume.advantages.map((a, i) => (
+          <p key={i} style={{ textAlign: "center", fontSize: 11.5, color: "#5f584c", marginBottom: 4 }}>{a}</p>
+        ))}
+      </ArtSec>
+      <ArtSec title="教育背景"><EduItems resume={resume} /></ArtSec>
+      <ArtSec title="项目经历"><ProjectItems resume={resume} /></ArtSec>
+      <ArtSec title="校园经历"><ActivityItems resume={resume} /></ArtSec>
+      <ArtSec title="技能证书"><SkillsBlock resume={resume} /><PortfolioItems resume={resume} /></ArtSec>
+    </div>
+  );
+}
+
+function ArtSec({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section style={{ marginBottom: 20 }}>
+      <h3 style={{ fontSize: 12, fontWeight: 700, color: "#8a8272", letterSpacing: "0.4em", textAlign: "center", marginBottom: 10 }}>
+        <span style={{ display: "inline-block", width: 26, height: 1, background: "#d8d2c8", verticalAlign: "middle", marginRight: 10 }} />
+        {title}
+        <span style={{ display: "inline-block", width: 26, height: 1, background: "#d8d2c8", verticalAlign: "middle", marginLeft: 10 }} />
+      </h3>
+      {children}
+    </section>
+  );
+}
+
+/** ⑳ 杂志风（衬线 + 居中 + 竖线） */
+function MagazineTemplate({ resume }: { resume: Resume }) {
+  const b = resume.basics;
+  const sec = (t: string, inner: React.ReactNode) => (
+    <section style={{ marginTop: 16, paddingLeft: 14, borderLeft: "3px solid #c9b458" }}>
+      <h3 style={{ fontSize: 13, fontWeight: 700, color: "#3a342c", letterSpacing: "0.18em", marginBottom: 8 }}>{t}</h3>
+      {inner}
+    </section>
+  );
+  return (
+    <div style={{ padding: "40px 48px 28px", minHeight: "100%", fontFamily: "Georgia,'Times New Roman',serif" }}>
+      <div style={{ textAlign: "center", borderBottom: "2px double #c9b458", paddingBottom: 16, marginBottom: 18, position: "relative" }}>
+        <AvatarFrame
+          resume={resume}
+          style={{ position: "absolute", top: 0, right: 0, borderColor: "#d8cd9e", background: "repeating-linear-gradient(45deg,#faf8f0,#faf8f0 6px,#f5f2e6 6px,#f5f2e6 12px)", color: "#c9bd8f" }}
+        />
+        <div style={{ fontSize: 29, fontWeight: 700, color: "#3a342c", letterSpacing: "0.2em" }}>{b.name || "你的名字"}</div>
+        {b.title && <div style={{ fontSize: 12, color: "#8a8272", letterSpacing: "0.3em", marginTop: 6 }}>求职意向 · {b.title}</div>}
+        <ContactLine resume={resume} style={{ fontSize: 10.5, color: "#6f6758", justifyContent: "center", marginTop: 8 }} />
+      </div>
+      {b.summary && sec("个人简介", <p style={{ textAlign: "center", fontSize: 11.5, color: "#5f584c" }}>{b.summary}</p>)}
+      {sec("个人优势", resume.advantages.map((a, i) => <p key={i} style={{ textAlign: "center", fontSize: 11.5, color: "#5f584c", marginBottom: 4 }}>{a}</p>))}
+      {sec("教育背景", <EduItems resume={resume} />)}
+      {sec("项目经历", <ProjectItems resume={resume} />)}
+      {sec("校园经历", <ActivityItems resume={resume} />)}
+      {sec("技能证书", <SkillsBlock resume={resume} />)}
+      {sec("作品集", <PortfolioItems resume={resume} />)}
+    </div>
+  );
+}
+
+/** ⑲ 顶部色条现代 */
+function TopbarModernTemplate({ resume }: { resume: Resume }) {
+  const b = resume.basics;
+  return (
+    <div style={{ paddingBottom: 26, minHeight: "100%" }}>
+      <div
+        style={{
+          background: "linear-gradient(120deg,#2563eb,#3b82f6,#60a5fa)",
+          padding: "24px 44px 20px",
+          display: "flex",
+          alignItems: "center",
+          gap: 18,
+          borderBottom: "4px solid #1d4ed8",
+        }}
+      >
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 26, fontWeight: 800, color: "#fff" }}>{b.name || "你的名字"}</div>
+          {b.title && <div style={{ fontSize: 12.5, color: "#dbeafe", fontWeight: 600, marginTop: 2 }}>求职意向：{b.title}</div>}
+          <ContactLine resume={resume} style={{ marginTop: 7, fontSize: 11, color: "#e0edff" }} />
+        </div>
+        <AvatarFrame
+          resume={resume}
+          style={{ borderColor: "#bcd6fb", background: "repeating-linear-gradient(45deg,#3d82f5,#3d82f5 6px,#3678e8 6px,#3678e8 12px)", color: "#cfe0fc" }}
+        />
+      </div>
+      <div style={{ padding: "0 44px" }}>
+        {b.summary && <Sec title="个人简介" accent="#1d4ed8"><Desc>{b.summary}</Desc></Sec>}
+        <Sec title="个人优势" accent="#1d4ed8"><AdvantagesItems resume={resume} bulletColor="#3b82f6" /></Sec>
+        <Sec title="教育背景" accent="#1d4ed8"><EduItems resume={resume} /></Sec>
+        <Sec title="项目经历" accent="#1d4ed8"><ProjectItems resume={resume} /></Sec>
+        <Sec title="校园经历" accent="#1d4ed8"><ActivityItems resume={resume} /></Sec>
+        <Sec title="技能证书" accent="#1d4ed8"><SkillsBlock resume={resume} /><PortfolioItems resume={resume} /></Sec>
+      </div>
+    </div>
+  );
+}
+
+// ================= 色系单栏（工厂） =================
+
+const colorSingle = {
+  "minimal-blue": makeSingle({
+    accent: "#4f81bd",
+    titleColor: "#1d3a5f",
+    topStyle: { borderBottom: "3px solid #4f81bd", paddingBottom: 12 },
+    bulletColor: "#4f81bd",
+  }),
+  "bw-minimal": makeSingle({
+    accent: "#111111",
+    titleColor: "#111111",
+    topStyle: { borderBottom: "2.5px solid #111", paddingBottom: 12 },
+    bulletColor: "#666666",
+  }),
+  "fresh-green": makeSingle({
+    accent: "#3f9d6b",
+    titleColor: "#1e5631",
+    topStyle: { borderBottom: "3px solid #3f9d6b", paddingBottom: 12 },
+    avatarStyle: { borderColor: "#b8dcc6", background: "repeating-linear-gradient(45deg,#f3faf5,#f3faf5 6px,#eaf5ee 6px,#eaf5ee 12px)", color: "#8fc3a2" },
+    bulletColor: "#3f9d6b",
+  }),
+  "gradient-purple": makeSingle({
+    accent: "#7c5cd6",
+    titleColor: "#4a2f8f",
+    topStyle: {
+      borderBottom: "3px solid #7c5cd6",
+      paddingBottom: 12,
+      background: "linear-gradient(90deg,#f6f2fd,#fdfbff)",
+      borderRadius: "0 0 12px 12px",
+      paddingTop: 14,
+      paddingLeft: 16,
+      paddingRight: 16,
+    },
+    avatarStyle: { borderColor: "#cfc2ee", background: "repeating-linear-gradient(45deg,#f7f4fd,#f7f4fd 6px,#f0ebfa 6px,#f0ebfa 12px)", color: "#b5a6dd" },
+    bulletColor: "#7c5cd6",
+  }),
+  "vibrant-orange": makeSingle({
+    accent: "#e8833a",
+    titleColor: "#9a4a10",
+    topStyle: { borderBottom: "3px solid #e8833a", paddingBottom: 12 },
+    avatarStyle: { borderColor: "#f0c39a", background: "repeating-linear-gradient(45deg,#fdf7f0,#fdf7f0 6px,#faf0e2 6px,#faf0e2 12px)", color: "#e0ab77" },
+    bulletColor: "#e8833a",
+  }),
+  "space-grey": makeSingle({
+    accent: "#6b7280",
+    titleColor: "#1f2937",
+    topStyle: { borderBottom: "3px solid #6b7280", paddingBottom: 12 },
+    bulletColor: "#6b7280",
+  }),
+  "rose-gold": makeSingle({
+    accent: "#c98585",
+    titleColor: "#8a4a4a",
+    topStyle: {
+      borderBottom: "3px solid #c98585",
+      paddingBottom: 12,
+      background: "linear-gradient(90deg,#fdf3f4,#fbe9ea)",
+      borderRadius: "0 0 12px 12px",
+      paddingTop: 14,
+      paddingLeft: 16,
+      paddingRight: 16,
+    },
+    avatarStyle: { borderColor: "#e0b9b9", background: "repeating-linear-gradient(45deg,#fdf6f6,#fdf6f6 6px,#faf0f0 6px,#faf0f0 12px)", color: "#d9a8a8" },
+    bulletColor: "#c98585",
+  }),
+  "classic-red": makeSingle({
+    accent: "#b03a3a",
+    titleColor: "#111111",
+    topStyle: { borderBottom: "3px solid #b03a3a", paddingBottom: 12 },
+    avatarStyle: { borderColor: "#d9a8a8", background: "repeating-linear-gradient(45deg,#fbf3f3,#fbf3f3 6px,#f8ecec 6px,#f8ecec 12px)", color: "#cc9a9a" },
+    bulletColor: "#b03a3a",
+  }),
+  "light-blue": makeSingle({
+    accent: "#4a90d9",
+    titleColor: "#1d4e89",
+    topStyle: { borderBottom: "3px solid #4a90d9", paddingBottom: 12 },
+    avatarStyle: { borderColor: "#a9cdf0", background: "repeating-linear-gradient(45deg,#f2f8fd,#f2f8fd 6px,#eaf4fc 6px,#eaf4fc 12px)", color: "#9fc3e4" },
+    secBg: "#f0f7fd",
+    bulletColor: "#4a90d9",
+  }),
+  "military-green": makeSingle({
+    accent: "#7d9470",
+    titleColor: "#e8efe4",
+    topStyle: {
+      background: "#3a4a34",
+      borderRadius: "0 0 12px 12px",
+      padding: "20px 18px 14px",
+      borderBottom: "3px solid #5c7351",
+    },
+    avatarStyle: { borderColor: "#9db394", background: "repeating-linear-gradient(45deg,#45543e,#45543e 6px,#3e4d38 6px,#3e4d38 12px)", color: "#b6c9ac" },
+    roleColor: "#c9d6c0",
+    contactColor: "#d8e2d0",
+    bulletColor: "#7d9470",
+  }),
+};
+
+// ================= 出口 =================
+
 export function ResumeDocument({ resume }: { resume: Resume }) {
-  switch (resume.template) {
-    case "modern":
-      return <ModernTemplate resume={resume} />;
-    case "compact":
-      return <CompactTemplate resume={resume} />;
-    case "sidebar":
-      return <SidebarTemplate resume={resume} />;
-    case "elegant":
-      return <ElegantTemplate resume={resume} />;
-    case "creative":
-      return <CreativeTemplate resume={resume} />;
-    case "timeline":
-      return <TimelineTemplate resume={resume} />;
-    default:
-      return <ClassicTemplate resume={resume} />;
-  }
+  const t = resume.template;
+  if (t === "timeline") return <TimelineTemplate resume={resume} />;
+  if (t === "it-minimal") return <ItMinimalTemplate resume={resume} />;
+  if (t === "dense") return <DenseTemplate resume={resume} />;
+  if (t === "biz-split") return <BizSplitTemplate resume={resume} />;
+  if (t === "sidebar-navy") return <SidebarNavyTemplate resume={resume} />;
+  if (t === "edu-blue") return <EduBlueTemplate resume={resume} />;
+  if (t === "dark-biz") return <DarkBizTemplate resume={resume} />;
+  if (t === "artistic") return <ArtisticTemplate resume={resume} />;
+  if (t === "magazine") return <MagazineTemplate resume={resume} />;
+  if (t === "topbar-modern") return <TopbarModernTemplate resume={resume} />;
+  const factory = colorSingle[t as keyof typeof colorSingle];
+  if (factory) return factory({ resume });
+  return <TimelineTemplate resume={resume} />;
 }
