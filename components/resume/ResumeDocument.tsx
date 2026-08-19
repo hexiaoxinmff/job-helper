@@ -1,4 +1,9 @@
-import type { Resume } from "@/lib/types";
+import type { Resume, SectionKey } from "@/lib/types";
+
+/** 板块可见性辅助：visibility 缺省视为显示 */
+function visible(resume: Resume, key: SectionKey) {
+  return resume.visibility[key] !== false;
+}
 
 function Contacts({ resume }: { resume: Resume }) {
   const b = resume.basics;
@@ -18,6 +23,78 @@ function Bullets({ items }: { items: string[] }) {
   );
 }
 
+/** 个人优势：多条 bullet */
+function AdvantagesBlock({ resume }: { resume: Resume }) {
+  if (!visible(resume, "advantages") || resume.advantages.length === 0) return null;
+  return <Bullets items={resume.advantages} />;
+}
+
+/** 实习经历（与工作经历同构） */
+function InternshipsBlock({ resume }: { resume: Resume }) {
+  if (!visible(resume, "internships") || resume.internships.length === 0) return null;
+  return (
+    <>
+      {resume.internships.map((w) => (
+        <Row key={w.id} left={`${w.company}　${w.role}`} right={`${w.startDate} - ${w.endDate}`}>
+          <Bullets items={w.bullets} />
+        </Row>
+      ))}
+    </>
+  );
+}
+
+/** 校园经历 */
+function ActivitiesBlock({ resume }: { resume: Resume }) {
+  if (!visible(resume, "activities") || resume.activities.length === 0) return null;
+  return (
+    <>
+      {resume.activities.map((a) => (
+        <Row key={a.id} left={`${a.org}　${a.role}`} right={`${a.startDate} - ${a.endDate}`}>
+          {a.description && <p className="text-sm text-neutral-600 mt-0.5">{a.description}</p>}
+        </Row>
+      ))}
+    </>
+  );
+}
+
+/** 荣誉奖项 */
+function AwardsBlock({ resume }: { resume: Resume }) {
+  if (!visible(resume, "awards") || resume.awards.length === 0) return null;
+  return (
+    <>
+      {resume.awards.map((a) => (
+        <Row key={a.id} left={a.name} right={a.date}>
+          {a.description && <p className="text-sm text-neutral-600 mt-0.5">{a.description}</p>}
+        </Row>
+      ))}
+    </>
+  );
+}
+
+/** 语言能力 */
+function LanguagesBlock({ resume }: { resume: Resume }) {
+  if (!visible(resume, "languages") || resume.languages.length === 0) return null;
+  return (
+    <p className="text-sm text-neutral-700">
+      {resume.languages.map((l) => `${l.language}（${l.level || "熟练"}）`).join("　·　")}
+    </p>
+  );
+}
+
+/** 作品集 */
+function PortfolioBlock({ resume }: { resume: Resume }) {
+  if (!visible(resume, "portfolio") || resume.portfolio.length === 0) return null;
+  return (
+    <>
+      {resume.portfolio.map((p) => (
+        <Row key={p.id} left={p.name} right={p.link}>
+          {p.description && <p className="text-sm text-neutral-600 mt-0.5">{p.description}</p>}
+        </Row>
+      ))}
+    </>
+  );
+}
+
 function ClassicTemplate({ resume }: { resume: Resume }) {
   const b = resume.basics;
   return (
@@ -30,6 +107,12 @@ function ClassicTemplate({ resume }: { resume: Resume }) {
 
       {b.summary && <p className="text-sm text-neutral-700 mb-4">{b.summary}</p>}
 
+      {visible(resume, "advantages") && resume.advantages.length > 0 && (
+        <Section title="个人优势">
+          <AdvantagesBlock resume={resume} />
+        </Section>
+      )}
+
       {resume.education.length > 0 && (
         <Section title="教育经历">
           {resume.education.map((e) => (
@@ -37,6 +120,12 @@ function ClassicTemplate({ resume }: { resume: Resume }) {
               {e.description && <p className="text-sm text-neutral-600 mt-0.5">{e.description}</p>}
             </Row>
           ))}
+        </Section>
+      )}
+
+      {visible(resume, "internships") && resume.internships.length > 0 && (
+        <Section title="实习经历">
+          <InternshipsBlock resume={resume} />
         </Section>
       )}
 
@@ -61,6 +150,12 @@ function ClassicTemplate({ resume }: { resume: Resume }) {
         </Section>
       )}
 
+      {visible(resume, "activities") && resume.activities.length > 0 && (
+        <Section title="校园经历">
+          <ActivitiesBlock resume={resume} />
+        </Section>
+      )}
+
       {resume.skills.length > 0 && (
         <Section title="技能">
           <div className="space-y-1">
@@ -71,6 +166,24 @@ function ClassicTemplate({ resume }: { resume: Resume }) {
               </p>
             ))}
           </div>
+        </Section>
+      )}
+
+      {visible(resume, "languages") && resume.languages.length > 0 && (
+        <Section title="语言能力">
+          <LanguagesBlock resume={resume} />
+        </Section>
+      )}
+
+      {visible(resume, "awards") && resume.awards.length > 0 && (
+        <Section title="荣誉奖项">
+          <AwardsBlock resume={resume} />
+        </Section>
+      )}
+
+      {visible(resume, "portfolio") && resume.portfolio.length > 0 && (
+        <Section title="作品集">
+          <PortfolioBlock resume={resume} />
         </Section>
       )}
     </div>
@@ -91,6 +204,12 @@ function ModernTemplate({ resume }: { resume: Resume }) {
 
         {b.summary && <p className="text-sm text-neutral-700 mb-5">{b.summary}</p>}
 
+        {visible(resume, "advantages") && resume.advantages.length > 0 && (
+          <Section title="个人优势" accent>
+            <AdvantagesBlock resume={resume} />
+          </Section>
+        )}
+
         {resume.education.length > 0 && (
           <Section title="教育经历" accent>
             {resume.education.map((e) => (
@@ -98,6 +217,12 @@ function ModernTemplate({ resume }: { resume: Resume }) {
                 {e.description && <p className="text-sm text-neutral-600 mt-0.5">{e.description}</p>}
               </Row>
             ))}
+          </Section>
+        )}
+
+        {visible(resume, "internships") && resume.internships.length > 0 && (
+          <Section title="实习经历" accent>
+            <InternshipsBlock resume={resume} />
           </Section>
         )}
 
@@ -122,6 +247,12 @@ function ModernTemplate({ resume }: { resume: Resume }) {
           </Section>
         )}
 
+        {visible(resume, "activities") && resume.activities.length > 0 && (
+          <Section title="校园经历" accent>
+            <ActivitiesBlock resume={resume} />
+          </Section>
+        )}
+
         {resume.skills.length > 0 && (
           <Section title="技能" accent>
             <div className="space-y-1">
@@ -132,6 +263,24 @@ function ModernTemplate({ resume }: { resume: Resume }) {
                 </p>
               ))}
             </div>
+          </Section>
+        )}
+
+        {visible(resume, "languages") && resume.languages.length > 0 && (
+          <Section title="语言能力" accent>
+            <LanguagesBlock resume={resume} />
+          </Section>
+        )}
+
+        {visible(resume, "awards") && resume.awards.length > 0 && (
+          <Section title="荣誉奖项" accent>
+            <AwardsBlock resume={resume} />
+          </Section>
+        )}
+
+        {visible(resume, "portfolio") && resume.portfolio.length > 0 && (
+          <Section title="作品集" accent>
+            <PortfolioBlock resume={resume} />
           </Section>
         )}
       </div>
@@ -151,6 +300,12 @@ function CompactTemplate({ resume }: { resume: Resume }) {
 
       {b.summary && <p className="text-neutral-700 mb-3">{b.summary}</p>}
 
+      {visible(resume, "advantages") && resume.advantages.length > 0 && (
+        <Section title="个人优势" compact>
+          <AdvantagesBlock resume={resume} />
+        </Section>
+      )}
+
       {resume.education.length > 0 && (
         <Section title="教育经历" compact>
           {resume.education.map((e) => (
@@ -158,6 +313,12 @@ function CompactTemplate({ resume }: { resume: Resume }) {
               {e.description && <p className="text-neutral-600">{e.description}</p>}
             </Row>
           ))}
+        </Section>
+      )}
+
+      {visible(resume, "internships") && resume.internships.length > 0 && (
+        <Section title="实习经历" compact>
+          <InternshipsBlock resume={resume} />
         </Section>
       )}
 
@@ -182,6 +343,12 @@ function CompactTemplate({ resume }: { resume: Resume }) {
         </Section>
       )}
 
+      {visible(resume, "activities") && resume.activities.length > 0 && (
+        <Section title="校园经历" compact>
+          <ActivitiesBlock resume={resume} />
+        </Section>
+      )}
+
       {resume.skills.length > 0 && (
         <Section title="技能" compact>
           <div className="space-y-0.5">
@@ -192,6 +359,24 @@ function CompactTemplate({ resume }: { resume: Resume }) {
               </p>
             ))}
           </div>
+        </Section>
+      )}
+
+      {visible(resume, "languages") && resume.languages.length > 0 && (
+        <Section title="语言能力" compact>
+          <LanguagesBlock resume={resume} />
+        </Section>
+      )}
+
+      {visible(resume, "awards") && resume.awards.length > 0 && (
+        <Section title="荣誉奖项" compact>
+          <AwardsBlock resume={resume} />
+        </Section>
+      )}
+
+      {visible(resume, "portfolio") && resume.portfolio.length > 0 && (
+        <Section title="作品集" compact>
+          <PortfolioBlock resume={resume} />
         </Section>
       )}
     </div>
@@ -278,6 +463,17 @@ function SidebarTemplate({ resume }: { resume: Resume }) {
           <p className="mt-4 text-xs leading-relaxed text-neutral-300">{b.summary}</p>
         )}
 
+        {visible(resume, "advantages") && resume.advantages.length > 0 && (
+          <div className="mt-6">
+            <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-neutral-400">个人优势</h2>
+            <ul className="space-y-1 text-xs text-neutral-300">
+              {resume.advantages.map((a, i) => (
+                <li key={i}>• {a}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         {resume.skills.length > 0 && (
           <div className="mt-6">
             <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-neutral-400">技能</h2>
@@ -289,6 +485,42 @@ function SidebarTemplate({ resume }: { resume: Resume }) {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {visible(resume, "languages") && resume.languages.length > 0 && (
+          <div className="mt-6">
+            <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-neutral-400">语言能力</h2>
+            <p className="text-xs text-neutral-300">
+              {resume.languages.map((l) => `${l.language}（${l.level || "熟练"}）`).join(" · ")}
+            </p>
+          </div>
+        )}
+
+        {visible(resume, "awards") && resume.awards.length > 0 && (
+          <div className="mt-6">
+            <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-neutral-400">荣誉奖项</h2>
+            <ul className="space-y-1 text-xs text-neutral-300">
+              {resume.awards.map((a) => (
+                <li key={a.id}>
+                  {a.name}
+                  {a.date ? `（${a.date}）` : ""}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {visible(resume, "portfolio") && resume.portfolio.length > 0 && (
+          <div className="mt-6">
+            <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-neutral-400">作品集</h2>
+            <ul className="space-y-1 text-xs text-neutral-300">
+              {resume.portfolio.map((p) => (
+                <li key={p.id} className="break-all">
+                  {p.name}: {p.link}
+                </li>
+              ))}
+            </ul>
           </div>
         )}
 
@@ -315,6 +547,12 @@ function SidebarTemplate({ resume }: { resume: Resume }) {
       </aside>
 
       <div className="w-2/3 p-8">
+        {visible(resume, "internships") && resume.internships.length > 0 && (
+          <Section title="实习经历">
+            <InternshipsBlock resume={resume} />
+          </Section>
+        )}
+
         {resume.work.length > 0 && (
           <Section title="工作经历">
             {resume.work.map((w) => (
@@ -336,8 +574,14 @@ function SidebarTemplate({ resume }: { resume: Resume }) {
           </Section>
         )}
 
-        {resume.work.length === 0 && resume.projects.length === 0 && (
-          <p className="text-sm text-neutral-400">在右侧添加「工作经历」或「项目经历」。</p>
+        {visible(resume, "activities") && resume.activities.length > 0 && (
+          <Section title="校园经历">
+            <ActivitiesBlock resume={resume} />
+          </Section>
+        )}
+
+        {resume.work.length === 0 && resume.projects.length === 0 && resume.internships.length === 0 && (
+          <p className="text-sm text-neutral-400">在右侧添加「实习 / 工作 / 项目」经历。</p>
         )}
       </div>
     </div>
@@ -366,6 +610,18 @@ function ElegantTemplate({ resume }: { resume: Resume }) {
 
       {b.summary && <p className="mb-6 text-center text-sm italic text-neutral-600">{b.summary}</p>}
 
+      {visible(resume, "advantages") && resume.advantages.length > 0 && (
+        <Section title="个人优势">
+          <div className="space-y-1 text-center">
+            {resume.advantages.map((a, i) => (
+              <p key={i} className="text-sm italic text-neutral-700">
+                {a}
+              </p>
+            ))}
+          </div>
+        </Section>
+      )}
+
       {resume.education.length > 0 && (
         <Section title="教育背景">
           {resume.education.map((e) => (
@@ -374,6 +630,12 @@ function ElegantTemplate({ resume }: { resume: Resume }) {
               {e.description && <p className="text-sm text-neutral-600 mt-0.5">{e.description}</p>}
             </Row>
           ))}
+        </Section>
+      )}
+
+      {visible(resume, "internships") && resume.internships.length > 0 && (
+        <Section title="实习经历">
+          <InternshipsBlock resume={resume} />
         </Section>
       )}
 
@@ -398,6 +660,12 @@ function ElegantTemplate({ resume }: { resume: Resume }) {
         </Section>
       )}
 
+      {visible(resume, "activities") && resume.activities.length > 0 && (
+        <Section title="校园经历">
+          <ActivitiesBlock resume={resume} />
+        </Section>
+      )}
+
       {resume.skills.length > 0 && (
         <Section title="专业技能">
           <div className="space-y-1">
@@ -410,6 +678,39 @@ function ElegantTemplate({ resume }: { resume: Resume }) {
           </div>
         </Section>
       )}
+
+      {(visible(resume, "languages") && resume.languages.length > 0) ||
+      (visible(resume, "awards") && resume.awards.length > 0) ||
+      (visible(resume, "portfolio") && resume.portfolio.length > 0) ? (
+        <Section title="附加信息">
+          <div className="space-y-2">
+            {visible(resume, "languages") && resume.languages.length > 0 && (
+              <p className="text-sm">
+                <span className="font-medium text-neutral-800">语言：</span>
+                <span className="text-neutral-600">
+                  {resume.languages.map((l) => `${l.language}（${l.level || "熟练"}）`).join(" / ")}
+                </span>
+              </p>
+            )}
+            {visible(resume, "awards") && resume.awards.length > 0 && (
+              <p className="text-sm">
+                <span className="font-medium text-neutral-800">荣誉：</span>
+                <span className="text-neutral-600">
+                  {resume.awards.map((a) => `${a.name}${a.date ? `（${a.date}）` : ""}`).join(" / ")}
+                </span>
+              </p>
+            )}
+            {visible(resume, "portfolio") && resume.portfolio.length > 0 && (
+              <p className="text-sm">
+                <span className="font-medium text-neutral-800">作品：</span>
+                <span className="text-neutral-600">
+                  {resume.portfolio.map((p) => `${p.name}（${p.link}）`).join(" / ")}
+                </span>
+              </p>
+            )}
+          </div>
+        </Section>
+      ) : null}
     </div>
   );
 }
@@ -431,6 +732,13 @@ function CreativeTemplate({ resume }: { resume: Resume }) {
             ))}
           </div>
         )}
+        {visible(resume, "advantages") && resume.advantages.length > 0 && (
+          <ul className="mt-4 space-y-1 text-sm text-indigo-50">
+            {resume.advantages.map((a, i) => (
+              <li key={i}>• {a}</li>
+            ))}
+          </ul>
+        )}
       </header>
 
       <div className="p-8">
@@ -443,6 +751,12 @@ function CreativeTemplate({ resume }: { resume: Resume }) {
                 {e.description && <p className="text-sm text-neutral-600 mt-0.5">{e.description}</p>}
               </Row>
             ))}
+          </Section>
+        )}
+
+        {visible(resume, "internships") && resume.internships.length > 0 && (
+          <Section title="实习经历" tone="indigo">
+            <InternshipsBlock resume={resume} />
           </Section>
         )}
 
@@ -467,6 +781,12 @@ function CreativeTemplate({ resume }: { resume: Resume }) {
           </Section>
         )}
 
+        {visible(resume, "activities") && resume.activities.length > 0 && (
+          <Section title="校园经历" tone="indigo">
+            <ActivitiesBlock resume={resume} />
+          </Section>
+        )}
+
         {resume.skills.length > 0 && (
           <Section title="技能" tone="indigo">
             <div className="space-y-1">
@@ -477,6 +797,24 @@ function CreativeTemplate({ resume }: { resume: Resume }) {
                 </p>
               ))}
             </div>
+          </Section>
+        )}
+
+        {visible(resume, "languages") && resume.languages.length > 0 && (
+          <Section title="语言能力" tone="indigo">
+            <LanguagesBlock resume={resume} />
+          </Section>
+        )}
+
+        {visible(resume, "awards") && resume.awards.length > 0 && (
+          <Section title="荣誉奖项" tone="indigo">
+            <AwardsBlock resume={resume} />
+          </Section>
+        )}
+
+        {visible(resume, "portfolio") && resume.portfolio.length > 0 && (
+          <Section title="作品集" tone="indigo">
+            <PortfolioBlock resume={resume} />
           </Section>
         )}
       </div>
@@ -558,10 +896,25 @@ function TimelineTemplate({ resume }: { resume: Resume }) {
         {b.summary && <p className="mt-3 text-sm leading-relaxed text-neutral-700">{b.summary}</p>}
       </div>
 
-      {/* 章节区 */}
+      {/* 章节区（对齐何钊新简历 PDF 顺序：个人优势 → 教育背景 → 经历 → 校园经历 → 技能及证书） */}
       <div className="relative space-y-5 px-10 pb-8 pt-4">
-        {resume.education.length > 0 && (
-          <TimelineSection title="教育经历">
+        {/* 1. 个人优势 */}
+        {visible(resume, "advantages") && resume.advantages.length > 0 && (
+          <TimelineSection title="个人优势">
+            <ul className="space-y-1 text-sm text-neutral-700">
+              {resume.advantages.map((a, i) => (
+                <li key={i} className="flex">
+                  <span className="mr-2 text-neutral-400">•</span>
+                  <span>{a}</span>
+                </li>
+              ))}
+            </ul>
+          </TimelineSection>
+        )}
+
+        {/* 2. 教育背景 */}
+        {visible(resume, "education") && resume.education.length > 0 && (
+          <TimelineSection title="教育背景">
             {resume.education.map((e) => (
               <TimelineItem
                 key={e.id}
@@ -574,7 +927,22 @@ function TimelineTemplate({ resume }: { resume: Resume }) {
           </TimelineSection>
         )}
 
-        {resume.work.length > 0 && (
+        {/* 3. 实习 / 工作 / 项目经历（沿时间线） */}
+        {visible(resume, "internships") && resume.internships.length > 0 && (
+          <TimelineSection title="实习经历">
+            {resume.internships.map((w) => (
+              <TimelineItem
+                key={w.id}
+                head={`${w.company}　${w.role}`}
+                time={`${w.startDate} - ${w.endDate}`}
+              >
+                <Bullets items={w.bullets} />
+              </TimelineItem>
+            ))}
+          </TimelineSection>
+        )}
+
+        {visible(resume, "work") && resume.work.length > 0 && (
           <TimelineSection title="工作经历">
             {resume.work.map((w) => (
               <TimelineItem
@@ -588,7 +956,7 @@ function TimelineTemplate({ resume }: { resume: Resume }) {
           </TimelineSection>
         )}
 
-        {resume.projects.length > 0 && (
+        {visible(resume, "projects") && resume.projects.length > 0 && (
           <TimelineSection title="项目经历">
             {resume.projects.map((p) => (
               <TimelineItem
@@ -603,16 +971,62 @@ function TimelineTemplate({ resume }: { resume: Resume }) {
           </TimelineSection>
         )}
 
-        {resume.skills.length > 0 && (
-          <TimelineSection title="技能">
+        {/* 4. 校园经历 */}
+        {visible(resume, "activities") && resume.activities.length > 0 && (
+          <TimelineSection title="校园经历">
+            {resume.activities.map((a) => (
+              <TimelineItem
+                key={a.id}
+                head={`${a.org}　${a.role}`}
+                time={`${a.startDate} - ${a.endDate}`}
+              >
+                {a.description && <p className="mt-0.5 text-sm text-neutral-600">{a.description}</p>}
+              </TimelineItem>
+            ))}
+          </TimelineSection>
+        )}
+
+        {/* 5. 技能及证书（技能 + 荣誉 + 语言合并区） */}
+        {(visible(resume, "skills") && resume.skills.length > 0) ||
+        (visible(resume, "awards") && resume.awards.length > 0) ||
+        (visible(resume, "languages") && resume.languages.length > 0) ? (
+          <TimelineSection title="技能及证书">
             <div className="space-y-1">
-              {resume.skills.map((s) => (
-                <p key={s.id} className="text-sm">
-                  <span className="font-medium text-neutral-800">{s.category}：</span>
-                  <span className="text-neutral-600">{s.items.join(" / ")}</span>
+              {visible(resume, "skills") &&
+                resume.skills.map((s) => (
+                  <p key={s.id} className="text-sm">
+                    <span className="font-medium text-neutral-800">{s.category}：</span>
+                    <span className="text-neutral-600">{s.items.join(" / ")}</span>
+                  </p>
+                ))}
+              {visible(resume, "languages") && resume.languages.length > 0 && (
+                <p className="text-sm">
+                  <span className="font-medium text-neutral-800">语言：</span>
+                  <span className="text-neutral-600">
+                    {resume.languages.map((l) => `${l.language}（${l.level || "熟练"}）`).join(" / ")}
+                  </span>
                 </p>
-              ))}
+              )}
+              {visible(resume, "awards") && resume.awards.length > 0 && (
+                <p className="text-sm">
+                  <span className="font-medium text-neutral-800">荣誉：</span>
+                  <span className="text-neutral-600">
+                    {resume.awards.map((a) => `${a.name}${a.date ? `（${a.date}）` : ""}`).join(" / ")}
+                  </span>
+                </p>
+              )}
             </div>
+          </TimelineSection>
+        ) : null}
+
+        {/* 作品集 */}
+        {visible(resume, "portfolio") && resume.portfolio.length > 0 && (
+          <TimelineSection title="作品集">
+            {resume.portfolio.map((p) => (
+              <TimelineItem key={p.id} head={p.name} time={p.link}>
+                {p.description && <p className="mt-0.5 text-sm text-neutral-600">{p.description}</p>}
+              </TimelineItem>
+            ))}
           </TimelineSection>
         )}
       </div>

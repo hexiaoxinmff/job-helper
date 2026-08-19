@@ -1,7 +1,20 @@
 "use client";
 
 import { createContext, ReactNode, useCallback, useContext, useSyncExternalStore } from "react";
-import { Resume, TemplateId, createEmptyResume } from "./types";
+import {
+  ActivityItem,
+  AwardItem,
+  EducationItem,
+  InternshipItem,
+  LanguageItem,
+  PortfolioItem,
+  ProjectItem,
+  Resume,
+  SkillGroup,
+  TemplateId,
+  WorkItem,
+  createEmptyResume,
+} from "./types";
 
 interface ResumeContextValue {
   resume: Resume;
@@ -13,8 +26,12 @@ interface ResumeContextValue {
 
 const ResumeContext = createContext<ResumeContextValue | null>(null);
 const STORAGE_KEY = "job-helper:resume";
-/** 存储结构版本：1 = { version, data } 包装；旧数据为裸 Resume 对象（自动迁移） */
-const STORAGE_VERSION = 1;
+/**
+ * 存储结构版本：1 = { version, data } 包装 + 5 板块（basics/education/work/projects/skills）；
+ * 2 = 扩展 12 板块（新增 advantages/languages/internships/activities/awards/portfolio + visibility）。
+ * 旧裸 Resume 对象自动迁移。迁移红线：已有字段原样保留，不丢。
+ */
+const STORAGE_VERSION = 2;
 
 const TEMPLATE_IDS: TemplateId[] = [
   "classic",
@@ -26,6 +43,10 @@ const TEMPLATE_IDS: TemplateId[] = [
   "timeline",
 ];
 
+const isObj = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object";
+const arrOf = <T,>(v: unknown): T[] =>
+  (Array.isArray(v) ? v.filter((it): it is Record<string, unknown> => isObj(it)) : []) as unknown as T[];
+
 /** 逐字段校验从 localStorage 恢复的简历，损坏/跨版本数据降级为空值而非抛错 */
 function sanitizeResume(data: unknown): Resume {
   const empty = createEmptyResume();
@@ -33,40 +54,65 @@ function sanitizeResume(data: unknown): Resume {
   const d = data as Partial<Resume>;
 
   const basics = { ...empty.basics, ...(d.basics && typeof d.basics === "object" ? d.basics : {}) };
-  const education = Array.isArray(d.education)
-    ? d.education.filter((it): it is NonNullable<typeof it> => !!it && typeof it === "object")
-    : [];
-  const work = Array.isArray(d.work)
-    ? d.work.filter((it): it is NonNullable<typeof it> => !!it && typeof it === "object")
-    : [];
-  const projects = Array.isArray(d.projects)
-    ? d.projects.filter((it): it is NonNullable<typeof it> => !!it && typeof it === "object")
-    : [];
-  const skills = Array.isArray(d.skills)
-    ? d.skills.filter((it): it is NonNullable<typeof it> => !!it && typeof it === "object")
-    : [];
+  const education = arrOf<EducationItem>(d.education);
+  const languages = arrOf<LanguageItem>(d.languages);
+  const internships = arrOf<InternshipItem>(d.internships);
+  const work = arrOf<WorkItem>(d.work);
+  const projects = arrOf<ProjectItem>(d.projects);
+  const activities = arrOf<ActivityItem>(d.activities);
+  const skills = arrOf<SkillGroup>(d.skills);
+  const awards = arrOf<AwardItem>(d.awards);
+  const portfolio = arrOf<PortfolioItem>(d.portfolio);
+  const advantages = Array.isArray(d.advantages) ? d.advantages.filter((s) => typeof s === "string") : [];
+  const visibility =
+    d.visibility && isObj(d.visibility)
+      ? Object.fromEntries(Object.entries(d.visibility).filter(([, v]) => typeof v === "boolean"))
+      : {};
   const template: TemplateId = TEMPLATE_IDS.includes(d.template as TemplateId)
     ? (d.template as TemplateId)
     : empty.template;
 
-  return { basics, education, work, projects, skills, template };
+  return {
+    basics,
+    advantages,
+    education,
+    languages,
+    internships,
+    work,
+    projects,
+    activities,
+    skills,
+    awards,
+    portfolio,
+    visibility,
+    template,
+  };
 }
 
-/** 兼容旧格式（裸 Resume）与 v1（{ version, data }），损坏返回空简历 */
+/** v1 → v2 温和迁移：仅当旧 summary 含换行（用户曾把多行内容塞进简介）时拆为个人优势，否则保持空 */
+function migrateAdvantages(prev: Resume): Resume {
+  if (prev.advantages.length > 0) return prev;
+  const s = prev.basics.summary;
+  if (!s || !s.includes("\n")) return prev;
+  const lines = s
+    .split("\n")
+    .map((l) => l.replace(/^[•·\-\s]+/, "").trim())
+    .filter(Boolean);
+  if (lines.length < 2) return prev;
+  return { ...prev, advantages: lines };
+}
+
+/** 兼容旧格式（裸 Resume）与 v1/v2（{ version, data }），损坏返回空简历 */
 function loadResume(raw: string | null): Resume {
   if (!raw) return createEmptyResume();
   try {
     const parsed = JSON.parse(raw) as unknown;
-    if (
-      parsed &&
-      typeof parsed === "object" &&
-      "version" in (parsed as object) &&
-      (parsed as { version?: unknown }).version === STORAGE_VERSION
-    ) {
-      return sanitizeResume((parsed as { data?: unknown }).data);
+    if (parsed && isObj(parsed) && "version" in parsed) {
+      // 版本号低于当前版本（v1）→ sanitize 时缺省字段自动补空；再温和迁移 advantages
+      return migrateAdvantages(sanitizeResume(parsed.data));
     }
     // 旧格式：直接是 Resume 对象
-    return sanitizeResume(parsed);
+    return migrateAdvantages(sanitizeResume(parsed));
   } catch {
     return createEmptyResume();
   }

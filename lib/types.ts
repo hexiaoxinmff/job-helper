@@ -82,6 +82,10 @@ export interface BasicInfo {
   website: string;
   /** 个人简介 */
   summary: string;
+  /** 出生年月（可选） */
+  birth?: string;
+  /** 性别（可选） */
+  sex?: string;
 }
 
 /** 教育经历 */
@@ -95,6 +99,16 @@ export interface EducationItem {
   startDate: string;
   endDate: string;
   description: string;
+}
+
+/** 实习经历（与工作经历同构，渲染共用） */
+export interface InternshipItem {
+  id: string;
+  company: string;
+  role: string;
+  startDate: string;
+  endDate: string;
+  bullets: string[];
 }
 
 /** 工作经历 */
@@ -119,6 +133,46 @@ export interface ProjectItem {
   bullets: string[];
 }
 
+/** 校园经历 / 社团 / 志愿者 */
+export interface ActivityItem {
+  id: string;
+  /** 组织 / 社团 / 赛事名称 */
+  org: string;
+  /** 角色 */
+  role: string;
+  startDate: string;
+  endDate: string;
+  /** 职责与贡献 */
+  description: string;
+}
+
+/** 荣誉奖项 / 证书 */
+export interface AwardItem {
+  id: string;
+  /** 奖项 / 证书名 */
+  name: string;
+  /** 时间（如 2024.09） */
+  date: string;
+  /** 颁发机构 / 说明 */
+  description: string;
+}
+
+/** 语言能力 */
+export interface LanguageItem {
+  id: string;
+  language: string;
+  /** 熟练度，如 CET-6 / 流利 / N3 */
+  level: string;
+}
+
+/** 作品集 */
+export interface PortfolioItem {
+  id: string;
+  name: string;
+  link: string;
+  description: string;
+}
+
 /** 技能分组 */
 export interface SkillGroup {
   id: string;
@@ -128,24 +182,56 @@ export interface SkillGroup {
   items: string[];
 }
 
-/** 完整简历数据 */
+/** 可显示/隐藏的内容板块 key */
+export type SectionKey =
+  | "advantages"
+  | "education"
+  | "languages"
+  | "internships"
+  | "work"
+  | "projects"
+  | "activities"
+  | "skills"
+  | "awards"
+  | "portfolio";
+
+/** 板块显示开关：缺省视为显示 */
+export type SectionVisibility = Partial<Record<SectionKey, boolean>>;
+
+/** 完整简历数据（v2：新增个人优势/实习/校园/荣誉/语言/作品集板块） */
 export interface Resume {
   basics: BasicInfo;
+  /** 个人优势，每条一个 bullet */
+  advantages: string[];
   education: EducationItem[];
+  languages: LanguageItem[];
+  internships: InternshipItem[];
   work: WorkItem[];
   projects: ProjectItem[];
+  activities: ActivityItem[];
   skills: SkillGroup[];
+  awards: AwardItem[];
+  portfolio: PortfolioItem[];
+  /** 板块显示开关 */
+  visibility: SectionVisibility;
   template: TemplateId;
 }
 
 /** 生成空白简历 */
 export function createEmptyResume(): Resume {
   return {
-    basics: { name: "", title: "", email: "", phone: "", location: "", website: "", summary: "" },
+    basics: { name: "", title: "", email: "", phone: "", location: "", website: "", summary: "", birth: "", sex: "" },
+    advantages: [],
     education: [],
+    languages: [],
+    internships: [],
     work: [],
     projects: [],
+    activities: [],
     skills: [],
+    awards: [],
+    portfolio: [],
+    visibility: {},
     template: "classic",
   };
 }
