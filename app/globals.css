@@ -365,3 +365,59 @@ body {
 .animate-privacy-pop {
   animation: privacy-pop 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
+
+/* ==========================================================================
+   打印 / 导出 PDF 样式（@media print）
+   - 强制白底：body 背景用 var(--background)，暗色下为深色，勾选「背景图形」打印会污染纸面
+   - 清掉桌面端左侧导航占位（md:pl-56）与 main 内边距，简历内容铺满纸面
+   - 模板容器 max-w-3xl（768px）在 A4 内容区（约 674px）会被截断 → 打印时解除上限
+   - 方案 A：深色设计块（sidebar 侧栏 / creative 头图）print-color-adjust: exact，
+     不勾「背景图形」也完整输出深色块；页面底色仍强制白
+   - 分页控制：区块整体不拆分、标题不与正文分页
+   ========================================================================== */
+@media print {
+  html {
+    color-scheme: light;
+  }
+  html,
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  /* 桌面端左侧导航打印时已隐藏，清除其占位留白；页面内边距清掉 */
+  body {
+    padding-left: 0 !important;
+  }
+  main {
+    padding: 0 !important;
+  }
+  /* 简历模板容器：解除 768px 上限，避免 A4 内容区两侧截断 */
+  main .max-w-3xl {
+    max-width: none;
+  }
+  /* 弹层（隐私承诺 / 确认框）打印时一律不显示 */
+  div[role="dialog"] {
+    display: none !important;
+  }
+  /* 深色设计块保留（方案 A）：不勾「背景图形」也完整输出 */
+  .max-w-3xl > aside,
+  .max-w-3xl > header {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  /* 分页控制：区块整体不拆分、标题不与正文分页 */
+  section {
+    break-inside: avoid;
+  }
+  h1,
+  h2,
+  h3 {
+    break-after: avoid;
+  }
+}
+
+/* 打印纸面统一版式（Chromium 支持 @page size/margin） */
+@page {
+  size: A4;
+  margin: 14mm 12mm;
+}
