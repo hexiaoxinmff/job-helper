@@ -45,3 +45,7 @@ next-env.d.ts
 /优化方案.html
 /_jb_build/
 .build-tmp/
+
+# generated version files (regenerated before every build by scripts/make-version.mjs)
+/lib/version.ts
+/public/version.txt

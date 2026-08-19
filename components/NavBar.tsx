@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { APP_VERSION } from "@/lib/version";
 
 const NAV_ITEMS = [
   { href: "/", label: "简历诊断" },
@@ -88,6 +89,12 @@ export default function NavBar() {
                 {item.label}
               </Link>
             ))}
+            <p
+              className="px-3 py-2 text-[10px] text-neutral-300 select-all dark:text-neutral-600"
+              title="当前线上版本（日期-时间-git提交号）"
+            >
+              版本 {APP_VERSION}
+            </p>
           </div>
         )}
       </nav>
@@ -114,6 +121,12 @@ export default function NavBar() {
             <span>外观</span>
             <ThemeToggle className="h-8 w-8" />
           </div>
+          <p
+            className="mt-3 text-[10px] text-neutral-300 select-all dark:text-neutral-600"
+            title="当前线上版本（日期-时间-git提交号）"
+          >
+            版本 {APP_VERSION}
+          </p>
         </div>
       </aside>
     </>

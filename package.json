@@ -3,8 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "node scripts/make-version.mjs",
     "dev": "next dev",
-    "build": "next build",
+    "build": "node scripts/make-version.mjs && next build",
     "start": "npx serve out",
     "typecheck": "tsc --noEmit",
     "lint": "eslint && tsc --noEmit"
