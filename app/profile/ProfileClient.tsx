@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { useProfile } from "@/lib/profile";
 import { track } from "@/lib/track";
 import PrivacyNote from "@/components/PrivacyNote";
+import { Button } from "@/components/ui/Button";
 import CareerModelChart from "@/components/CareerModelChart";
 
 export default function ProfileClient() {
@@ -77,18 +78,10 @@ export default function ProfileClient() {
 
       {/* 操作 */}
       <div className="mt-5 flex flex-wrap gap-3">
-        <button
-          onClick={exportProfile}
-          className="rounded-xl bg-primary-600 px-4 py-2.5 font-medium text-white hover:bg-primary-700"
-        >
-          导出档案 (.json)
-        </button>
-        <button
-          onClick={() => fileRef.current?.click()}
-          className="rounded-xl border border-neutral-300 bg-white px-4 py-2.5 font-medium text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800"
-        >
+        <Button onClick={exportProfile}>导出档案 (.json)</Button>
+        <Button variant="outline" onClick={() => fileRef.current?.click()}>
           导入档案
-        </button>
+        </Button>
         <button
           onClick={() => {
             if (confirm("确定清除本地所有档案数据？此操作不可恢复。")) {

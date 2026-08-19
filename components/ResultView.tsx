@@ -12,6 +12,8 @@ import {
 import { toPng } from "html-to-image";
 import KeywordChip from "./KeywordChip";
 import { ErrorBoundary } from "./ErrorBoundary";
+import { Button } from "@/components/ui/Button";
+import { Alert } from "@/components/ui/Alert";
 import { track } from "@/lib/track";
 import { useCopy } from "@/lib/use-copy";
 import { generateResumeRewrites } from "@/lib/ai-client";
@@ -172,9 +174,9 @@ export default function ResultView({ result, resumeText, jdText, onReset }: Prop
   return (
     <section className="space-y-6">
       {/* 免责声明（醒目）：对齐「防幻觉」合规要求 */}
-      <div className="rounded-xl border border-warning-300 bg-warning-50 px-4 py-3 text-sm text-warning-800 dark:border-warning-800 dark:bg-warning-950/50 dark:text-warning-200">
+      <Alert variant="warning">
         ⚠️ AI 建议仅供参考，关键求职决策请结合自身情况与人工判断；本报告不构成任何录用保证。
-      </div>
+      </Alert>
 
       {/* 可导出的报告区 */}
       <div ref={reportRef} className="space-y-6 p-1">
@@ -409,25 +411,27 @@ export default function ResultView({ result, resumeText, jdText, onReset }: Prop
 
       {/* 操作 */}
       <div className="flex flex-col gap-3 sm:flex-row">
-        <button
+        <Button
           onClick={downloadReport}
           disabled={shareLoading}
-          className="flex-1 rounded-xl bg-primary-600 py-3 font-medium text-white transition-colors hover:bg-primary-700 disabled:opacity-50"
+          className="flex-1"
         >
           {shareLoading ? "生成图片中…" : "保存报告图片"}
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="outline"
           onClick={copyReport}
-          className="flex-1 rounded-xl border border-neutral-300 bg-white py-3 font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800"
+          className="flex-1"
         >
           复制文字报告
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="outline"
           onClick={onReset}
-          className="flex-1 rounded-xl border border-neutral-300 bg-white py-3 font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800"
+          className="flex-1"
         >
           再测一份
-        </button>
+        </Button>
       </div>
 
       {shareMsg && <p className="text-center text-sm text-success-600 dark:text-success-400">{shareMsg}</p>}

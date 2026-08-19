@@ -8,6 +8,8 @@ import { getJdById, JD_LOCALES, type JdLocale } from "@/lib/jd-library";
 import { useResume } from "@/lib/resume-store";
 import { useCopy } from "@/lib/use-copy";
 import PrivacyNote from "@/components/PrivacyNote";
+import { Button } from "@/components/ui/Button";
+import { Alert } from "@/components/ui/Alert";
 import { track } from "@/lib/track";
 
 export default function VerticalClient() {
@@ -93,10 +95,10 @@ export default function VerticalClient() {
             <p className="mt-1 text-neutral-500 dark:text-neutral-400">{selected.tagline}</p>
           </div>
         </div>
-        <div className="mt-4 rounded-xl border border-warning-200 bg-warning-50 p-4 text-sm text-warning-800 dark:border-warning-900 dark:bg-warning-950/40 dark:text-warning-200">
+        <Alert variant="warning" className="mt-4">
           <span className="font-medium">核心痛点：</span>
           {selected.painPoint}
-        </div>
+        </Alert>
       </header>
 
       {/* 定位与包装建议 */}
@@ -145,12 +147,13 @@ export default function VerticalClient() {
                 </p>
                 <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">{r.note}</p>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <button
+                  <Button
+                    variant="secondary"
+                    size="sm"
                     onClick={() => copyJd(r.jdId)}
-                    className="rounded-lg bg-neutral-100 px-3 py-1.5 text-sm text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700"
                   >
                     {copiedKey === r.jdId ? "已复制 JD ✓" : "复制参考 JD"}
-                  </button>
+                  </Button>
                   <Link
                     href="/"
                     className="rounded-lg border border-neutral-300 px-3 py-1.5 text-sm text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-800"
@@ -170,12 +173,9 @@ export default function VerticalClient() {
         <p className="mb-4 text-sm text-neutral-500 dark:text-neutral-400">
           已按「{selected.recommendedTemplate}」版式预填引导占位，点击一键载入编辑器，把括号里的示例替换成你自己的真实经历即可。
         </p>
-        <button
-          onClick={openInEditor}
-          className="w-full rounded-xl bg-primary-600 py-3 font-medium text-white transition-colors hover:bg-primary-700"
-        >
+        <Button size="lg" className="w-full" onClick={openInEditor}>
           用此模板在编辑器中打开
-        </button>
+        </Button>
       </section>
 
       <PrivacyNote>

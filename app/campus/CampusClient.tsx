@@ -6,6 +6,8 @@ import { track } from "@/lib/track";
 import PrivacyNote from "@/components/PrivacyNote";
 import { Field } from "@/components/ui/Field";
 import { Input, Textarea } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
+import { Alert } from "@/components/ui/Alert";
 
 const STORAGE_KEY = "job-helper:campus-lead";
 
@@ -162,9 +164,8 @@ export default function CampusClient() {
           </p>
 
           {lead ? (
-            <div className="rounded-xl border border-success-200 bg-success-50 p-5 text-sm text-success-800 dark:border-success-900 dark:bg-success-950/40 dark:text-success-200">
-              <p className="font-medium">✅ 申请已提交（本地留存）</p>
-              <p className="mt-2">
+            <Alert variant="success" title="✅ 申请已提交（本地留存）">
+              <p>
                 {lead.school}
                 {lead.dept ? ` · ${lead.dept}` : ""} · 规模 {lead.scale}
               </p>
@@ -181,12 +182,12 @@ export default function CampusClient() {
                       /* ignore */
                     }
                   }}
-                  className="rounded-lg border border-success-300 px-3 py-1.5 text-success-700 hover:bg-success-100 dark:border-success-800 dark:text-success-300 dark:hover:bg-success-950"
+                  className="rounded-lg border border-success-300 px-3 py-1.5 text-sm text-success-700 hover:bg-success-100 dark:border-success-800 dark:text-success-300 dark:hover:bg-success-950"
                 >
                   清除本地申请记录
                 </button>
               </div>
-            </div>
+            </Alert>
           ) : (
             <div className="space-y-4">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -242,21 +243,11 @@ export default function CampusClient() {
                 />
               </Field>
 
-              {error && (
-                <p
-                  role="alert"
-                  className="rounded-lg border border-danger-200 bg-danger-50 px-4 py-3 text-sm text-danger-600 dark:border-danger-900 dark:bg-danger-950/40 dark:text-danger-400"
-                >
-                  {error}
-                </p>
-              )}
+              {error && <Alert variant="danger">{error}</Alert>}
 
-              <button
-                onClick={submit}
-                className="w-full rounded-xl bg-primary-600 py-3 font-medium text-white transition-colors hover:bg-primary-700"
-              >
+              <Button size="lg" className="w-full" onClick={submit}>
                 提交申请
-              </button>
+              </Button>
             </div>
           )}
         </div>

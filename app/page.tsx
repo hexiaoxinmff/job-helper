@@ -8,6 +8,8 @@ import { extractTextFromPdf, looksLikePdf } from "@/lib/pdf";
 import { diagnoseResume } from "@/lib/diagnose";
 import { track } from "@/lib/track";
 import { JD_LIBRARY, JD_LOCALES, getJdById, type JdLocale } from "@/lib/jd-library";
+import { Button } from "@/components/ui/Button";
+import { Alert } from "@/components/ui/Alert";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const AI_ENABLED_KEY = "job-helper:ai-enabled"; // 默认开启 AI 增强；关闭后仅规则评分，不发外部请求
@@ -328,21 +330,17 @@ export default function UploadPage() {
           </div>
 
           {error && (
-            <p
-              role="alert"
-              className="text-sm text-danger-600 bg-danger-50 border border-danger-200 rounded-lg px-4 py-3 dark:bg-danger-950/40 dark:border-danger-900 dark:text-danger-400"
-            >
-              {error}
-            </p>
+            <Alert variant="danger">{error}</Alert>
           )}
 
-          <button
-            onClick={handleSubmit}
+          <Button
+            size="lg"
+            className="w-full"
             disabled={loading}
-            className="w-full py-3.5 rounded-xl bg-primary-600 text-white font-medium text-base hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            onClick={handleSubmit}
           >
             {loading ? "诊断中…" : "开始诊断"}
-          </button>
+          </Button>
 
           {loading && progress >= 0 && (
             <div className="space-y-2" aria-live="polite">

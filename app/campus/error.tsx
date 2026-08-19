@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
+import { Button } from "@/components/ui/Button";
 
 export default function CampusError({
   error,
@@ -23,12 +24,7 @@ export default function CampusError({
           页面渲染遇到问题，重试一下即可；你填写的申请信息不会被保存。
         </p>
         <div className="mt-6 flex justify-center gap-3">
-          <button
-            onClick={retry}
-            className="rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-700"
-          >
-            重试
-          </button>
+          <Button onClick={retry}>重试</Button>
           <Link
             href="/"
             className="rounded-xl border border-neutral-300 px-5 py-2.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-800"
