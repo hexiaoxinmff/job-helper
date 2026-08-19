@@ -241,6 +241,84 @@ ${text}
   return { star, parts, tips };
 }
 
+async function actionParseResume(resumeText) {
+  const text = (resumeText || "").slice(0, 8000);
+  const prompt = `你是一位资深简历信息抽取专家。请把下面的简历文本抽取为结构化的简历 JSON（用于填进简历编辑器），严格从原文提取，不得编造任何内容（简历没有的信息留空或空数组）。
+
+【简历文本】
+${text}
+
+输出要求：
+1. basics.name 姓名；basics.title 求职意向/目标岗位（简历写"求职意向"或目标岗位时取该值，否则取摘要中提到的岗位）；email/phone 从原文提取；location 城市；website 个人链接（GitHub/博客等）；summary 用 2-3 句话概括；birth/sex 从原文提取（"出生年月/性别"字段）。
+2. advantages：个人优势/自我评价中的分条优势，每条保留「标签：说明」结构；没有就空数组。
+3. education：学校/学历/专业/起止（格式 XXXX.XX）/描述（GPA、主修课程等）。
+4. languages：语言+水平（CET-4/6、N3 等）。
+5. internships/work：实习与正式工作分开；公司/职位/起止/bullets（原文条目，3-6 条）。
+6. projects：项目名/角色/链接/起止/bullets。
+7. activities：校园经历/社团/志愿者：组织/角色/起止/描述。
+8. skills：按类别分组（编程语言/前端/后端/工具/数据库 等），items 每项一个技能。
+9. awards：奖项/证书名/时间/说明。
+10. portfolio：作品集/个人站：名称/链接/说明。
+
+严格按以下 JSON 输出（不输出其他内容）：
+{
+  "basics": {"name":"","title":"","email":"","phone":"","location":"","website":"","summary":"","birth":"","sex":""},
+  "advantages": ["标签：说明"],
+  "education": [{"school":"","degree":"","major":"","startDate":"","endDate":"","description":""}],
+  "languages": [{"language":"","level":""}],
+  "internships": [{"company":"","role":"","startDate":"","endDate":"","bullets":[""]}],
+  "work": [{"company":"","role":"","startDate":"","endDate":"","bullets":[""]}],
+  "projects": [{"name":"","role":"","link":"","startDate":"","endDate":"","bullets":[""]}],
+  "activities": [{"org":"","role":"","startDate":"","endDate":"","description":""}],
+  "skills": [{"category":"","items":[""]}],
+  "awards": [{"name":"","date":"","description":""}],
+  "portfolio": [{"name":"","link":"","description":""}]
+}`;
+
+  const content = await callDeepSeek("你只输出合法的 JSON，不做任何解释。", prompt, 2500);
+  const parsed = parseJsonObject(content);
+  const str = (v, max) => String(v ?? "").trim().slice(0, max ?? 200);
+  const arrStr = (v) => (Array.isArray(v) ? v.filter((s) => typeof s === "string").map((s) => s.trim()).filter(Boolean).slice(0, 8) : []);
+  const arrObj = (v, mapper, max) =>
+    Array.isArray(v) ? v.filter((o) => o && typeof o === "object").map(mapper).filter((o) => o && Object.values(o).some(Boolean)).slice(0, max ?? 10) : [];
+
+  const basics = parsed.basics && typeof parsed.basics === "object" ? parsed.basics : {};
+  const education = arrObj(parsed.education, (e) => ({
+    school: str(e.school), degree: str(e.degree), major: str(e.major),
+    startDate: str(e.startDate, 20), endDate: str(e.endDate, 20), description: str(e.description, 500),
+  }));
+  const languages = arrObj(parsed.languages, (l) => ({ language: str(l.language), level: str(l.level, 50) }));
+  const internships = arrObj(parsed.internships, (w) => ({
+    company: str(w.company), role: str(w.role), startDate: str(w.startDate, 20), endDate: str(w.endDate, 20), bullets: arrStr(w.bullets),
+  }));
+  const work = arrObj(parsed.work, (w) => ({
+    company: str(w.company), role: str(w.role), startDate: str(w.startDate, 20), endDate: str(w.endDate, 20), bullets: arrStr(w.bullets),
+  }));
+  const projects = arrObj(parsed.projects, (p) => ({
+    name: str(p.name), role: str(p.role), link: str(p.link), startDate: str(p.startDate, 20), endDate: str(p.endDate, 20), bullets: arrStr(p.bullets),
+  }));
+  const activities = arrObj(parsed.activities, (a) => ({
+    org: str(a.org), role: str(a.role), startDate: str(a.startDate, 20), endDate: str(a.endDate, 20), description: str(a.description, 500),
+  }));
+  const skills = arrObj(parsed.skills, (s) => ({ category: str(s.category), items: arrStr(s.items) }));
+  const awards = arrObj(parsed.awards, (a) => ({ name: str(a.name), date: str(a.date, 30), description: str(a.description, 300) }));
+  const portfolio = arrObj(parsed.portfolio, (p) => ({ name: str(p.name), link: str(p.link), description: str(p.description, 300) }));
+
+  const result = {
+    basics: {
+      name: str(basics.name), title: str(basics.title), email: str(basics.email), phone: str(basics.phone),
+      location: str(basics.location), website: str(basics.website), summary: str(basics.summary, 500),
+      birth: str(basics.birth, 30), sex: str(basics.sex, 10),
+    },
+    advantages: arrStr(parsed.advantages).slice(0, 6),
+    education, languages, internships, work, projects, activities, skills, awards, portfolio,
+  };
+  if (!result.basics.name && result.education.length === 0 && result.work.length === 0 && result.internships.length === 0) {
+    throw new Error("AI 未能从该文本中抽取到有效简历信息");
+  }
+  return result;
+}
+
 async function dispatch(payload) {
   const { action } = payload || {};
   switch (action) {
@@ -252,6 +330,8 @@ async function dispatch(payload) {
       return await actionRewrite(payload.resumeText, payload.jdText, payload.missingKeywords);
     case "star":
       return await actionStar(payload.experience);
+    case "parseResume":
+      return await actionParseResume(payload.resumeText);
     default:
       const err = new Error(`未知 action: ${action}`);
       err.status = 400;

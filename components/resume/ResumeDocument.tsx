@@ -7,9 +7,23 @@ function visible(resume: Resume, key: SectionKey) {
 
 function Contacts({ resume }: { resume: Resume }) {
   const b = resume.basics;
-  const items = [b.email, b.phone, b.location, b.website].filter(Boolean);
+  const items = [
+    { label: "电话", value: b.phone },
+    { label: "邮箱", value: b.email },
+    { label: "城市", value: b.location },
+    { label: "GitHub", value: b.website },
+  ].filter((it) => it.value);
   if (items.length === 0) return null;
-  return <p className="text-sm text-neutral-500 mt-1">{items.join("  ·  ")}</p>;
+  return (
+    <p className="text-sm text-neutral-500 mt-1">
+      {items.map((it, i) => (
+        <span key={it.label}>
+          {i > 0 && "  ·  "}
+          {it.label}：{it.value}
+        </span>
+      ))}
+    </p>
+  );
 }
 
 function Bullets({ items }: { items: string[] }) {
@@ -101,7 +115,7 @@ function ClassicTemplate({ resume }: { resume: Resume }) {
     <div className="bg-white text-neutral-800 p-10 max-w-3xl mx-auto">
       <header className="border-b-2 border-neutral-800 pb-3 mb-4">
         <h1 className="text-3xl font-bold">{b.name || "你的名字"}</h1>
-        {b.title && <p className="text-lg text-neutral-600 mt-1">{b.title}</p>}
+        {b.title && <p className="text-lg text-neutral-600 mt-1">求职意向：{b.title}</p>}
         <Contacts resume={resume} />
       </header>
 
@@ -198,7 +212,7 @@ function ModernTemplate({ resume }: { resume: Resume }) {
       <div className="p-10">
         <header className="mb-5">
           <h1 className="text-3xl font-bold text-primary-700">{b.name || "你的名字"}</h1>
-          {b.title && <p className="text-base text-neutral-500 mt-1">{b.title}</p>}
+          {b.title && <p className="text-base text-neutral-500 mt-1">求职意向：{b.title}</p>}
           <Contacts resume={resume} />
         </header>
 
@@ -294,7 +308,7 @@ function CompactTemplate({ resume }: { resume: Resume }) {
     <div className="bg-white text-neutral-800 p-8 max-w-3xl mx-auto text-sm leading-snug">
       <header className="mb-3">
         <h1 className="text-2xl font-bold">{b.name || "你的名字"}</h1>
-        {b.title && <p className="text-neutral-600">{b.title}</p>}
+        {b.title && <p className="text-neutral-600">求职意向：{b.title}</p>}
         <Contacts resume={resume} />
       </header>
 
@@ -447,7 +461,7 @@ function SidebarTemplate({ resume }: { resume: Resume }) {
     <div className="bg-white text-neutral-800 max-w-3xl mx-auto flex min-h-[900px] print:min-h-0">
       <aside className="w-1/3 bg-neutral-900 text-neutral-100 p-6 print:bg-neutral-900">
         <h1 className="text-xl font-bold leading-tight">{b.name || "你的名字"}</h1>
-        {b.title && <p className="mt-1 text-sm text-neutral-300">{b.title}</p>}
+        {b.title && <p className="mt-1 text-sm text-neutral-300">求职意向：{b.title}</p>}
 
         {contacts.length > 0 && (
           <div className="mt-4 space-y-1 text-xs text-neutral-300">
@@ -596,7 +610,7 @@ function ElegantTemplate({ resume }: { resume: Resume }) {
       <header className="mb-6 text-center">
         <h1 className="text-3xl font-semibold tracking-wide">{b.name || "你的名字"}</h1>
         {b.title && (
-          <p className="mt-1 text-sm uppercase tracking-[0.2em] text-neutral-500">{b.title}</p>
+          <p className="mt-1 text-sm uppercase tracking-[0.2em] text-neutral-500">求职意向：{b.title}</p>
         )}
         {contacts.length > 0 && (
           <div className="mt-2 flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs text-neutral-500">
@@ -722,7 +736,7 @@ function CreativeTemplate({ resume }: { resume: Resume }) {
     <div className="bg-white text-neutral-800 max-w-3xl mx-auto">
       <header className="bg-indigo-600 p-8 text-white print:bg-indigo-600">
         <h1 className="text-3xl font-bold">{b.name || "你的名字"}</h1>
-        {b.title && <p className="mt-1 text-indigo-100">{b.title}</p>}
+        {b.title && <p className="mt-1 text-indigo-100">求职意向：{b.title}</p>}
         {contacts.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-indigo-50">
             {contacts.map((c, i) => (
@@ -866,7 +880,6 @@ function TimelineItem({
 
 function TimelineTemplate({ resume }: { resume: Resume }) {
   const b = resume.basics;
-  const contacts = [b.email, b.phone, b.location, b.website].filter(Boolean);
   return (
     <div className="relative mx-auto max-w-3xl bg-white text-neutral-800">
       {/* 左侧蓝色细边条 */}
@@ -886,12 +899,19 @@ function TimelineTemplate({ resume }: { resume: Resume }) {
         </div>
       </div>
 
-      {/* 头部：姓名 / 目标岗位 / 联系方式 / 简介 */}
+      {/* 头部：姓名 / 求职意向 / 联系方式（带标签，对齐何钊新 PDF）/ 简介 */}
       <div className="relative px-10 pb-2 pt-6">
         <h1 className="text-3xl font-bold text-neutral-900">{b.name || "你的名字"}</h1>
-        {b.title && <p className="mt-1 text-sm text-neutral-500">{b.title}</p>}
-        {contacts.length > 0 && (
-          <p className="mt-2 text-xs text-neutral-600">{contacts.join("　·　")}</p>
+        {b.title && <p className="mt-1 text-sm text-neutral-500">求职意向：{b.title}</p>}
+        {(b.phone || b.email || b.birth || b.sex || b.location || b.website) && (
+          <div className="mt-2 flex flex-wrap gap-x-6 gap-y-0.5 text-xs text-neutral-600">
+            {b.phone && <span>电话：{b.phone}</span>}
+            {b.birth && <span>出生年月：{b.birth}</span>}
+            {b.email && <span>邮箱：{b.email}</span>}
+            {b.sex && <span>性别：{b.sex}</span>}
+            {b.location && <span>城市：{b.location}</span>}
+            {b.website && <span>GitHub：{b.website}</span>}
+          </div>
         )}
         {b.summary && <p className="mt-3 text-sm leading-relaxed text-neutral-700">{b.summary}</p>}
       </div>

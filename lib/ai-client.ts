@@ -1,6 +1,8 @@
 // 浏览器端 AI 调用封装：统一打到 ai-proxy 云函数（隐藏 DeepSeek Key）。
 // 失败时返回 null，由调用方降级为规则结果。
 
+import type { ParsedResumeInput } from "./resume-import";
+
 const AI_PROXY_URL =
   process.env.NEXT_PUBLIC_AI_PROXY_URL ||
   "https://xiaoxin2026-personal-d1acf1a1fb0-1469931868.ap-shanghai.app.tcloudbase.com/ai-proxy";
@@ -81,4 +83,11 @@ export function generateResumeRewrites(
 
 export function generateStarDescription(experience: string): Promise<StarResult | null> {
   return callAiProxy<StarResult>("star", { experience });
+}
+
+/** AI 简历解析：文本 → 结构化简历（不含 id，由调用方补齐） */
+export type AiParsedResume = ParsedResumeInput;
+
+export function parseResumeByAi(text: string): Promise<AiParsedResume | null> {
+  return callAiProxy<AiParsedResume>("parseResume", { resumeText: text });
 }

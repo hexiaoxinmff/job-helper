@@ -6,6 +6,8 @@ import { Card } from "@/components/ui/Card";
 import { Field } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import ImportDialog from "@/components/ImportDialog";
+import type { ParsedResumeInput } from "@/lib/resume-import";
 import Link from "next/link";
 import type {
   BasicInfo,
@@ -234,6 +236,7 @@ function GroupCard({
 export default function EditorClient() {
   const { resume, hydrated, setResume, reset } = useResume();
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const progress = computeProgress(resume);
 
   const patchBasics = (patch: Partial<BasicInfo>) =>
@@ -370,6 +373,36 @@ export default function EditorClient() {
       visibility: { ...p.visibility, [key]: p.visibility[key] === false ? true : false },
     }));
 
+  /** 导入结果合并：非空字段覆盖，空板块保留已有内容（数组补 id） */
+  const applyImport = (parsed: ParsedResumeInput) => {
+    setResume((p) => {
+      const b = parsed.basics ?? {};
+      const nextBasics = { ...p.basics };
+      for (const k of Object.keys(b) as (keyof BasicInfo)[]) {
+        const v = b[k];
+        if (v !== undefined && String(v).trim() !== "") nextBasics[k] = v as never;
+      }
+      const withIds = <T,>(next?: T[]): (T & { id: string })[] | undefined =>
+        next && next.length > 0 ? next.map((it) => ({ ...it, id: uid() })) : undefined;
+      const adv = parsed.advantages?.length ? parsed.advantages : undefined;
+
+      return {
+        ...p,
+        basics: nextBasics,
+        advantages: adv ?? p.advantages,
+        education: withIds(parsed.education) ?? p.education,
+        languages: withIds(parsed.languages) ?? p.languages,
+        internships: withIds(parsed.internships) ?? p.internships,
+        work: withIds(parsed.work) ?? p.work,
+        projects: withIds(parsed.projects) ?? p.projects,
+        activities: withIds(parsed.activities) ?? p.activities,
+        skills: withIds(parsed.skills) ?? p.skills,
+        awards: withIds(parsed.awards) ?? p.awards,
+        portfolio: withIds(parsed.portfolio) ?? p.portfolio,
+      };
+    });
+  };
+
   const handleReset = () => {
     setResetConfirmOpen(true);
   };
@@ -401,6 +434,9 @@ export default function EditorClient() {
           <p className="mt-2 text-neutral-600 dark:text-neutral-300">填写内容，自动保存到本地浏览器</p>
         </div>
         <div className="flex gap-2 print:hidden">
+          <Button variant="secondary" onClick={() => setImportOpen(true)}>
+            导入简历
+          </Button>
           <Link
             href="/preview"
             className="inline-flex items-center justify-center rounded-lg border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-800"
@@ -917,6 +953,15 @@ export default function EditorClient() {
         okLabel="确认清空"
         onConfirm={confirmReset}
         onCancel={() => setResetConfirmOpen(false)}
+      />
+
+      <ImportDialog
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        onImport={(parsed) => {
+          applyImport(parsed);
+          setImportOpen(false);
+        }}
       />
     </main>
   );
