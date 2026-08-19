@@ -14,7 +14,8 @@ export default function GlobalError({
   }, [error]);
 
   // global-error 会替换根布局，无法使用全局样式与主题切换，
-  // 这里用内联样式保证自带可用的外观。
+  // 这里用内联样式保证自带可用的外观；颜色优先读根 CSS 变量（--jh-*），
+  // 变量缺失时回退到兜底色值（与变量定义一致），避免全局 CSS 未加载时白屏。
   return (
     <html lang="zh-CN">
       <body
@@ -24,8 +25,8 @@ export default function GlobalError({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#0f172a",
-          color: "#e2e8f0",
+          background: "var(--jh-bg, #0f172a)",
+          color: "var(--jh-fg, #e2e8f0)",
           fontFamily:
             'ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif',
         }}
@@ -36,18 +37,18 @@ export default function GlobalError({
             width: "90%",
             padding: 32,
             borderRadius: 16,
-            border: "1px solid #334155",
-            background: "#1e293b",
+            border: "1px solid var(--jh-border-strong, #334155)",
+            background: "var(--jh-bg-elevated, #1e293b)",
             textAlign: "center",
           }}
         >
           <div style={{ fontSize: 40, marginBottom: 12 }}>⚠️</div>
           <h1 style={{ fontSize: 20, fontWeight: 600, margin: 0 }}>应用出错了</h1>
-          <p style={{ marginTop: 8, fontSize: 14, color: "#94a3b8" }}>
+          <p style={{ marginTop: 8, fontSize: 14, color: "var(--jh-fg-muted, #94a3b8)" }}>
             发生了无法恢复的错误，请重试。
           </p>
           {error.digest && (
-            <p style={{ marginTop: 4, fontSize: 12, color: "#64748b" }}>
+            <p style={{ marginTop: 4, fontSize: 12, color: "var(--jh-fg-faint, #64748b)" }}>
               错误码：{error.digest}
             </p>
           )}
@@ -58,7 +59,7 @@ export default function GlobalError({
               padding: "10px 20px",
               borderRadius: 12,
               border: "none",
-              background: "#2563eb",
+              background: "var(--jh-primary-600, #2563eb)",
               color: "#fff",
               fontSize: 14,
               fontWeight: 500,

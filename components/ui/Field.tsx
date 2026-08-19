@@ -16,7 +16,7 @@ interface FieldProps {
 export function Field({ label, hint, children, value, onChange, placeholder, textarea }: FieldProps) {
   return (
     <label className="block">
-      <span className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">{label}</span>
+      <span className="mb-1 block text-sm font-medium text-neutral-700 dark:text-neutral-200">{label}</span>
       {children ??
         (textarea ? (
           <Textarea
@@ -27,7 +27,7 @@ export function Field({ label, hint, children, value, onChange, placeholder, tex
         ) : (
           <Input value={value} placeholder={placeholder} onChange={(e) => onChange?.(e.target.value)} />
         ))}
-      {hint && <span className="mt-1 block text-xs text-slate-400 dark:text-slate-500">{hint}</span>}
+      {hint && <span className="mt-1 block text-xs text-neutral-400 dark:text-neutral-500">{hint}</span>}
     </label>
   );
 }

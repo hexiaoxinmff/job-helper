@@ -50,41 +50,41 @@ export default function PrivacyModal() {
       role="dialog"
       aria-modal="true"
       aria-labelledby="privacy-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-privacy-fade"
+      className="fixed inset-0 z-50 flex items-center justify-center p-md animate-privacy-fade"
     >
       {/* 遮罩 */}
-      <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-neutral-900/50 backdrop-blur-sm" />
 
       {/* 弹窗卡片 */}
-      <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-slate-200 animate-privacy-pop dark:bg-slate-900 dark:ring-slate-700">
-        <div className="flex items-center gap-3">
+      <div className="relative w-full max-w-md rounded-2xl bg-white p-lg shadow-2xl ring-1 ring-neutral-200 animate-privacy-pop dark:bg-neutral-900 dark:ring-neutral-700">
+        <div className="flex items-center gap-sm">
           <span className="text-2xl" aria-hidden="true">
             🔒
           </span>
           <h2
             id="privacy-title"
-            className="text-lg font-semibold text-slate-900 dark:text-slate-100"
+            className="text-lg font-semibold text-neutral-900 dark:text-neutral-100"
           >
             隐私承诺
           </h2>
         </div>
 
-        <p className="mt-4 text-[15px] leading-relaxed text-slate-600 dark:text-slate-300">
-          简历仅在你的浏览器内解析、<span className="font-medium text-slate-800 dark:text-slate-100">不落库、不存储</span>；
+        <p className="mt-md text-[15px] leading-relaxed text-neutral-600 dark:text-neutral-300">
+          简历仅在你的浏览器内解析、<span className="font-medium text-neutral-800 dark:text-neutral-100">不落库、不存储</span>；
           开启 AI 增强时，文本会经云函数代理转发给 AI 服务商用于生成诊断建议，
-          <span className="font-medium text-slate-800 dark:text-slate-100">不留存、不记录</span>，你可随时在诊断页关闭该功能。
+          <span className="font-medium text-neutral-800 dark:text-neutral-100">不留存、不记录</span>，你可随时在诊断页关闭该功能。
           你的数据安全由你掌控，请放心使用。
         </p>
 
         <button
           type="button"
           onClick={acknowledge}
-          className="mt-6 w-full inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
+          className="mt-lg w-full inline-flex items-center justify-center gap-xs rounded-lg bg-primary-600 px-md py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-neutral-900"
         >
           我已知晓
         </button>
 
-        <p className="mt-3 text-center text-xs text-slate-400 dark:text-slate-500">
+        <p className="mt-sm text-center text-xs text-neutral-400 dark:text-neutral-500">
           勾选后本承诺将不再自动弹出（清除本站数据可重新查看）
         </p>
       </div>

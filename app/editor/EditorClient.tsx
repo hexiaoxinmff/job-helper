@@ -37,51 +37,51 @@ const fromLines = (text: string) =>
 
 /** 模板缩略预览 */
 function TemplateThumb({ id }: { id: TemplateId }) {
-  const base = "h-16 w-full overflow-hidden rounded-md border border-slate-200 bg-white";
+  const base = "h-16 w-full overflow-hidden rounded-md border border-neutral-200 bg-white";
   switch (id) {
     case "classic":
       return (
-        <div className={`${base} p-2`}>
-          <div className="h-3 w-1/2 rounded bg-slate-700" />
-          <div className="mt-2 h-1.5 w-3/4 rounded bg-slate-300" />
-          <div className="mt-1 h-1.5 w-2/3 rounded bg-slate-200" />
+        <div className={`${base} p-xs`}>
+          <div className="h-3 w-1/2 rounded bg-neutral-700" />
+          <div className="mt-xs h-1.5 w-3/4 rounded bg-neutral-300" />
+          <div className="mt-1 h-1.5 w-2/3 rounded bg-neutral-200" />
         </div>
       );
     case "modern":
       return (
         <div className={base}>
-          <div className="h-1.5 w-full bg-blue-600" />
-          <div className="p-2">
-            <div className="h-2.5 w-1/2 rounded bg-blue-500" />
-            <div className="mt-1.5 h-1.5 w-3/4 rounded bg-slate-200" />
+          <div className="h-1.5 w-full bg-primary-600" />
+          <div className="p-xs">
+            <div className="h-2.5 w-1/2 rounded bg-primary-500" />
+            <div className="mt-1.5 h-1.5 w-3/4 rounded bg-neutral-200" />
           </div>
         </div>
       );
     case "compact":
       return (
-        <div className={`${base} p-2`}>
-          <div className="h-1.5 w-1/2 rounded bg-slate-600" />
-          <div className="mt-1 h-1 w-3/4 rounded bg-slate-200" />
-          <div className="mt-1 h-1 w-2/3 rounded bg-slate-200" />
+        <div className={`${base} p-xs`}>
+          <div className="h-1.5 w-1/2 rounded bg-neutral-600" />
+          <div className="mt-1 h-1 w-3/4 rounded bg-neutral-200" />
+          <div className="mt-1 h-1 w-2/3 rounded bg-neutral-200" />
         </div>
       );
     case "sidebar":
       return (
         <div className={`${base} flex`}>
-          <div className="w-1/3 bg-slate-800" />
+          <div className="w-1/3 bg-neutral-800" />
           <div className="flex-1 space-y-1 p-1.5">
-            <div className="h-1.5 w-1/2 rounded bg-slate-400" />
-            <div className="h-1 w-3/4 rounded bg-slate-200" />
-            <div className="h-1 w-2/3 rounded bg-slate-200" />
+            <div className="h-1.5 w-1/2 rounded bg-neutral-400" />
+            <div className="h-1 w-3/4 rounded bg-neutral-200" />
+            <div className="h-1 w-2/3 rounded bg-neutral-200" />
           </div>
         </div>
       );
     case "elegant":
       return (
         <div className={`${base} flex flex-col items-center justify-center`}>
-          <div className="h-2.5 w-1/2 rounded bg-slate-700" />
-          <div className="my-1 h-px w-8 bg-slate-400" />
-          <div className="h-1 w-2/3 rounded bg-slate-200" />
+          <div className="h-2.5 w-1/2 rounded bg-neutral-700" />
+          <div className="my-1 h-px w-8 bg-neutral-400" />
+          <div className="h-1 w-2/3 rounded bg-neutral-200" />
         </div>
       );
     case "creative":
@@ -89,8 +89,8 @@ function TemplateThumb({ id }: { id: TemplateId }) {
         <div className={base}>
           <div className="h-5 w-full bg-gradient-to-r from-indigo-600 to-violet-600" />
           <div className="space-y-1 p-1.5">
-            <div className="h-1.5 w-1/2 rounded bg-slate-300" />
-            <div className="h-1 w-3/4 rounded bg-slate-200" />
+            <div className="h-1.5 w-1/2 rounded bg-neutral-300" />
+            <div className="h-1 w-3/4 rounded bg-neutral-200" />
           </div>
         </div>
       );
@@ -117,7 +117,7 @@ function computeProgress(r: Resume) {
 /** 引导提示条 */
 function Tip({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mb-4 rounded-lg bg-blue-50 px-3 py-2 text-xs leading-relaxed text-slate-600 dark:bg-blue-950/40 dark:text-slate-300">
+    <div className="mb-md rounded-lg bg-primary-50 px-sm py-xs text-xs leading-relaxed text-neutral-600 dark:bg-primary-950/40 dark:text-neutral-300">
       {children}
     </div>
   );
@@ -125,7 +125,7 @@ function Tip({ children }: { children: React.ReactNode }) {
 
 /** 空区块引导 */
 function EmptyHint({ text }: { text: string }) {
-  return <p className="text-sm text-slate-400 dark:text-slate-500">{text}</p>;
+  return <p className="text-sm text-neutral-400 dark:text-neutral-500">{text}</p>;
 }
 
 export default function EditorClient() {
@@ -200,28 +200,28 @@ export default function EditorClient() {
   // 本地数据回填前渲染骨架，避免空表单一闪而过后才填充（hydration 闪白）
   if (!hydrated) {
     return (
-      <main className="flex-1 w-full max-w-3xl mx-auto px-4 py-10">
-        <div className="animate-pulse space-y-4">
-          <div className="h-9 w-48 rounded-lg bg-slate-200 dark:bg-slate-800" />
-          <div className="h-4 w-72 rounded bg-slate-200 dark:bg-slate-800" />
-          <div className="h-64 rounded-2xl bg-slate-200 dark:bg-slate-800" />
-          <div className="h-40 rounded-2xl bg-slate-200 dark:bg-slate-800" />
+      <main className="flex-1 w-full max-w-3xl mx-auto px-md py-2xl">
+        <div className="animate-pulse space-y-md">
+          <div className="h-9 w-48 rounded-lg bg-neutral-200 dark:bg-neutral-800" />
+          <div className="h-4 w-72 rounded bg-neutral-200 dark:bg-neutral-800" />
+          <div className="h-64 rounded-2xl bg-neutral-200 dark:bg-neutral-800" />
+          <div className="h-40 rounded-2xl bg-neutral-200 dark:bg-neutral-800" />
         </div>
       </main>
     );
   }
 
   return (
-    <main className="flex-1 w-full max-w-3xl mx-auto px-4 py-10">
-      <header className="mb-6 flex items-start justify-between gap-4">
+    <main className="flex-1 w-full max-w-3xl mx-auto px-md py-2xl">
+      <header className="mb-lg flex items-start justify-between gap-md">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">简历编辑器</h1>
-          <p className="mt-2 text-slate-600 dark:text-slate-300">填写内容，自动保存到本地浏览器</p>
+          <h1 className="text-3xl font-bold text-neutral-900 dark:text-neutral-100">简历编辑器</h1>
+          <p className="mt-xs text-neutral-600 dark:text-neutral-300">填写内容，自动保存到本地浏览器</p>
         </div>
-        <div className="flex gap-2 print:hidden">
+        <div className="flex gap-xs print:hidden">
           <Link
             href="/preview"
-            className="inline-flex items-center justify-center rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            className="inline-flex items-center justify-center rounded-lg border border-neutral-300 px-md py-xs text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-800"
           >
             预览 / 导出
           </Link>
@@ -234,20 +234,20 @@ export default function EditorClient() {
       {/* 完成度进度 */}
       <Card className="print:hidden">
         <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
+          <span className="text-sm font-medium text-neutral-700 dark:text-neutral-200">
             简历完成度
           </span>
-          <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">
+          <span className="text-sm font-semibold text-primary-600 dark:text-primary-400">
             {progress.percent}%
           </span>
         </div>
-        <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+        <div className="mt-xs h-2 w-full overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-800">
           <div
-            className="h-full rounded-full bg-blue-600 transition-all"
+            className="h-full rounded-full bg-primary-600 transition-all"
             style={{ width: `${progress.percent}%` }}
           />
         </div>
-        <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
+        <p className="mt-xs text-xs text-neutral-400 dark:text-neutral-500">
           {progress.missing.length === 0
             ? "各部分已填写，可直接预览导出 🎉"
             : `还差：${progress.missing.join("、")}（共 ${progress.done}/${progress.total} 项已填）`}
@@ -255,39 +255,39 @@ export default function EditorClient() {
       </Card>
 
       {/* 模板样式选择 */}
-      <Card title="模板样式" className="mt-6 print:hidden">
-        <p className="mb-3 text-xs text-slate-400 dark:text-slate-500">
+      <Card title="模板样式" className="mt-lg print:hidden">
+        <p className="mb-sm text-xs text-neutral-400 dark:text-neutral-500">
           选择一套版式，内容填写不受模板影响，可随时切换。
         </p>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <div className="grid grid-cols-2 gap-sm sm:grid-cols-3">
           {TEMPLATES.map((t) => (
             <button
               key={t.id}
               type="button"
               onClick={() => setResume((p) => ({ ...p, template: t.id }))}
-              className={`flex flex-col rounded-xl border p-2 text-left transition-colors ${
+              className={`flex flex-col rounded-xl border p-xs text-left transition-colors ${
                 resume.template === t.id
-                  ? "border-blue-500 bg-blue-50 ring-2 ring-blue-200 dark:bg-blue-950/40"
-                  : "border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
+                  ? "border-primary-500 bg-primary-50 ring-2 ring-primary-200 dark:bg-primary-950/40"
+                  : "border-neutral-200 hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-800"
               }`}
             >
               <TemplateThumb id={t.id} />
-              <span className="mt-2 text-sm font-medium text-slate-800 dark:text-slate-100">
+              <span className="mt-xs text-sm font-medium text-neutral-800 dark:text-neutral-100">
                 {t.label}
               </span>
-              <span className="text-xs text-slate-400 dark:text-slate-500">{t.desc}</span>
+              <span className="text-xs text-neutral-400 dark:text-neutral-500">{t.desc}</span>
             </button>
           ))}
         </div>
       </Card>
 
-      <div className="space-y-6">
-        <Card title="基本信息" className="mt-6">
+      <div className="space-y-lg">
+        <Card title="基本信息" className="mt-lg">
           <Tip>
             💡 求职意向写<strong>具体岗位名</strong>（如「前端开发工程师」），比「工程师」更精准；
             个人简介用 2–3 句话概括你的核心优势与求职方向。
           </Tip>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-md">
             <Field label="姓名" placeholder="张三" value={resume.basics.name} onChange={(v) => patchBasics({ name: v })} />
             <Field label="求职意向" placeholder="前端开发工程师" value={resume.basics.title} onChange={(v) => patchBasics({ title: v })} />
             <Field label="邮箱" placeholder="name@example.com" value={resume.basics.email} onChange={(v) => patchBasics({ email: v })} />
@@ -295,7 +295,7 @@ export default function EditorClient() {
             <Field label="所在地" placeholder="上海" value={resume.basics.location} onChange={(v) => patchBasics({ location: v })} />
             <Field label="个人网站" placeholder="github.com/yourname" value={resume.basics.website} onChange={(v) => patchBasics({ website: v })} />
           </div>
-          <div className="mt-4">
+          <div className="mt-md">
             <Field
               label="个人简介"
               placeholder="用 2–3 句话概括你的核心优势、专长与求职方向"
@@ -310,22 +310,22 @@ export default function EditorClient() {
           <Tip>
             💡 按<strong>时间倒序</strong>填写；GPA、专业排名、核心课程、荣誉奖项都可写进「描述」。
           </Tip>
-          <div className="space-y-4">
+          <div className="space-y-md">
             {resume.education.length === 0 && (
               <EmptyHint text="还没有教育经历，点击下方按钮添加；应届生请填写在读院校。" />
             )}
             {resume.education.map((e) => (
-              <div key={e.id} className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div key={e.id} className="rounded-xl border border-neutral-200 p-md dark:border-neutral-700">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-sm">
                   <Field label="学校" placeholder="某某大学" value={e.school} onChange={(v) => updateEducation(e.id, { school: v })} />
                   <Field label="学历" placeholder="本科 / 硕士" value={e.degree} onChange={(v) => updateEducation(e.id, { degree: v })} />
                   <Field label="专业" placeholder="计算机科学与技术" value={e.major} onChange={(v) => updateEducation(e.id, { major: v })} />
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-xs">
                     <Field label="开始" placeholder="2022.09" value={e.startDate} onChange={(v) => updateEducation(e.id, { startDate: v })} />
                     <Field label="结束" placeholder="2026.06" value={e.endDate} onChange={(v) => updateEducation(e.id, { endDate: v })} />
                   </div>
                 </div>
-                <div className="mt-3">
+                <div className="mt-sm">
                   <Field
                     label="描述（可选）"
                     placeholder="如：GPA 3.8/4.0，专业前 5%；曾获国家奖学金"
@@ -337,7 +337,7 @@ export default function EditorClient() {
                 <button
                   type="button"
                   onClick={() => removeEducation(e.id)}
-                  className="mt-2 text-sm text-red-600 hover:underline dark:text-red-400"
+                  className="mt-xs text-sm text-danger-600 hover:underline dark:text-danger-400"
                 >
                   删除
                 </button>
@@ -354,19 +354,19 @@ export default function EditorClient() {
             💡 用 <strong>STAR 句式</strong>（情境-任务-行动-结果），每条突出<strong>量化成果</strong>，
             如「主导 X 项目，通过 Y 方案，使 Z 指标提升 30%」。
           </Tip>
-          <div className="space-y-4">
+          <div className="space-y-md">
             {resume.work.length === 0 && (
               <EmptyHint text="暂无工作经历？可填写实习，或直接在下方添加「项目经历」。" />
             )}
             {resume.work.map((w) => (
-              <div key={w.id} className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div key={w.id} className="rounded-xl border border-neutral-200 p-md dark:border-neutral-700">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-sm">
                   <Field label="公司" placeholder="某某科技有限公司" value={w.company} onChange={(v) => updateWork(w.id, { company: v })} />
                   <Field label="职位" placeholder="前端开发工程师" value={w.role} onChange={(v) => updateWork(w.id, { role: v })} />
                   <Field label="开始" placeholder="2024.07" value={w.startDate} onChange={(v) => updateWork(w.id, { startDate: v })} />
                   <Field label="结束" placeholder="2025.08" value={w.endDate} onChange={(v) => updateWork(w.id, { endDate: v })} />
                 </div>
-                <div className="mt-3">
+                <div className="mt-sm">
                   <Field
                     label="工作描述（每行一条，建议用 STAR 句式）"
                     placeholder={"例：负责 XX 模块，通过 XX 优化，使页面加载时间降低 40%"}
@@ -378,7 +378,7 @@ export default function EditorClient() {
                 <button
                   type="button"
                   onClick={() => removeWork(w.id)}
-                  className="mt-2 text-sm text-red-600 hover:underline dark:text-red-400"
+                  className="mt-xs text-sm text-danger-600 hover:underline dark:text-danger-400"
                 >
                   删除
                 </button>
@@ -395,22 +395,22 @@ export default function EditorClient() {
             💡 写清你担任的<strong>角色</strong>、使用的<strong>关键技术</strong>，以及最终<strong>产出/影响</strong>；
             有链接（仓库 / 演示）一定填上，更有说服力。
           </Tip>
-          <div className="space-y-4">
+          <div className="space-y-md">
             {resume.projects.length === 0 && (
               <EmptyHint text="还没有项目经历，点击下方按钮添加（课程设计、竞赛、开源贡献都算）。" />
             )}
             {resume.projects.map((x) => (
-              <div key={x.id} className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div key={x.id} className="rounded-xl border border-neutral-200 p-md dark:border-neutral-700">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-sm">
                   <Field label="项目名称" placeholder="项目名称" value={x.name} onChange={(v) => updateProject(x.id, { name: v })} />
                   <Field label="角色" placeholder="负责人 / 核心开发" value={x.role} onChange={(v) => updateProject(x.id, { role: v })} />
                   <Field label="链接" placeholder="github.com/... 或 演示链接" value={x.link} onChange={(v) => updateProject(x.id, { link: v })} />
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-xs">
                     <Field label="开始" placeholder="2024.03" value={x.startDate} onChange={(v) => updateProject(x.id, { startDate: v })} />
                     <Field label="结束" placeholder="2024.06" value={x.endDate} onChange={(v) => updateProject(x.id, { endDate: v })} />
                   </div>
                 </div>
-                <div className="mt-3">
+                <div className="mt-sm">
                   <Field
                     label="项目描述（每行一条）"
                     placeholder={"例：作为核心开发，使用 React+TS 搭建 XX 系统，服务 1w+ 用户"}
@@ -422,7 +422,7 @@ export default function EditorClient() {
                 <button
                   type="button"
                   onClick={() => removeProject(x.id)}
-                  className="mt-2 text-sm text-red-600 hover:underline dark:text-red-400"
+                  className="mt-xs text-sm text-danger-600 hover:underline dark:text-danger-400"
                 >
                   删除
                 </button>
@@ -439,14 +439,14 @@ export default function EditorClient() {
             💡 按<strong>熟练度分组</strong>（如 熟练掌握 / 了解），避免堆砌无关工具；
             语言、框架、工具分开写更清晰。
           </Tip>
-          <div className="space-y-4">
+          <div className="space-y-md">
             {resume.skills.length === 0 && (
               <EmptyHint text="还没有技能分组，点击下方按钮添加（如：前端 / 后端 / 语言）。" />
             )}
             {resume.skills.map((s) => (
-              <div key={s.id} className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
+              <div key={s.id} className="rounded-xl border border-neutral-200 p-md dark:border-neutral-700">
                 <Field label="分类" placeholder="前端 / 后端 / 语言" value={s.category} onChange={(v) => updateSkill(s.id, { category: v })} />
-                <div className="mt-3">
+                <div className="mt-sm">
                   <Field
                     label="技能（每行一个，如：React / TypeScript）"
                     placeholder={"React\nTypeScript\nNext.js"}
@@ -458,7 +458,7 @@ export default function EditorClient() {
                 <button
                   type="button"
                   onClick={() => removeSkill(s.id)}
-                  className="mt-2 text-sm text-red-600 hover:underline dark:text-red-400"
+                  className="mt-xs text-sm text-danger-600 hover:underline dark:text-danger-400"
                 >
                   删除
                 </button>
@@ -470,7 +470,7 @@ export default function EditorClient() {
           </div>
         </Card>
 
-        <p className="text-xs text-slate-400 text-center dark:text-slate-500">
+        <p className="text-xs text-neutral-400 text-center dark:text-neutral-500">
           内容自动保存在本地浏览器，不会上传服务器
         </p>
       </div>

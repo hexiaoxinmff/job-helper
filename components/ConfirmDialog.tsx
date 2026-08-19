@@ -73,8 +73,8 @@ export default function ConfirmDialog({
   const titleId = "confirm-dialog-title";
   const descId = "confirm-dialog-desc";
   const okCls = danger
-    ? "bg-red-600 hover:bg-red-700 focus-visible:ring-red-400"
-    : "bg-blue-600 hover:bg-blue-700 focus-visible:ring-blue-400";
+    ? "bg-danger-600 hover:bg-danger-700 focus-visible:ring-danger-400"
+    : "bg-primary-600 hover:bg-primary-700 focus-visible:ring-primary-400";
 
   return (
     <div
@@ -83,44 +83,44 @@ export default function ConfirmDialog({
       aria-labelledby={titleId}
       aria-describedby={description ? descId : undefined}
       onClick={handleBackdropClick}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-privacy-fade"
+      className="fixed inset-0 z-50 flex items-center justify-center p-md animate-privacy-fade"
     >
       {/* 遮罩 */}
-      <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" aria-hidden="true" />
+      <div className="absolute inset-0 bg-neutral-900/50 backdrop-blur-sm" aria-hidden="true" />
 
       {/* 弹窗卡片 */}
       <div
         ref={dialogRef}
-        className="relative w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-slate-200 animate-privacy-pop dark:bg-slate-900 dark:ring-slate-700"
+        className="relative w-full max-w-sm rounded-2xl bg-white p-lg shadow-2xl ring-1 ring-neutral-200 animate-privacy-pop dark:bg-neutral-900 dark:ring-neutral-700"
       >
         <h2
           id={titleId}
-          className="text-lg font-semibold text-slate-900 dark:text-slate-100"
+          className="text-lg font-semibold text-neutral-900 dark:text-neutral-100"
         >
           {title}
         </h2>
         {description && (
           <p
             id={descId}
-            className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300"
+            className="mt-sm text-sm leading-relaxed text-neutral-600 dark:text-neutral-300"
           >
             {description}
           </p>
         )}
 
-        <div className="mt-6 flex justify-end gap-2">
+        <div className="mt-lg flex justify-end gap-xs">
           <button
             ref={cancelRef}
             type="button"
             onClick={onCancel}
-            className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 dark:focus-visible:ring-offset-slate-900"
+            className="inline-flex items-center justify-center rounded-lg border border-neutral-300 bg-white px-md py-xs text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-2 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700 dark:focus-visible:ring-offset-neutral-900"
           >
             {cancelLabel}
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className={`inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 ${okCls}`}
+            className={`inline-flex items-center justify-center rounded-lg px-md py-xs text-sm font-medium text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-neutral-900 ${okCls}`}
           >
             {okLabel}
           </button>

@@ -28,7 +28,7 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
       onClick={toggle}
       aria-label={isDark ? "切换到亮色模式" : "切换到暗色模式"}
       title={isDark ? "切换到亮色模式" : "切换到暗色模式"}
-      className={`inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-600 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 ${className}`}
+      className={`inline-flex items-center justify-center rounded-lg border border-neutral-300 bg-white text-neutral-600 transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700 ${className}`}
     >
       {isDark ? <SunIcon /> : <MoonIcon />}
     </button>

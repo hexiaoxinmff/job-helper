@@ -35,16 +35,16 @@ export default function VerticalClient() {
 
   if (!selected) {
     return (
-      <main className="flex-1 w-full max-w-4xl mx-auto px-4 py-10">
-        <header className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">垂直人群模板</h1>
-          <p className="mt-3 text-slate-600 dark:text-slate-300">
+      <main className="flex-1 w-full max-w-4xl mx-auto px-md py-2xl">
+        <header className="mb-xl">
+          <h1 className="text-3xl font-bold text-neutral-900 dark:text-neutral-100">垂直人群模板</h1>
+          <p className="mt-sm text-neutral-600 dark:text-neutral-300">
             针对高价值垂直人群（跨专业转码 / 考公转行 / 二战转就业 / 应届零实习 / 在职跳槽 / 海归）的起步简历骨架与定位建议。
             每个模板都「诚实不编造」——只给结构与引导，经历由你填写。
           </p>
         </header>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-md sm:grid-cols-2">
           {VERTICAL_TEMPLATES.map((t) => (
             <button
               key={t.id}
@@ -52,19 +52,19 @@ export default function VerticalClient() {
                 setSelectedId(t.id);
                 track("vertical_view", { id: t.id });
               }}
-              className="rounded-2xl border border-slate-200 bg-white p-5 text-left transition-colors hover:border-blue-400 hover:bg-blue-50/40 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-700 dark:hover:bg-blue-950/30"
+              className="rounded-2xl border border-neutral-200 bg-white p-5 text-left transition-colors hover:border-primary-400 hover:bg-primary-50/40 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-primary-700 dark:hover:bg-primary-950/30"
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-sm">
                 <span className="text-3xl">{t.emoji}</span>
                 <div>
-                  <p className="font-semibold text-slate-800 dark:text-slate-100">{t.name}</p>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">{t.tagline}</p>
+                  <p className="font-semibold text-neutral-800 dark:text-neutral-100">{t.name}</p>
+                  <p className="text-sm text-neutral-500 dark:text-neutral-400">{t.tagline}</p>
                 </div>
               </div>
-              <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+              <p className="mt-sm text-sm leading-relaxed text-neutral-600 dark:text-neutral-300">
                 {t.painPoint}
               </p>
-              <p className="mt-3 text-xs text-blue-600 dark:text-blue-400">查看模板 →</p>
+              <p className="mt-sm text-xs text-primary-600 dark:text-primary-400">查看模板 →</p>
             </button>
           ))}
         </div>
@@ -77,35 +77,35 @@ export default function VerticalClient() {
   }
 
   return (
-    <main className="flex-1 w-full max-w-3xl mx-auto px-4 py-10">
+    <main className="flex-1 w-full max-w-3xl mx-auto px-md py-2xl">
       <button
         onClick={() => setSelectedId(null)}
-        className="mb-6 text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+        className="mb-lg text-sm text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
       >
         ← 返回全部模板
       </button>
 
-      <header className="mb-8">
-        <div className="flex items-center gap-3">
+      <header className="mb-xl">
+        <div className="flex items-center gap-sm">
           <span className="text-4xl">{selected.emoji}</span>
           <div>
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">{selected.name}</h1>
-            <p className="mt-1 text-slate-500 dark:text-slate-400">{selected.tagline}</p>
+            <h1 className="text-3xl font-bold text-neutral-900 dark:text-neutral-100">{selected.name}</h1>
+            <p className="mt-1 text-neutral-500 dark:text-neutral-400">{selected.tagline}</p>
           </div>
         </div>
-        <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+        <div className="mt-md rounded-xl border border-warning-200 bg-warning-50 p-md text-sm text-warning-800 dark:border-warning-900 dark:bg-warning-950/40 dark:text-warning-200">
           <span className="font-medium">核心痛点：</span>
           {selected.painPoint}
         </div>
       </header>
 
       {/* 定位与包装建议 */}
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
-        <h2 className="mb-4 font-semibold text-slate-800 dark:text-slate-100">定位与包装建议</h2>
-        <ol className="space-y-3">
+      <section className="rounded-2xl border border-neutral-200 bg-white p-lg dark:border-neutral-800 dark:bg-neutral-900">
+        <h2 className="mb-md font-semibold text-neutral-800 dark:text-neutral-100">定位与包装建议</h2>
+        <ol className="space-y-sm">
           {selected.guidance.map((g, i) => (
-            <li key={i} className="flex gap-3 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-semibold text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+            <li key={i} className="flex gap-sm text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-100 text-xs font-semibold text-primary-700 dark:bg-primary-950 dark:text-primary-300">
                 {i + 1}
               </span>
               {g}
@@ -115,9 +115,9 @@ export default function VerticalClient() {
       </section>
 
       {/* 推荐目标岗位 */}
-      <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="font-semibold text-slate-800 dark:text-slate-100">推荐目标岗位</h2>
+      <section className="mt-lg rounded-2xl border border-neutral-200 bg-white p-lg dark:border-neutral-800 dark:bg-neutral-900">
+        <div className="mb-md flex items-center justify-between">
+          <h2 className="font-semibold text-neutral-800 dark:text-neutral-100">推荐目标岗位</h2>
           <div className="flex items-center gap-1">
             {JD_LOCALES.map((l) => (
               <button
@@ -125,8 +125,8 @@ export default function VerticalClient() {
                 onClick={() => setLocale(l.id)}
                 className={`rounded-lg px-2.5 py-1 text-xs ${
                   locale === l.id
-                    ? "bg-blue-600 text-white"
-                    : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                    ? "bg-primary-600 text-white"
+                    : "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300"
                 }`}
               >
                 {l.label}
@@ -134,26 +134,26 @@ export default function VerticalClient() {
             ))}
           </div>
         </div>
-        <div className="space-y-3">
+        <div className="space-y-sm">
           {selected.targetRoles.map((r) => {
             const tpl = getJdById(r.jdId);
             if (!tpl) return null;
             return (
-              <div key={r.jdId} className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
-                <p className="font-medium text-slate-800 dark:text-slate-100">
+              <div key={r.jdId} className="rounded-xl border border-neutral-200 p-md dark:border-neutral-700">
+                <p className="font-medium text-neutral-800 dark:text-neutral-100">
                   {tpl.industry[locale]} · {tpl.role[locale]}
                 </p>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{r.note}</p>
-                <div className="mt-3 flex flex-wrap gap-2">
+                <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">{r.note}</p>
+                <div className="mt-sm flex flex-wrap gap-xs">
                   <button
                     onClick={() => copyJd(r.jdId)}
-                    className="rounded-lg bg-slate-100 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                    className="rounded-lg bg-neutral-100 px-sm py-1.5 text-sm text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700"
                   >
                     {copiedKey === r.jdId ? "已复制 JD ✓" : "复制参考 JD"}
                   </button>
                   <Link
                     href="/"
-                    className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                    className="rounded-lg border border-neutral-300 px-sm py-1.5 text-sm text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-800"
                   >
                     去首页诊断 →
                   </Link>
@@ -165,14 +165,14 @@ export default function VerticalClient() {
       </section>
 
       {/* 起步简历骨架 */}
-      <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
-        <h2 className="mb-1 font-semibold text-slate-800 dark:text-slate-100">起步简历骨架</h2>
-        <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
+      <section className="mt-lg rounded-2xl border border-neutral-200 bg-white p-lg dark:border-neutral-800 dark:bg-neutral-900">
+        <h2 className="mb-1 font-semibold text-neutral-800 dark:text-neutral-100">起步简历骨架</h2>
+        <p className="mb-md text-sm text-neutral-500 dark:text-neutral-400">
           已按「{selected.recommendedTemplate}」版式预填引导占位，点击一键载入编辑器，把括号里的示例替换成你自己的真实经历即可。
         </p>
         <button
           onClick={openInEditor}
-          className="w-full rounded-xl bg-blue-600 py-3 font-medium text-white transition-colors hover:bg-blue-700"
+          className="w-full rounded-xl bg-primary-600 py-sm font-medium text-white transition-colors hover:bg-primary-700"
         >
           用此模板在编辑器中打开
         </button>

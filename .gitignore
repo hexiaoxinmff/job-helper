@@ -44,3 +44,4 @@ next-env.d.ts
 # local planning docs
 /优化方案.html
 /_jb_build/
+.build-tmp/

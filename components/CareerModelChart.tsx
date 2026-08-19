@@ -121,19 +121,19 @@ export default function CareerModelChart({
   } as const;
 
   const selectCls =
-    "mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100";
+    "mt-1.5 w-full rounded-lg border border-neutral-300 bg-white px-sm py-xs text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-lg">
       {/* 对比设置：任选两次快照 + 目标线 */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
-        <h3 className="mb-1 font-semibold text-slate-800 dark:text-slate-100">对比设置</h3>
-        <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
+      <div className="rounded-2xl border border-neutral-200 bg-white p-lg dark:border-neutral-800 dark:bg-neutral-900">
+        <h3 className="mb-1 font-semibold text-neutral-800 dark:text-neutral-100">对比设置</h3>
+        <p className="mb-md text-sm text-neutral-500 dark:text-neutral-400">
           选择任意两次诊断快照对比前后变化，并可选填「理想岗位目标总分」作为对照基准线。
         </p>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-md sm:grid-cols-3">
           <div>
-            <label className="block text-xs font-medium text-slate-600 dark:text-slate-300">
+            <label className="block text-xs font-medium text-neutral-600 dark:text-neutral-300">
               对比 A（基准前）
             </label>
             <select value={effA} onChange={(e) => setAIdx(Number(e.target.value))} className={selectCls}>
@@ -145,7 +145,7 @@ export default function CareerModelChart({
             </select>
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-600 dark:text-slate-300">
+            <label className="block text-xs font-medium text-neutral-600 dark:text-neutral-300">
               对比 B（基准后）
             </label>
             <select value={effB} onChange={(e) => setBIdx(Number(e.target.value))} className={selectCls}>
@@ -157,7 +157,7 @@ export default function CareerModelChart({
             </select>
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-600 dark:text-slate-300">
+            <label className="block text-xs font-medium text-neutral-600 dark:text-neutral-300">
               理想岗位目标总分
             </label>
             <input
@@ -184,7 +184,7 @@ export default function CareerModelChart({
       </div>
 
       {/* 摘要 */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-sm sm:grid-cols-3 lg:grid-cols-5">
         <SummaryTile
           label="A 总分"
           value={aSnap.overallScore}
@@ -218,20 +218,20 @@ export default function CareerModelChart({
       </div>
 
       {/* 成长趋势折线图 */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
-        <h3 className="mb-1 font-semibold text-slate-800 dark:text-slate-100">能力成长趋势</h3>
-        <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
+      <div className="rounded-2xl border border-neutral-200 bg-white p-lg dark:border-neutral-800 dark:bg-neutral-900">
+        <h3 className="mb-1 font-semibold text-neutral-800 dark:text-neutral-100">能力成长趋势</h3>
+        <p className="mb-md text-sm text-neutral-500 dark:text-neutral-400">
           每次诊断沉淀的能力画像，构成你的长期职业建模轨迹。虚线标记所选对比点（A/B）与目标线。
         </p>
         <div className="h-72 w-full">
           <ErrorBoundary
             fallback={(error, reset) => (
-              <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
-                <p className="text-sm text-slate-500 dark:text-slate-400">趋势图加载失败</p>
-                <p className="text-xs text-slate-400 dark:text-slate-500">{error.message}</p>
+              <div className="flex h-full flex-col items-center justify-center gap-xs text-center">
+                <p className="text-sm text-neutral-500 dark:text-neutral-400">趋势图加载失败</p>
+                <p className="text-xs text-neutral-400 dark:text-neutral-500">{error.message}</p>
                 <button
                   onClick={reset}
-                  className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-700"
+                  className="rounded-lg bg-primary-600 px-sm py-1.5 text-sm text-white hover:bg-primary-700"
                 >
                   重试
                 </button>
@@ -298,22 +298,22 @@ export default function CareerModelChart({
       </div>
 
       {/* 任选快照雷达对比 */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
-        <h3 className="mb-1 font-semibold text-slate-800 dark:text-slate-100">
+      <div className="rounded-2xl border border-neutral-200 bg-white p-lg dark:border-neutral-800 dark:bg-neutral-900">
+        <h3 className="mb-1 font-semibold text-neutral-800 dark:text-neutral-100">
           对比 A vs B · 维度雷达
         </h3>
-        <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
+        <p className="mb-md text-sm text-neutral-500 dark:text-neutral-400">
           五维能力的所选两次快照前后变化；虚线为理想岗位目标基准（若已设定）。
         </p>
         <div className="h-72 w-full">
           <ErrorBoundary
             fallback={(error, reset) => (
-              <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
-                <p className="text-sm text-slate-500 dark:text-slate-400">对比图加载失败</p>
-                <p className="text-xs text-slate-400 dark:text-slate-500">{error.message}</p>
+              <div className="flex h-full flex-col items-center justify-center gap-xs text-center">
+                <p className="text-sm text-neutral-500 dark:text-neutral-400">对比图加载失败</p>
+                <p className="text-xs text-neutral-400 dark:text-neutral-500">{error.message}</p>
                 <button
                   onClick={reset}
-                  className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-700"
+                  className="rounded-lg bg-primary-600 px-sm py-1.5 text-sm text-white hover:bg-primary-700"
                 >
                   重试
                 </button>
@@ -371,16 +371,16 @@ function SummaryTile({
   accent?: "slate" | "emerald" | "red" | "blue";
 }) {
   const accentCls: Record<string, string> = {
-    slate: "text-slate-800 dark:text-slate-100",
-    emerald: "text-emerald-600 dark:text-emerald-400",
-    red: "text-red-600 dark:text-red-400",
-    blue: "text-blue-600 dark:text-blue-400",
+    slate: "text-neutral-800 dark:text-neutral-100",
+    emerald: "text-success-600 dark:text-success-400",
+    red: "text-danger-600 dark:text-danger-400",
+    blue: "text-primary-600 dark:text-primary-400",
   };
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-      <p className="text-xs text-slate-500 dark:text-slate-400">{label}</p>
+    <div className="rounded-xl border border-neutral-200 bg-white p-md dark:border-neutral-800 dark:bg-neutral-900">
+      <p className="text-xs text-neutral-500 dark:text-neutral-400">{label}</p>
       <p className={`mt-1 text-2xl font-bold ${accentCls[accent]}`}>{value}</p>
-      {sub && <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">{sub}</p>}
+      {sub && <p className="mt-0.5 text-xs text-neutral-400 dark:text-neutral-500">{sub}</p>}
     </div>
   );
 }

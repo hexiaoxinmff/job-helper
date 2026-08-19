@@ -30,20 +30,20 @@ export default function ProfileClient() {
   };
 
   return (
-    <main className="flex-1 w-full max-w-3xl mx-auto px-4 py-10">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">私人职业档案</h1>
-        <p className="mt-3 text-slate-600 dark:text-slate-300">
+    <main className="flex-1 w-full max-w-3xl mx-auto px-md py-2xl">
+      <header className="mb-xl">
+        <h1 className="text-3xl font-bold text-neutral-900 dark:text-neutral-100">私人职业档案</h1>
+        <p className="mt-sm text-neutral-600 dark:text-neutral-300">
           跨平台私有的能力画像与成长轨迹。数据仅存于你本地浏览器，可导出携带、可随时清除，不上传任何服务器。
         </p>
       </header>
 
       {/* 开关 */}
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
-        <div className="flex items-center justify-between gap-4">
+      <section className="rounded-2xl border border-neutral-200 bg-white p-lg dark:border-neutral-800 dark:bg-neutral-900">
+        <div className="flex items-center justify-between gap-md">
           <div>
-            <p className="font-medium text-slate-800 dark:text-slate-100">开启私人档案</p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="font-medium text-neutral-800 dark:text-neutral-100">开启私人档案</p>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">
               {profile.enabled
                 ? "已开启：每次诊断会自动沉淀为历史快照。"
                 : "默认关闭：开启后才会保存诊断记录（关闭不会删除已有数据）。"}
@@ -54,8 +54,8 @@ export default function ProfileClient() {
               setEnabled(!profile.enabled);
               track(profile.enabled ? "profile_disable" : "profile_enable");
             }}
-            className={`shrink-0 rounded-xl px-4 py-2.5 font-medium text-white transition-colors ${
-              profile.enabled ? "bg-slate-400 hover:bg-slate-500" : "bg-blue-600 hover:bg-blue-700"
+            className={`shrink-0 rounded-xl px-md py-2.5 font-medium text-white transition-colors ${
+              profile.enabled ? "bg-neutral-400 hover:bg-neutral-500" : "bg-primary-600 hover:bg-primary-700"
             }`}
           >
             {profile.enabled ? "关闭" : "开启"}
@@ -63,29 +63,29 @@ export default function ProfileClient() {
         </div>
 
         <div className="mt-5">
-          <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-200">
+          <label className="mb-1.5 block text-sm font-medium text-neutral-700 dark:text-neutral-200">
             目标岗位 / 求职方向
           </label>
           <input
             value={profile.targetRole}
             onChange={(e) => setTargetRole(e.target.value)}
             placeholder="例如：前端工程师 / 跨专业转码"
-            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            className="w-full rounded-xl border border-neutral-300 bg-white px-md py-2.5 text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
           />
         </div>
       </section>
 
       {/* 操作 */}
-      <div className="mt-5 flex flex-wrap gap-3">
+      <div className="mt-5 flex flex-wrap gap-sm">
         <button
           onClick={exportProfile}
-          className="rounded-xl bg-blue-600 px-4 py-2.5 font-medium text-white hover:bg-blue-700"
+          className="rounded-xl bg-primary-600 px-md py-2.5 font-medium text-white hover:bg-primary-700"
         >
           导出档案 (.json)
         </button>
         <button
           onClick={() => fileRef.current?.click()}
-          className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+          className="rounded-xl border border-neutral-300 bg-white px-md py-2.5 font-medium text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800"
         >
           导入档案
         </button>
@@ -97,7 +97,7 @@ export default function ProfileClient() {
               track("profile_clear");
             }
           }}
-          className="rounded-xl border border-red-300 bg-white px-4 py-2.5 font-medium text-red-600 hover:bg-red-50 dark:border-red-900 dark:bg-slate-900 dark:text-red-400 dark:hover:bg-red-950"
+          className="rounded-xl border border-danger-300 bg-white px-md py-2.5 font-medium text-danger-600 hover:bg-danger-50 dark:border-danger-900 dark:bg-neutral-900 dark:text-danger-400 dark:hover:bg-danger-950"
         >
           清除数据
         </button>
@@ -110,19 +110,19 @@ export default function ProfileClient() {
         />
       </div>
       {importMsg && (
-        <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">{importMsg}</p>
+        <p className="mt-sm text-sm text-neutral-600 dark:text-neutral-300">{importMsg}</p>
       )}
 
       {/* 长期职业建模对比图 */}
       {profile.histories.length >= 2 && (
-        <section className="mt-8">
-          <h2 className="mb-1 flex items-center gap-2 font-semibold text-slate-800 dark:text-slate-100">
+        <section className="mt-xl">
+          <h2 className="mb-1 flex items-center gap-xs font-semibold text-neutral-800 dark:text-neutral-100">
             长期职业建模对比
-            <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-950 dark:text-purple-300">
+            <span className="rounded-full bg-accent-100 px-xs py-0.5 text-xs font-medium text-accent-700 dark:bg-accent-950 dark:text-accent-300">
               新增
             </span>
           </h2>
-          <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
+          <p className="mb-md text-sm text-neutral-500 dark:text-neutral-400">
             基于 {profile.histories.length} 次诊断快照，可视化你的能力成长轨迹与前后变化。
           </p>
           <CareerModelChart
@@ -134,40 +134,40 @@ export default function ProfileClient() {
       )}
 
       {/* 历史快照 */}
-      <section className="mt-8">
-        <h2 className="mb-4 font-semibold text-slate-800 dark:text-slate-100">
+      <section className="mt-xl">
+        <h2 className="mb-md font-semibold text-neutral-800 dark:text-neutral-100">
           诊断历史（{profile.histories.length}）
         </h2>
         {profile.histories.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-400 dark:border-slate-700">
+          <p className="rounded-xl border border-dashed border-neutral-300 p-xl text-center text-sm text-neutral-400 dark:border-neutral-700">
             暂无记录。开启档案并在「简历诊断」页完成一次诊断即可自动沉淀。
           </p>
         ) : (
           <>
             {profile.histories.length === 1 && (
-              <p className="mb-3 rounded-xl border border-dashed border-slate-300 p-4 text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
+              <p className="mb-sm rounded-xl border border-dashed border-neutral-300 p-md text-sm text-neutral-500 dark:border-neutral-700 dark:text-neutral-400">
                 已沉淀 1 次快照。再完成至少 1 次诊断，「长期职业建模对比」会自动显示成长趋势与前后雷达对比。
               </p>
             )}
-            <div className="space-y-3">
+            <div className="space-y-sm">
               {profile.histories.map((h) => (
                 <div
                   key={h.id}
-                  className="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
+                  className="rounded-xl border border-neutral-200 p-md dark:border-neutral-700"
                 >
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className="font-medium text-slate-800 dark:text-slate-100">
+                  <div className="mb-xs flex items-center justify-between">
+                    <span className="font-medium text-neutral-800 dark:text-neutral-100">
                       {h.targetRole || "（未填写方向）"}
                     </span>
-                    <span className="text-sm text-slate-500 dark:text-slate-400">
+                    <span className="text-sm text-neutral-500 dark:text-neutral-400">
                       {new Date(h.ts).toLocaleDateString()} · 匹配度 {h.overallScore}
                     </span>
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-xs">
                     {h.dimensions.map((d) => (
                       <span
                         key={d.name}
-                        className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                        className="rounded-full bg-neutral-100 px-xs py-0.5 text-xs text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300"
                       >
                         {d.name} {d.score}
                       </span>

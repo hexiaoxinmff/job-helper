@@ -22,18 +22,18 @@ export default function NavBar() {
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   const itemClass = (href: string) =>
-    `flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+    `flex items-center gap-xs px-sm py-xs rounded-lg text-sm transition-colors ${
       isActive(href)
-        ? "bg-blue-50 text-blue-700 font-medium dark:bg-blue-950 dark:text-blue-300"
-        : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-800"
+        ? "bg-primary-50 text-primary-700 font-medium dark:bg-primary-950 dark:text-primary-300"
+        : "text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:text-neutral-100 dark:hover:bg-neutral-800"
     }`;
 
   return (
     <>
       {/* 移动端：汉堡按钮 + 折叠面板（<768px） */}
-      <nav className="md:hidden sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur print:hidden dark:border-slate-800 dark:bg-slate-900/90">
-        <div className="max-w-3xl mx-auto px-4 h-12 flex items-center justify-between">
-          <Link href="/" className="font-semibold text-slate-900 text-base dark:text-slate-100">
+      <nav className="md:hidden sticky top-0 z-30 border-b border-neutral-200 bg-white/90 backdrop-blur print:hidden dark:border-neutral-800 dark:bg-neutral-900/90">
+        <div className="max-w-3xl mx-auto px-md h-12 flex items-center justify-between">
+          <Link href="/" className="font-semibold text-neutral-900 text-base dark:text-neutral-100">
             求职在线助手
           </Link>
           <div className="flex items-center gap-1">
@@ -43,7 +43,7 @@ export default function NavBar() {
               aria-expanded={menuOpen}
               aria-label={menuOpen ? "关闭导航菜单" : "打开导航菜单"}
               onClick={() => setMenuOpen((v) => !v)}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-600 transition-colors hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-neutral-600 transition-colors hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800"
             >
               <svg
                 width="20"
@@ -73,16 +73,16 @@ export default function NavBar() {
         </div>
 
         {menuOpen && (
-          <div className="border-t border-slate-200 bg-white px-3 py-2 shadow-lg dark:border-slate-800 dark:bg-slate-900">
+          <div className="border-t border-neutral-200 bg-white px-sm py-xs shadow-lg dark:border-neutral-800 dark:bg-neutral-900">
             {NAV_ITEMS.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={() => setMenuOpen(false)}
-                className={`block px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                className={`block px-sm py-2.5 rounded-lg text-sm transition-colors ${
                   isActive(item.href)
-                    ? "bg-blue-50 text-blue-700 font-medium dark:bg-blue-950 dark:text-blue-300"
-                    : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                    ? "bg-primary-50 text-primary-700 font-medium dark:bg-primary-950 dark:text-primary-300"
+                    : "text-neutral-600 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800"
                 }`}
               >
                 {item.label}
@@ -93,15 +93,15 @@ export default function NavBar() {
       </nav>
 
       {/* 桌面端：左侧固定导航栏（≥768px） */}
-      <aside className="hidden md:flex fixed inset-y-0 left-0 w-56 flex-col border-r border-slate-200 bg-white z-30 print:hidden dark:border-slate-800 dark:bg-slate-900">
-        <div className="px-5 pt-6 pb-4 border-b border-slate-100 dark:border-slate-800">
-          <Link href="/" className="font-semibold text-slate-900 text-lg block dark:text-slate-100">
+      <aside className="hidden md:flex fixed inset-y-0 left-0 w-56 flex-col border-r border-neutral-200 bg-white z-30 print:hidden dark:border-neutral-800 dark:bg-neutral-900">
+        <div className="px-5 pt-lg pb-md border-b border-neutral-100 dark:border-neutral-800">
+          <Link href="/" className="font-semibold text-neutral-900 text-lg block dark:text-neutral-100">
             求职在线助手
           </Link>
-          <p className="text-xs text-slate-400 mt-1">AI 求职工具箱</p>
+          <p className="text-xs text-neutral-400 mt-1">AI 求职工具箱</p>
         </div>
 
-        <nav className="flex-1 px-3 py-4 space-y-1">
+        <nav className="flex-1 px-sm py-md space-y-1">
           {NAV_ITEMS.map((item) => (
             <Link key={item.href} href={item.href} className={itemClass(item.href)}>
               {item.label}
@@ -109,8 +109,8 @@ export default function NavBar() {
           ))}
         </nav>
 
-        <div className="px-5 py-4 border-t border-slate-100 text-xs text-slate-400 leading-relaxed dark:border-slate-800">
-          <div className="flex items-center justify-between gap-2">
+        <div className="px-5 py-md border-t border-neutral-100 text-xs text-neutral-400 leading-relaxed dark:border-neutral-800">
+          <div className="flex items-center justify-between gap-xs">
             <span>外观</span>
             <ThemeToggle className="h-8 w-8" />
           </div>

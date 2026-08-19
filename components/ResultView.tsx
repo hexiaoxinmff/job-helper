@@ -16,12 +16,13 @@ import { track } from "@/lib/track";
 import { useCopy } from "@/lib/use-copy";
 import { generateResumeRewrites } from "@/lib/ai-client";
 import { useProfile } from "@/lib/profile";
+import { resolveThemeVars } from "@/lib/theme";
 
 function confidenceLabel(c?: "low" | "medium" | "high"): { text: string; cls: string } {
-  if (c === "high") return { text: "高", cls: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300" };
-  if (c === "medium") return { text: "中", cls: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300" };
-  if (c === "low") return { text: "低", cls: "bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-300" };
-  return { text: "—", cls: "bg-slate-200 text-slate-600" };
+  if (c === "high") return { text: "高", cls: "bg-success-100 text-success-700 dark:bg-success-950 dark:text-success-300" };
+  if (c === "medium") return { text: "中", cls: "bg-warning-100 text-warning-700 dark:bg-warning-950 dark:text-warning-300" };
+  if (c === "low") return { text: "低", cls: "bg-neutral-200 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300" };
+  return { text: "—", cls: "bg-neutral-200 text-neutral-600" };
 }
 
 interface Props {
@@ -39,9 +40,9 @@ interface RewriteItem {
 }
 
 function scoreColor(score: number): string {
-  if (score >= 80) return "text-emerald-600 dark:text-emerald-400";
-  if (score >= 60) return "text-amber-600 dark:text-amber-400";
-  return "text-red-600 dark:text-red-400";
+  if (score >= 80) return "text-success-600 dark:text-success-400";
+  if (score >= 60) return "text-warning-600 dark:text-warning-400";
+  return "text-danger-600 dark:text-danger-400";
 }
 
 function scoreLabel(score: number): string {
@@ -83,10 +84,8 @@ export default function ResultView({ result, resumeText, jdText, onReset }: Prop
     setShareLoading(true);
     setShareMsg("");
     try {
-      // 导出背景跟随当前主题（暗色下导出不刺眼）
-      const bgColor = getComputedStyle(document.documentElement)
-        .getPropertyValue("--background")
-        .trim() || "#ffffff";
+      // 导出背景跟随当前主题（暗色下导出不刺眼）；值来自根 CSS 变量注册表
+      const bgColor = resolveThemeVars().bg || "#ffffff";
       const dataUrl = await toPng(reportRef.current, {
         pixelRatio: 2,
         backgroundColor: bgColor,
@@ -161,30 +160,30 @@ export default function ResultView({ result, resumeText, jdText, onReset }: Prop
   };
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-lg">
       {/* 免责声明（醒目）：对齐「防幻觉」合规要求 */}
-      <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-200">
+      <div className="rounded-xl border border-warning-300 bg-warning-50 px-md py-sm text-sm text-warning-800 dark:border-warning-800 dark:bg-warning-950/50 dark:text-warning-200">
         ⚠️ AI 建议仅供参考，关键求职决策请结合自身情况与人工判断；本报告不构成任何录用保证。
       </div>
 
       {/* 可导出的报告区 */}
-      <div ref={reportRef} className="space-y-6 p-1">
+      <div ref={reportRef} className="space-y-lg p-1">
         {/* 总分 */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center dark:border-slate-800 dark:bg-slate-900">
-          <p className="text-sm text-slate-500 dark:text-slate-400">整体匹配度</p>
-          <p className={`text-5xl font-bold mt-2 ${scoreColor(result.overallScore)}`}>
+        <div className="rounded-2xl border border-neutral-200 bg-white p-lg text-center dark:border-neutral-800 dark:bg-neutral-900">
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">整体匹配度</p>
+          <p className={`text-5xl font-bold mt-xs ${scoreColor(result.overallScore)}`}>
             {result.overallScore}
-            <span className="text-xl text-slate-400 font-normal dark:text-slate-500"> /100</span>
+            <span className="text-xl text-neutral-400 font-normal dark:text-neutral-500"> /100</span>
           </p>
-          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+          <p className="mt-xs text-sm text-neutral-600 dark:text-neutral-300">
             {scoreLabel(result.overallScore)}
             {result.aiEnhanced && (
-              <span className="ml-2 inline-block rounded-full bg-purple-100 px-2 py-0.5 text-xs text-purple-700 dark:bg-purple-950 dark:text-purple-300">
+              <span className="ml-xs inline-block rounded-full bg-accent-100 px-xs py-0.5 text-xs text-accent-700 dark:bg-accent-950 dark:text-accent-300">
                 AI 增强
               </span>
             )}
             {result.confidence && (
-              <span className={`ml-2 inline-block rounded-full px-2 py-0.5 text-xs ${confidenceLabel(result.confidence).cls}`}>
+              <span className={`ml-xs inline-block rounded-full px-xs py-0.5 text-xs ${confidenceLabel(result.confidence).cls}`}>
                 置信度 {confidenceLabel(result.confidence).text}
               </span>
             )}
@@ -192,18 +191,18 @@ export default function ResultView({ result, resumeText, jdText, onReset }: Prop
         </div>
 
         {/* 雷达图 + 维度明细 */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
-          <h2 className="mb-4 font-semibold text-slate-800 dark:text-slate-100">维度评分</h2>
-          <div className="flex flex-col gap-6 md:flex-row">
+        <div className="rounded-2xl border border-neutral-200 bg-white p-lg dark:border-neutral-800 dark:bg-neutral-900">
+          <h2 className="mb-md font-semibold text-neutral-800 dark:text-neutral-100">维度评分</h2>
+          <div className="flex flex-col gap-lg md:flex-row">
             <div className="h-64 w-full md:w-1/2">
               <ErrorBoundary
                 fallback={(error, reset) => (
-                  <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
-                    <p className="text-sm text-slate-500 dark:text-slate-400">图表加载失败</p>
-                    <p className="text-xs text-slate-400 dark:text-slate-500">{error.message}</p>
+                  <div className="flex h-full flex-col items-center justify-center gap-xs text-center">
+                    <p className="text-sm text-neutral-500 dark:text-neutral-400">图表加载失败</p>
+                    <p className="text-xs text-neutral-400 dark:text-neutral-500">{error.message}</p>
                     <button
                       onClick={reset}
-                      className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-700"
+                      className="rounded-lg bg-primary-600 px-sm py-1.5 text-sm text-white hover:bg-primary-700"
                     >
                       重试
                     </button>
@@ -224,24 +223,24 @@ export default function ResultView({ result, resumeText, jdText, onReset }: Prop
                 </ResponsiveContainer>
               </ErrorBoundary>
             </div>
-            <div className="w-full space-y-3 md:w-1/2">
+            <div className="w-full space-y-sm md:w-1/2">
               {result.dimensions.map((d, i) => (
-                <div key={d.name} className="flex items-start gap-3">
+                <div key={d.name} className="flex items-start gap-sm">
                   <span className={`w-14 shrink-0 text-lg font-semibold ${scoreColor(d.score)}`}>
                     {d.score}
                   </span>
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                    <p className="text-sm font-medium text-neutral-800 dark:text-neutral-100">
                       {d.name}
-                      <span className="ml-2 text-xs font-normal text-slate-400 dark:text-slate-500">
+                      <span className="ml-xs text-xs font-normal text-neutral-400 dark:text-neutral-500">
                         权重 {Math.round((d.weight ?? weights[i] ?? 0) * 100)}%
                       </span>
                     </p>
-                    <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{d.description}</p>
+                    <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">{d.description}</p>
                   </div>
                 </div>
               ))}
-              <p className="border-t border-slate-100 pt-2 text-xs text-slate-400 dark:border-slate-800 dark:text-slate-500">
+              <p className="border-t border-neutral-100 pt-xs text-xs text-neutral-400 dark:border-neutral-800 dark:text-neutral-500">
                 总分 = 各维度得分 × 权重 之和（{result.overallScore} 分）
               </p>
             </div>
@@ -250,14 +249,14 @@ export default function ResultView({ result, resumeText, jdText, onReset }: Prop
 
         {/* 关键词 */}
         {(result.matchedKeywords.length > 0 || result.missingKeywords.length > 0) && (
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
-            <div className="mb-3 flex items-baseline justify-between">
-              <h2 className="font-semibold text-slate-800 dark:text-slate-100">关键词对比</h2>
-              <span className="text-xs text-slate-400 dark:text-slate-500">点击带 ⓘ 的关键词可查看含义</span>
+          <div className="rounded-2xl border border-neutral-200 bg-white p-lg dark:border-neutral-800 dark:bg-neutral-900">
+            <div className="mb-sm flex items-baseline justify-between">
+              <h2 className="font-semibold text-neutral-800 dark:text-neutral-100">关键词对比</h2>
+              <span className="text-xs text-neutral-400 dark:text-neutral-500">点击带 ⓘ 的关键词可查看含义</span>
             </div>
             {result.matchedKeywords.length > 0 && (
-              <div className="mb-3">
-                <p className="mb-1.5 text-xs text-slate-500 dark:text-slate-400">✅ 已命中</p>
+              <div className="mb-sm">
+                <p className="mb-1.5 text-xs text-neutral-500 dark:text-neutral-400">✅ 已命中</p>
                 <div className="flex flex-wrap gap-1.5">
                   {result.matchedKeywords.map((kw) => (
                     <KeywordChip key={kw} keyword={kw} variant="matched" />
@@ -267,7 +266,7 @@ export default function ResultView({ result, resumeText, jdText, onReset }: Prop
             )}
             {result.missingKeywords.length > 0 && (
               <div>
-                <p className="mb-1.5 text-xs text-slate-500 dark:text-slate-400">❌ 缺失</p>
+                <p className="mb-1.5 text-xs text-neutral-500 dark:text-neutral-400">❌ 缺失</p>
                 <div className="flex flex-wrap gap-1.5">
                   {result.missingKeywords.map((kw) => (
                     <KeywordChip key={kw} keyword={kw} variant="missing" />
@@ -279,12 +278,12 @@ export default function ResultView({ result, resumeText, jdText, onReset }: Prop
         )}
 
         {/* 建议 */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
-          <h2 className="mb-4 font-semibold text-slate-800 dark:text-slate-100">改进建议</h2>
-          <ol className="space-y-3">
+        <div className="rounded-2xl border border-neutral-200 bg-white p-lg dark:border-neutral-800 dark:bg-neutral-900">
+          <h2 className="mb-md font-semibold text-neutral-800 dark:text-neutral-100">改进建议</h2>
+          <ol className="space-y-sm">
             {result.suggestions.map((s, i) => (
-              <li key={i} className="flex gap-3 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-semibold text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+              <li key={i} className="flex gap-sm text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-100 text-xs font-semibold text-primary-700 dark:bg-primary-950 dark:text-primary-300">
                   {i + 1}
                 </span>
                 {s}
@@ -296,29 +295,29 @@ export default function ResultView({ result, resumeText, jdText, onReset }: Prop
 
       {/* 差距补救路线（诚实诊断：硬缺口 → 学习/补齐；表达缺口 → 在既有经历补位） */}
       {result.gapRemediation && result.gapRemediation.length > 0 && (
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
-          <h2 className="mb-1 font-semibold text-slate-800 dark:text-slate-100">差距补救路线</h2>
-          <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
+        <div className="rounded-2xl border border-neutral-200 bg-white p-lg dark:border-neutral-800 dark:bg-neutral-900">
+          <h2 className="mb-1 font-semibold text-neutral-800 dark:text-neutral-100">差距补救路线</h2>
+          <p className="mb-md text-sm text-neutral-500 dark:text-neutral-400">
             针对缺失项给出可行动路线——避免「过度美化」导致面试翻车，也避免笼统说「要学会它」。
           </p>
-          <div className="space-y-3">
+          <div className="space-y-sm">
             {result.gapRemediation.map((g) => (
-              <div key={g.keyword} className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
-                <div className="mb-1.5 flex items-center gap-2">
-                  <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-950 dark:text-red-300">
+              <div key={g.keyword} className="rounded-xl border border-neutral-200 p-md dark:border-neutral-700">
+                <div className="mb-1.5 flex items-center gap-xs">
+                  <span className="rounded-full bg-danger-100 px-xs py-0.5 text-xs font-medium text-danger-700 dark:bg-danger-950 dark:text-danger-300">
                     {g.keyword}
                   </span>
                   <span
-                    className={`rounded-full px-2 py-0.5 text-xs ${
+                    className={`rounded-full px-xs py-0.5 text-xs ${
                       g.kind === "expression"
-                        ? "bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300"
+                        ? "bg-info-100 text-info-700 dark:bg-info-950 dark:text-info-300"
                         : "bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300"
                     }`}
                   >
                     {g.kind === "expression" ? "表达缺口 · 可在现有经历补位" : "硬技能缺口 · 需学习/补齐"}
                   </span>
                 </div>
-                <p className="text-sm leading-relaxed text-slate-700 dark:text-slate-300">{g.action}</p>
+                <p className="text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">{g.action}</p>
               </div>
             ))}
           </div>
@@ -327,12 +326,12 @@ export default function ResultView({ result, resumeText, jdText, onReset }: Prop
 
       {/* AI 简历改写（仅 AI 增强时展示，对齐 AC-04：无 AI 能力时不展示依赖区） */}
       {result.aiEnhanced && (
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+      <div className="rounded-2xl border border-neutral-200 bg-white p-lg dark:border-neutral-800 dark:bg-neutral-900">
         <div className="mb-1 flex items-center justify-between">
-          <h2 className="font-semibold text-slate-800 dark:text-slate-100">AI 简历改写</h2>
-          <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs text-purple-700 dark:bg-purple-950 dark:text-purple-300">P0</span>
+          <h2 className="font-semibold text-neutral-800 dark:text-neutral-100">AI 简历改写</h2>
+          <span className="rounded-full bg-accent-100 px-xs py-0.5 text-xs text-accent-700 dark:bg-accent-950 dark:text-accent-300">P0</span>
         </div>
-        <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
+        <p className="mb-md text-sm text-neutral-500 dark:text-neutral-400">
           针对缺失关键词，基于你简历的既有经历生成可直接粘贴的改写句（不虚构、不编造）
         </p>
 
@@ -340,42 +339,42 @@ export default function ResultView({ result, resumeText, jdText, onReset }: Prop
           <button
             onClick={runRewrite}
             disabled={rewriteLoading}
-            className="w-full rounded-xl bg-purple-600 py-3 font-medium text-white transition-colors hover:bg-purple-700 disabled:opacity-50"
+            className="w-full rounded-xl bg-accent-600 py-sm font-medium text-white transition-colors hover:bg-accent-700 disabled:opacity-50"
           >
             {rewriteLoading ? "AI 改写中…" : "一键生成改写建议"}
           </button>
         )}
 
         {rewriteMsg && (
-          <p className="mb-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+          <p className="mb-sm rounded-lg border border-neutral-200 bg-neutral-50 px-md py-sm text-sm text-neutral-600 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
             {rewriteMsg}
           </p>
         )}
 
         {rewrites && rewrites.length > 0 && (
-          <div className="space-y-4">
+          <div className="space-y-md">
             {rewrites.map((item) => (
-              <div key={item.keyword} className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
-                <div className="mb-2 flex items-center justify-between">
-                  <span className="inline-block rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-950 dark:text-red-300">
+              <div key={item.keyword} className="rounded-xl border border-neutral-200 p-md dark:border-neutral-700">
+                <div className="mb-xs flex items-center justify-between">
+                  <span className="inline-block rounded-full bg-danger-100 px-xs py-0.5 text-xs font-medium text-danger-700 dark:bg-danger-950 dark:text-danger-300">
                     +{item.keyword}
                   </span>
                   <button
                     onClick={() => copyRewrite(item)}
-                    className="text-xs text-blue-600 hover:underline dark:text-blue-400"
+                    className="text-xs text-primary-600 hover:underline dark:text-primary-400"
                   >
                     {copiedKw === item.keyword ? "已复制 ✓" : "复制改写句"}
                   </button>
                 </div>
                 {item.original && (
-                  <p className="mb-1.5 text-xs text-slate-400 dark:text-slate-500">
+                  <p className="mb-1.5 text-xs text-neutral-400 dark:text-neutral-500">
                     原文：{item.original}
                   </p>
                 )}
-                <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm leading-relaxed text-slate-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-slate-100">
+                <p className="rounded-lg border border-success-200 bg-success-50 px-sm py-xs text-sm leading-relaxed text-neutral-800 dark:border-success-900 dark:bg-success-950 dark:text-neutral-100">
                   {item.rewritten}
                 </p>
-                <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">💡 {item.reason}</p>
+                <p className="mt-1.5 text-xs text-neutral-500 dark:text-neutral-400">💡 {item.reason}</p>
               </div>
             ))}
             <button
@@ -383,7 +382,7 @@ export default function ResultView({ result, resumeText, jdText, onReset }: Prop
                 setRewrites(null);
                 setRewriteMsg("");
               }}
-              className="text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+              className="text-sm text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
             >
               ← 重新生成
             </button>
@@ -391,7 +390,7 @@ export default function ResultView({ result, resumeText, jdText, onReset }: Prop
         )}
 
         {rewrites && rewrites.length === 0 && !rewriteMsg && (
-          <p className="text-sm text-slate-500 dark:text-slate-400">没有可改写的缺失关键词。</p>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">没有可改写的缺失关键词。</p>
         )}
       </div>
       )}
@@ -399,29 +398,29 @@ export default function ResultView({ result, resumeText, jdText, onReset }: Prop
       {/* STAR 已拆为独立页面（顶部导航可进入），此处不再展示 */}
 
       {/* 操作 */}
-      <div className="flex flex-col gap-3 sm:flex-row">
+      <div className="flex flex-col gap-sm sm:flex-row">
         <button
           onClick={downloadReport}
           disabled={shareLoading}
-          className="flex-1 rounded-xl bg-blue-600 py-3 font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+          className="flex-1 rounded-xl bg-primary-600 py-sm font-medium text-white transition-colors hover:bg-primary-700 disabled:opacity-50"
         >
           {shareLoading ? "生成图片中…" : "保存报告图片"}
         </button>
         <button
           onClick={copyReport}
-          className="flex-1 rounded-xl border border-slate-300 bg-white py-3 font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+          className="flex-1 rounded-xl border border-neutral-300 bg-white py-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800"
         >
           复制文字报告
         </button>
         <button
           onClick={onReset}
-          className="flex-1 rounded-xl border border-slate-300 bg-white py-3 font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+          className="flex-1 rounded-xl border border-neutral-300 bg-white py-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800"
         >
           再测一份
         </button>
       </div>
 
-      {shareMsg && <p className="text-center text-sm text-emerald-600 dark:text-emerald-400">{shareMsg}</p>}
+      {shareMsg && <p className="text-center text-sm text-success-600 dark:text-success-400">{shareMsg}</p>}
     </section>
   );
 }
