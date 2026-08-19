@@ -23,6 +23,7 @@ const TEMPLATE_IDS: TemplateId[] = [
   "sidebar",
   "elegant",
   "creative",
+  "timeline",
 ];
 
 /** 逐字段校验从 localStorage 恢复的简历，损坏/跨版本数据降级为空值而非抛错 */

@@ -484,6 +484,142 @@ function CreativeTemplate({ resume }: { resume: Resume }) {
   );
 }
 
+/**
+ * 蓝点时间轴模板（参照校园简历经典版式）：
+ * 顶部「个人简历」蓝条 + PERSONAL RESUME 灰条、左侧蓝条 + 中间时间线、
+ * 章节蓝点 + 灰线标题、条目蓝色小方块 + 右侧时间。
+ */
+function TimelineSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="relative">
+      {/* 蓝点：盖住中间时间线 */}
+      <div className="absolute -left-[18px] top-0.5 size-3.5 rounded-full border-2 border-white bg-primary-600" />
+      <div className="flex items-center gap-3">
+        <h2 className="shrink-0 text-lg font-bold text-neutral-900">{title}</h2>
+        <div className="h-px flex-1 bg-neutral-200" />
+      </div>
+      <div className="mt-2.5 space-y-3">{children}</div>
+    </section>
+  );
+}
+
+function TimelineItem({
+  head,
+  time,
+  children,
+}: {
+  head: string;
+  time?: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div>
+      <div className="flex items-baseline justify-between gap-4">
+        <span className="font-medium text-neutral-800">
+          <span className="mr-1.5 inline-block size-[4px] translate-y-[-2px] rounded-[1px] bg-primary-600" />
+          {head}
+        </span>
+        {time && <span className="shrink-0 text-xs whitespace-nowrap text-neutral-400">{time}</span>}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function TimelineTemplate({ resume }: { resume: Resume }) {
+  const b = resume.basics;
+  const contacts = [b.email, b.phone, b.location, b.website].filter(Boolean);
+  return (
+    <div className="relative mx-auto max-w-3xl bg-white text-neutral-800">
+      {/* 左侧蓝色细边条 */}
+      <div className="absolute inset-y-0 left-0 w-3 bg-primary-600" />
+      {/* 中间纵向时间线 */}
+      <div className="absolute inset-y-0 left-7 w-[2.5px] bg-primary-600" />
+
+      {/* 顶部双条：蓝色「个人简历」+ 灰色 PERSONAL RESUME */}
+      <div className="relative flex">
+        <div className="bg-primary-600 py-2 pl-12 pr-6 text-white print:bg-primary-600">
+          <span className="text-sm font-bold tracking-wide">个人简历</span>
+        </div>
+        <div className="flex flex-1 items-center bg-neutral-200 px-4 py-2 print:bg-neutral-200">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.35em] text-primary-600">
+            PERSONAL RESUME
+          </span>
+        </div>
+      </div>
+
+      {/* 头部：姓名 / 目标岗位 / 联系方式 / 简介 */}
+      <div className="relative px-10 pb-2 pt-6">
+        <h1 className="text-3xl font-bold text-neutral-900">{b.name || "你的名字"}</h1>
+        {b.title && <p className="mt-1 text-sm text-neutral-500">{b.title}</p>}
+        {contacts.length > 0 && (
+          <p className="mt-2 text-xs text-neutral-600">{contacts.join("　·　")}</p>
+        )}
+        {b.summary && <p className="mt-3 text-sm leading-relaxed text-neutral-700">{b.summary}</p>}
+      </div>
+
+      {/* 章节区 */}
+      <div className="relative space-y-5 px-10 pb-8 pt-4">
+        {resume.education.length > 0 && (
+          <TimelineSection title="教育经历">
+            {resume.education.map((e) => (
+              <TimelineItem
+                key={e.id}
+                head={`${e.school}　${e.major}　${e.degree}`}
+                time={`${e.startDate} - ${e.endDate}`}
+              >
+                {e.description && <p className="mt-0.5 text-sm text-neutral-600">{e.description}</p>}
+              </TimelineItem>
+            ))}
+          </TimelineSection>
+        )}
+
+        {resume.work.length > 0 && (
+          <TimelineSection title="工作经历">
+            {resume.work.map((w) => (
+              <TimelineItem
+                key={w.id}
+                head={`${w.company}　${w.role}`}
+                time={`${w.startDate} - ${w.endDate}`}
+              >
+                <Bullets items={w.bullets} />
+              </TimelineItem>
+            ))}
+          </TimelineSection>
+        )}
+
+        {resume.projects.length > 0 && (
+          <TimelineSection title="项目经历">
+            {resume.projects.map((p) => (
+              <TimelineItem
+                key={p.id}
+                head={`${p.name}　${p.role}`}
+                time={`${p.startDate} - ${p.endDate}`}
+              >
+                {p.link && <p className="mt-0.5 text-sm text-primary-600">{p.link}</p>}
+                <Bullets items={p.bullets} />
+              </TimelineItem>
+            ))}
+          </TimelineSection>
+        )}
+
+        {resume.skills.length > 0 && (
+          <TimelineSection title="技能">
+            <div className="space-y-1">
+              {resume.skills.map((s) => (
+                <p key={s.id} className="text-sm">
+                  <span className="font-medium text-neutral-800">{s.category}：</span>
+                  <span className="text-neutral-600">{s.items.join(" / ")}</span>
+                </p>
+              ))}
+            </div>
+          </TimelineSection>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function ResumeDocument({ resume }: { resume: Resume }) {
   switch (resume.template) {
     case "modern":
@@ -496,6 +632,8 @@ export function ResumeDocument({ resume }: { resume: Resume }) {
       return <ElegantTemplate resume={resume} />;
     case "creative":
       return <CreativeTemplate resume={resume} />;
+    case "timeline":
+      return <TimelineTemplate resume={resume} />;
     default:
       return <ClassicTemplate resume={resume} />;
   }

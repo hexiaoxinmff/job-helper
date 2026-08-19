@@ -29,6 +29,7 @@ const TEMPLATES: { id: TemplateId; label: string; desc: string }[] = [
   { id: "sidebar", label: "侧边栏", desc: "分栏布局，突出技能与亮点" },
   { id: "elegant", label: "优雅", desc: "衬线字体，适合文化/设计类" },
   { id: "creative", label: "创意", desc: "色块头图，适合技术/创意岗" },
+  { id: "timeline", label: "时间轴", desc: "蓝色时间轴，经典校园简历版式" },
 ];
 
 const toLines = (arr: string[]) => arr.join("\n");
@@ -91,6 +92,25 @@ function TemplateThumb({ id }: { id: TemplateId }) {
           <div className="space-y-1 p-1.5">
             <div className="h-1.5 w-1/2 rounded bg-neutral-300" />
             <div className="h-1 w-3/4 rounded bg-neutral-200" />
+          </div>
+        </div>
+      );
+    case "timeline":
+      return (
+        <div className={`${base} flex`}>
+          <div className="w-1 bg-primary-600" />
+          <div className="flex-1 p-1.5">
+            <div className="flex">
+              <div className="h-2.5 w-1/3 bg-primary-600" />
+              <div className="h-2.5 flex-1 bg-neutral-200" />
+            </div>
+            <div className="mt-1.5 flex items-center gap-1">
+              <div className="size-2 rounded-full border border-white bg-primary-600" />
+              <div className="h-1.5 w-1/2 rounded bg-neutral-300" />
+              <div className="h-px flex-1 bg-neutral-200" />
+            </div>
+            <div className="mt-1 h-1 w-3/4 rounded bg-neutral-200" />
+            <div className="mt-1 h-1 w-2/3 rounded bg-neutral-200" />
           </div>
         </div>
       );

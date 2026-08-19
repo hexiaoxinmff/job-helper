@@ -68,7 +68,8 @@ export type TemplateId =
   | "compact"
   | "sidebar"
   | "elegant"
-  | "creative";
+  | "creative"
+  | "timeline";
 
 /** 基本信息 */
 export interface BasicInfo {
