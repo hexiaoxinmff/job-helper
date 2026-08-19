@@ -1,7 +1,7 @@
 import StarGenerator from "@/components/StarGenerator";
 
 export const metadata = {
-  title: "STAR 描述生成器 - 求职在线助手",
+  title: "求职在线助手 - STAR 描述生成器",
   description:
     "输入一句经历，AI 扩写为「情境-任务-行动-结果」的简历亮点句式。免费、隐私安全。",
 };
