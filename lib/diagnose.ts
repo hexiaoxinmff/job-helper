@@ -23,27 +23,54 @@ function matchSemanticSkills(
   return { matched, missing };
 }
 
+/** 诊断选项 */
+export interface DiagnoseOptions {
+  /** 是否启用 AI 增强（默认 true；用户可关闭，关闭后仅规则评分） */
+  aiEnabled?: boolean;
+}
+
 export async function diagnoseResume(
   resumeText: string,
-  jdText: string
+  jdText: string,
+  options: DiagnoseOptions = {}
 ): Promise<AnalysisResult> {
   // 1) 规则评分（始终执行，作为基础结果）
   let result: AnalysisResult = analyzeResume(resumeText, jdText);
 
-  // 2) AI 评分建议增强
-  const aiResult = await generateAiSuggestions(resumeText, jdText);
+  // 用户关闭 AI 增强：仅走规则评分，不发起任何外部请求（隐私红线）
+  if (options.aiEnabled === false) {
+    return result;
+  }
+
+  // 2) AI 评分建议 + 语义 JD 解析：并行发起（二者无依赖，任一失败返回 null 不影响另一个）
+  //    串行改为并行，端到端耗时减半，满足 NFR-03 诊断 <8s 指标
+  const [aiResult, semantics] = await Promise.all([
+    generateAiSuggestions(resumeText, jdText),
+    analyzeJdSemantics(jdText),
+  ]);
   if (aiResult) {
+    // AI 返回的维度可能不带 weight，按同名维度或原顺序权重兜底，避免总分 NaN
+    const dims =
+      aiResult.dimensions.length > 0
+        ? aiResult.dimensions.map((d, i) => ({
+            ...d,
+            weight:
+              d.weight ??
+              result.dimensions.find((rd) => rd.name === d.name)?.weight ??
+              result.weights[i] ??
+              0,
+          }))
+        : result.dimensions;
     result = {
       ...result,
       overallScore: aiResult.overallScore ?? result.overallScore,
-      dimensions: aiResult.dimensions.length > 0 ? aiResult.dimensions : result.dimensions,
+      dimensions: dims,
       suggestions: aiResult.suggestions,
       aiEnhanced: true,
     };
   }
 
   // 3) AI 语义 JD 解析：识别近义技能（如"机器学习"≈"深度学习"），修正关键词与技能维度
-  const semantics = await analyzeJdSemantics(jdText);
   if (semantics) {
     const { matched, missing } = matchSemanticSkills(
       resumeText,
@@ -53,18 +80,20 @@ export async function diagnoseResume(
     if (matched.length + missing.length > 0) {
       const total = matched.length + missing.length;
       const skillDimIndex = result.dimensions.findIndex((d) => d.name === "技能匹配");
-      if (skillDimIndex >= 0) {
+      const skillDim = skillDimIndex >= 0 ? result.dimensions[skillDimIndex] : undefined;
+      if (skillDim) {
         result.dimensions[skillDimIndex] = {
-          ...result.dimensions[skillDimIndex],
+          ...skillDim,
           score: Math.round((matched.length / total) * 100),
           description: `AI 语义解析出 ${total} 项核心技能，简历命中 ${matched.length} 项（含近义表达）`,
         };
-        // 用修正后的维度分重算总分
+        // 用修正后的维度分重算总分（权重随维度自带，保留原始权重不被 AI 覆盖丢失）
+        const fallbackWeights = result.weights;
         result.overallScore = Math.round(
-          result.dimensions.reduce(
-            (sum, d, i) => sum + d.score * (result.weights[i] ?? 0),
-            0
-          )
+          result.dimensions.reduce((sum, d, i) => {
+            const w = d.weight ?? fallbackWeights[i] ?? 0;
+            return sum + d.score * w;
+          }, 0)
         );
       }
       result.matchedKeywords = [

@@ -20,20 +20,6 @@ function toLowerCase(s: string): string {
   return s.toLowerCase();
 }
 
-function countOccurrences(text: string, keyword: string): number {
-  const lowerText = toLowerCase(text);
-  const lowerKeyword = toLowerCase(keyword);
-  let count = 0;
-  let idx = 0;
-  while (true) {
-    idx = lowerText.indexOf(lowerKeyword, idx);
-    if (idx === -1) break;
-    count++;
-    idx += lowerKeyword.length;
-  }
-  return count;
-}
-
 // ========== 核心评分 ==========
 
 export function analyzeResume(
@@ -42,11 +28,6 @@ export function analyzeResume(
 ): AnalysisResult {
   const resume = toLowerCase(resumeText);
   const jd = toLowerCase(jdText);
-
-  // 1. 提取 JD 中的技能关键词，按出现次数排序
-  const jdKeywords = SKILL_KEYWORDS.filter(
-    (kw) => jd.includes(kw) && countOccurrences(resume, kw) === 0
-  );
 
   // 命中与缺失：以 JD 中出现的技能为准
   const matched: string[] = [];
@@ -72,6 +53,7 @@ export function analyzeResume(
     : 50;
   dimensions.push({
     name: "技能匹配",
+    weight: 0.3,
     score: skillScore,
     description:
       requiredSkills.length === 0
@@ -94,6 +76,7 @@ export function analyzeResume(
     : 50;
   dimensions.push({
     name: "关键词覆盖",
+    weight: 0.2,
     score: keywordScore,
     description: `JD 共识别 ${jdAllWords.length} 个关键词，简历覆盖 ${jdAllWords.filter((kw) => resume.includes(kw)).length} 个`,
   });
@@ -110,6 +93,7 @@ export function analyzeResume(
   if (hasStrongVerbs) expScore += 10; // 有强动词 +10
   dimensions.push({
     name: "经历与成果",
+    weight: 0.25,
     score: Math.min(100, expScore),
     description: hasNumbers
       ? "简历含量化成果（如 %/万/人/次 等），加分项"
@@ -134,6 +118,7 @@ export function analyzeResume(
     : 10;
   dimensions.push({
     name: "教育背景",
+    weight: 0.1,
     score: Math.min(100, eduScore),
     description:
       jdMajors.length > 0
@@ -154,6 +139,7 @@ export function analyzeResume(
   if (isTooLong) formatScore -= 15;
   dimensions.push({
     name: "表达规范",
+    weight: 0.15,
     score: Math.max(0, Math.min(100, formatScore)),
     description: isTooShort
       ? "简历内容过短（<200 字），可能信息不完整"
@@ -164,14 +150,11 @@ export function analyzeResume(
           : "建议增加分段，让结构更清晰",
   });
 
-  // 3. 总体分（加权）
-  // 维度权重与顺序：技能匹配 / 关键词覆盖 / 经历与成果 / 教育背景 / 表达规范
-  // 校准：下调纯关键词命中的「技能匹配」权重，上调真正体现简历价值的「经历与成果」，
-  // 避免 JD 未识别到技能词时分数虚高/虚低、整体波动过大。
-  const weights = [0.3, 0.2, 0.25, 0.1, 0.15];
+  // 3. 总体分（加权，按维度自带 weight，避免按 index 对齐脆弱）
   const overallScore = Math.round(
-    dimensions.reduce((sum, d, i) => sum + d.score * weights[i], 0)
+    dimensions.reduce((sum, d) => sum + d.score * d.weight, 0)
   );
+  const weights = dimensions.map((d) => d.weight);
 
   // 4. 规则化建议（按缺失项生成）
   const suggestions = buildRuleSuggestions(resumeText, jdText, missing);
@@ -197,7 +180,8 @@ export function analyzeResume(
   // 6. 置信度：基于输入信号质量（简历长度、JD 关键技能数量、可计算样本量）
   const resumeLen = resumeText.replace(/\s/g, "").length;
   const jdSkillCount = requiredSkills.length;
-  const sampleSize = requiredSkills.length + missing.length; // 已识别 JD 要求技能的样本量
+  // 样本量 = JD 要求技能的命中+缺失总和，即 requiredSkills.length（missing 是其子集，勿重复计数）
+  const sampleSize = requiredSkills.length;
   const confidence: "low" | "medium" | "high" =
     resumeLen < 200 || jdSkillCount === 0
       ? "low"

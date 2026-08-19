@@ -1,14 +1,42 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { AnalysisResult } from "@/lib/types";
 import ResultView from "@/components/ResultView";
+import PrivacyNote from "@/components/PrivacyNote";
 import { extractTextFromPdf, looksLikePdf } from "@/lib/pdf";
 import { diagnoseResume } from "@/lib/diagnose";
 import { track } from "@/lib/track";
 import { JD_LIBRARY, JD_LOCALES, getJdById, type JdLocale } from "@/lib/jd-library";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const AI_ENABLED_KEY = "job-helper:ai-enabled"; // 默认开启 AI 增强；关闭后仅规则评分，不发外部请求
+
+// AI 增强开关：外部 store（localStorage 记忆），用 useSyncExternalStore 订阅
+type Listener = () => void;
+const aiEnabledListeners = new Set<Listener>();
+
+function subscribeAiEnabled(listener: Listener) {
+  aiEnabledListeners.add(listener);
+  return () => aiEnabledListeners.delete(listener);
+}
+
+function getAiEnabledSnapshot(): boolean {
+  try {
+    return window.localStorage.getItem(AI_ENABLED_KEY) !== "off";
+  } catch {
+    return true;
+  }
+}
+
+function setAiEnabledStore(v: boolean) {
+  try {
+    window.localStorage.setItem(AI_ENABLED_KEY, v ? "on" : "off");
+  } catch {
+    /* 忽略写入失败 */
+  }
+  aiEnabledListeners.forEach((l) => l());
+}
 
 const PROGRESS_STEPS = [
   "正在解析 PDF…",
@@ -28,11 +56,29 @@ export default function UploadPage() {
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [progress, setProgress] = useState(-1);
+  // AI 增强开关：外部 store 订阅（localStorage 记忆，默认开）
+  const aiEnabled = useSyncExternalStore(
+    subscribeAiEnabled,
+    getAiEnabledSnapshot,
+    () => true
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
   const stepTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // 并发锁：防止重复点击「开始诊断」发起多次诊断
+  const submittingRef = useRef(false);
 
   useEffect(() => {
     track("page_view");
+  }, []);
+
+  // 卸载时清理进度定时器，避免组件卸载后仍更新状态
+  useEffect(() => {
+    return () => {
+      if (stepTimerRef.current) {
+        clearInterval(stepTimerRef.current);
+        stepTimerRef.current = null;
+      }
+    };
   }, []);
 
   const handleFile = useCallback((file: File | undefined | null) => {
@@ -51,6 +97,7 @@ export default function UploadPage() {
   }, []);
 
   const handleSubmit = async () => {
+    if (submittingRef.current) return; // 并发锁：诊断进行中忽略重复点击
     setError("");
     if (!resumeFile) {
       setError("请先上传简历 PDF");
@@ -65,9 +112,10 @@ export default function UploadPage() {
       return;
     }
 
+    submittingRef.current = true;
     setLoading(true);
     setProgress(0);
-    track("diagnose_start");
+    track("diagnose_start", { ai: aiEnabled });
     stepTimerRef.current = setInterval(() => {
       setProgress((p) => (p < PROGRESS_STEPS.length - 1 ? p + 1 : p));
     }, 1400);
@@ -96,8 +144,8 @@ export default function UploadPage() {
         return;
       }
 
-      // 3) 规则评分 + AI 增强（浏览器端评分 + ai-proxy 云函数）
-      const analysis = await diagnoseResume(parsed, jdText);
+      // 3) 规则评分 + AI 增强（浏览器端评分 + ai-proxy 云函数；aiEnabled=false 时仅规则评分）
+      const analysis = await diagnoseResume(parsed, jdText, { aiEnabled });
       setResumeText(parsed);
       setResult(analysis);
       track("diagnose_success", { score: analysis.overallScore, ai: !!analysis.aiEnhanced });
@@ -109,6 +157,7 @@ export default function UploadPage() {
         clearInterval(stepTimerRef.current);
         stepTimerRef.current = null;
       }
+      submittingRef.current = false;
       setLoading(false);
       setProgress(-1);
     }
@@ -137,7 +186,10 @@ export default function UploadPage() {
         <section className="space-y-6">
           {/* 上传区 */}
           <div
-            className={`border-2 border-dashed rounded-2xl p-8 text-center transition-colors cursor-pointer ${
+            role="button"
+            tabIndex={0}
+            aria-label="选择或拖拽上传简历 PDF"
+            className={`border-2 border-dashed rounded-2xl p-8 text-center transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${
               isDragging
                 ? "border-blue-500 bg-blue-50 dark:bg-blue-950/40"
                 : resumeFile
@@ -145,6 +197,12 @@ export default function UploadPage() {
                   : "border-slate-300 bg-white hover:border-blue-400 dark:border-slate-700 dark:bg-slate-900"
             }`}
             onClick={() => fileInputRef.current?.click()}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                fileInputRef.current?.click();
+              }
+            }}
             onDragOver={(e) => {
               e.preventDefault();
               setIsDragging(true);
@@ -243,8 +301,37 @@ export default function UploadPage() {
             />
           </div>
 
+          {/* AI 增强开关：关闭后仅规则评分，不发任何外部请求（隐私红线） */}
+          <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800/50">
+            <div>
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-200">AI 增强诊断</p>
+              <p className="text-xs text-slate-500 mt-0.5 dark:text-slate-400">
+                开启后简历文本将经云函数代理发送给 AI 服务商用于生成建议，不留存；关闭后仅本地规则评分
+              </p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={aiEnabled}
+              aria-label="AI 增强诊断开关"
+              onClick={() => setAiEnabledStore(!aiEnabled)}
+              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
+                aiEnabled ? "bg-blue-600" : "bg-slate-300 dark:bg-slate-600"
+              }`}
+            >
+              <span
+                className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                  aiEnabled ? "translate-x-5" : "translate-x-0.5"
+                }`}
+              />
+            </button>
+          </div>
+
           {error && (
-            <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3 dark:bg-red-950/40 dark:border-red-900 dark:text-red-400">
+            <p
+              role="alert"
+              className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3 dark:bg-red-950/40 dark:border-red-900 dark:text-red-400"
+            >
               {error}
             </p>
           )}
@@ -274,9 +361,9 @@ export default function UploadPage() {
             </div>
           )}
 
-          <p className="text-xs text-slate-400 text-center dark:text-slate-500">
-            🔒 隐私承诺：简历仅在你的浏览器内解析，分析完成后立即丢弃，不存储、不上传原文
-          </p>
+          <PrivacyNote>
+            隐私承诺：简历仅在你的浏览器内解析、不落库；开启 AI 增强时，文本经云函数代理转发给 AI 服务商用于生成建议，不留存、不记录
+          </PrivacyNote>
         </section>
       ) : (
         <ResultView

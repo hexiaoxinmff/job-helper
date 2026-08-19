@@ -1,35 +1,49 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 
 const STORAGE_KEY = "job-helper:privacy-ack";
 
+// ===== 外部 store：确认状态（localStorage）供 useSyncExternalStore 订阅 =====
+// 首次访问未确认 → 弹窗；确认后写入并通知订阅者关闭。
+type Listener = () => void;
+const ackListeners = new Set<Listener>();
+
+function getAckSnapshot(): boolean {
+  try {
+    return !!window.localStorage.getItem(STORAGE_KEY);
+  } catch {
+    return false;
+  }
+}
+
+function subscribeAck(listener: Listener) {
+  ackListeners.add(listener);
+  return () => ackListeners.delete(listener);
+}
+
+function acknowledge() {
+  try {
+    window.localStorage.setItem(STORAGE_KEY, new Date().toISOString());
+  } catch {
+    /* 忽略写入失败，仅关闭弹窗 */
+  }
+  ackListeners.forEach((l) => l());
+}
+
 /**
- * 开发者隐私承诺弹窗：页面启动后自动弹出一次，
+ * 开发者隐私承诺弹窗：首次使用自动弹出一次，
  * 点击「我已知晓」后写入 localStorage，后续不再自动弹出。
  */
 export default function PrivacyModal() {
-  const [open, setOpen] = useState(false);
+  const acked = useSyncExternalStore(
+    useCallback((l: Listener) => subscribeAck(l), []),
+    getAckSnapshot,
+    () => true // SSR / hydration 阶段视为已确认，不弹窗
+  );
 
-  useEffect(() => {
-    try {
-      const ack = window.localStorage.getItem(STORAGE_KEY);
-      if (!ack) setOpen(true);
-    } catch {
-      setOpen(true);
-    }
-  }, []);
-
-  const handleAcknowledge = () => {
-    try {
-      window.localStorage.setItem(STORAGE_KEY, new Date().toISOString());
-    } catch {
-      /* 忽略写入失败，仅关闭弹窗 */
-    }
-    setOpen(false);
-  };
-
-  if (!open) return null;
+  // 已确认过则不渲染
+  if (acked) return null;
 
   return (
     <div
@@ -56,16 +70,15 @@ export default function PrivacyModal() {
         </div>
 
         <p className="mt-4 text-[15px] leading-relaxed text-slate-600 dark:text-slate-300">
-          简历仅在你的浏览器内解析，分析完成后立即丢弃，
-          <span className="font-medium text-slate-800 dark:text-slate-100">
-            不存储、不上传原文
-          </span>
-          。你的数据安全由你掌控，请放心使用。
+          简历仅在你的浏览器内解析、<span className="font-medium text-slate-800 dark:text-slate-100">不落库、不存储</span>；
+          开启 AI 增强时，文本会经云函数代理转发给 AI 服务商用于生成诊断建议，
+          <span className="font-medium text-slate-800 dark:text-slate-100">不留存、不记录</span>，你可随时在诊断页关闭该功能。
+          你的数据安全由你掌控，请放心使用。
         </p>
 
         <button
           type="button"
-          onClick={handleAcknowledge}
+          onClick={acknowledge}
           className="mt-6 w-full inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
         >
           我已知晓

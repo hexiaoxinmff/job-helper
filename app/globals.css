@@ -51,7 +51,7 @@ html.dark {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-family: var(--font-sans);
 }
 
 /* 隐私承诺弹窗动画 */

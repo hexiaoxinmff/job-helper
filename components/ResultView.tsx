@@ -13,6 +13,7 @@ import { toPng } from "html-to-image";
 import KeywordChip from "./KeywordChip";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { track } from "@/lib/track";
+import { useCopy } from "@/lib/use-copy";
 import { generateResumeRewrites } from "@/lib/ai-client";
 import { useProfile } from "@/lib/profile";
 
@@ -57,9 +58,7 @@ export default function ResultView({ result, resumeText, jdText, onReset }: Prop
     score: d.score,
   }));
 
-  const weights = result.weights ?? result.dimensions.map(() => 1 / result.dimensions.length);
-
-  // 私人档案：开启后自动沉淀本次诊断（仅本地、用户所有）
+  const weights = result.weights ?? result.dimensions.map(() => 1 / result.dimensions.length);  // 私人档案：开启后自动沉淀本次诊断（仅本地、用户所有）
   const lastSavedRef = useRef<AnalysisResult | null>(null);
   useEffect(() => {
     if (profile.enabled && lastSavedRef.current !== result) {
@@ -84,9 +83,13 @@ export default function ResultView({ result, resumeText, jdText, onReset }: Prop
     setShareLoading(true);
     setShareMsg("");
     try {
+      // 导出背景跟随当前主题（暗色下导出不刺眼）
+      const bgColor = getComputedStyle(document.documentElement)
+        .getPropertyValue("--background")
+        .trim() || "#ffffff";
       const dataUrl = await toPng(reportRef.current, {
         pixelRatio: 2,
-        backgroundColor: "#ffffff",
+        backgroundColor: bgColor,
       });
       const link = document.createElement("a");
       link.download = `简历诊断-诊断报告-${result.overallScore}分.png`;
@@ -106,7 +109,7 @@ export default function ResultView({ result, resumeText, jdText, onReset }: Prop
   const [rewriteLoading, setRewriteLoading] = useState(false);
   const [rewrites, setRewrites] = useState<RewriteItem[] | null>(null);
   const [rewriteMsg, setRewriteMsg] = useState("");
-  const [copiedKw, setCopiedKw] = useState("");
+  const { copiedKey: copiedKw, copy: copyText } = useCopy();
 
   const runRewrite = async () => {
     setRewriteLoading(true);
@@ -135,24 +138,10 @@ export default function ResultView({ result, resumeText, jdText, onReset }: Prop
   };
 
   const copyRewrite = async (item: RewriteItem) => {
-    try {
-      await navigator.clipboard.writeText(item.rewritten);
-      setCopiedKw(item.keyword);
-      setTimeout(() => setCopiedKw(""), 1500);
-    } catch {
-      // 剪贴板不可用则静默
-    }
+    await copyText(item.rewritten, item.keyword);
   };
 
   // —— STAR 生成已拆为独立页面 /star ——
-
-  const copyText = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-    } catch {
-      // 剪贴板不可用则静默
-    }
-  };
 
   const copyReport = async () => {
     const lines = [
@@ -167,7 +156,7 @@ export default function ResultView({ result, resumeText, jdText, onReset }: Prop
       "",
       "由求职在线助手生成（免费）",
     ];
-    await copyText(lines.join("\n"));
+    await copyText(lines.join("\n"), "report");
     track("report_copy");
   };
 
@@ -245,7 +234,7 @@ export default function ResultView({ result, resumeText, jdText, onReset }: Prop
                     <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
                       {d.name}
                       <span className="ml-2 text-xs font-normal text-slate-400 dark:text-slate-500">
-                        权重 {Math.round((weights[i] ?? 0) * 100)}%
+                        权重 {Math.round((d.weight ?? weights[i] ?? 0) * 100)}%
                       </span>
                     </p>
                     <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{d.description}</p>
@@ -336,7 +325,8 @@ export default function ResultView({ result, resumeText, jdText, onReset }: Prop
         </div>
       )}
 
-      {/* AI 简历改写 */}
+      {/* AI 简历改写（仅 AI 增强时展示，对齐 AC-04：无 AI 能力时不展示依赖区） */}
+      {result.aiEnhanced && (
       <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
         <div className="mb-1 flex items-center justify-between">
           <h2 className="font-semibold text-slate-800 dark:text-slate-100">AI 简历改写</h2>
@@ -404,6 +394,7 @@ export default function ResultView({ result, resumeText, jdText, onReset }: Prop
           <p className="text-sm text-slate-500 dark:text-slate-400">没有可改写的缺失关键词。</p>
         )}
       </div>
+      )}
 
       {/* STAR 已拆为独立页面（顶部导航可进入），此处不再展示 */}
 

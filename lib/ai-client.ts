@@ -7,7 +7,7 @@ const AI_PROXY_URL =
 
 export interface AiSuggestionResult {
   overallScore?: number;
-  dimensions: { name: string; score: number; description: string }[];
+  dimensions: { name: string; score: number; description: string; weight?: number }[];
   suggestions: string[];
 }
 
@@ -30,12 +30,17 @@ export interface StarResult {
   tips: string[];
 }
 
+const AI_PROXY_TIMEOUT_MS = 8000; // 单个 AI 请求超时，超时返回 null 由调用方降级
+
 async function callAiProxy<T>(action: string, payload: Record<string, unknown>): Promise<T | null> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), AI_PROXY_TIMEOUT_MS);
   try {
     const res = await fetch(AI_PROXY_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action, ...payload }),
+      signal: controller.signal,
     });
     const data = await res.json().catch(() => null);
     if (!res.ok || !data || data.ok === false) {
@@ -44,8 +49,14 @@ async function callAiProxy<T>(action: string, payload: Record<string, unknown>):
     }
     return (data.data as T) ?? null;
   } catch (err) {
-    console.warn(`[ai-proxy] ${action} 网络错误:`, err);
+    if (err instanceof DOMException && err.name === "AbortError") {
+      console.warn(`[ai-proxy] ${action} 超时(${AI_PROXY_TIMEOUT_MS}ms)，降级为规则结果`);
+    } else {
+      console.warn(`[ai-proxy] ${action} 网络错误:`, err);
+    }
     return null;
+  } finally {
+    clearTimeout(timer);
   }
 }
 

@@ -47,6 +47,8 @@ export interface DimensionScore {
   score: number;
   /** 简短说明 */
   description: string;
+  /** 该维度权重（0-1，随维度自带，避免按 index 对齐脆弱） */
+  weight: number;
 }
 
 /** API 请求体 */

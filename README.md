@@ -44,7 +44,7 @@ AI 简历诊断工具：上传简历 PDF + 粘贴目标岗位 JD，自动解析�
 | 层 | 技术 | 说明 |
 |---|---|---|
 | 前端 | Next.js 16（App Router）+ Tailwind CSS | 前后端一体，少学一套框架 |
-| 后端 | Next.js API Routes（Route Handlers） | 无独立后端，部署简单 |
+| 后端 | CloudBase HTTP 云函数 `ai-proxy` | 隐藏 DeepSeek Key，纯前端无服务端路由 |
 | PDF 解析 | unpdf | 内置 pdf.js，无 worker 兼容问题 |
 | 可视化 | Recharts | 雷达图 |
 | AI 增强 | DeepSeek API（可选） | 未配置 key 时自动降级为规则评分 |
@@ -148,7 +148,7 @@ job-helper/
 
 ### 评分引擎（lib/scoring.ts）
 
-5 个维度，各 0-100 分，加权汇总为总分（权重 0.35/0.2/0.2/0.1/0.15）：
+5 个维度，各 0-100 分，加权汇总为总分（权重 0.30/0.20/0.25/0.10/0.15；8-18 校准：下调纯关键词命中的「技能匹配」、上调体现简历价值的「经历与成果」，避免 JD 未识别技能词时分数虚高/虚低）：
 
 1. **技能匹配**：JD 要求的技能关键词在简历中的命中比例
 2. **关键词覆盖**：JD 全文关键词（技能+经历类）覆盖率
@@ -158,38 +158,28 @@ job-helper/
 
 自定义关键词库：直接编辑 `lib/scoring.ts` 中的 `SKILL_KEYWORDS` / `EXPERIENCE_KEYWORDS` / `EDUCATION_KEYWORDS` 数组。
 
-### AI 增强（lib/ai.ts）
+### AI 增强（lib/ai-client.ts + cloudfunctions/ai-proxy）
 
-- 有 `DEEPSEEK_API_KEY` → 调用 DeepSeek 生成评分+建议，覆盖规则结果
-- 无 key / 调用失败 → 返回 `null`，API 自动回退到规则结果，不影响使用
+- 前端 `lib/ai-client.ts` 统一打到 CloudBase HTTP 云函数 `ai-proxy`（隐藏 DeepSeek Key，URL 由 `NEXT_PUBLIC_AI_PROXY_URL` 配置）
+- 云函数提供 4 个 action：`analyze`（评分建议）、`jdSemantics`（近义技能修正）、`rewrite`（改写）、`star`（STAR 句式）
+- 任一调用失败 / 超时（前端 8s、云函数上游 20s）→ 返回 `null`，自动降级到规则结果，功能不中断
+- 首页「AI 增强诊断」开关可关闭 AI（关闭后不发任何外部请求，仅本地规则评分，隐私红线）
+- 云函数已限制请求体 ≤1MB（防滥用）；重部署需保持 HTTP 函数形态：`tcb fn deploy ai-proxy --httpFn`
 
-### API 说明
+### 云函数 API 说明
 
-`POST /api/analyze`（multipart/form-data）：
+`POST {NEXT_PUBLIC_AI_PROXY_URL}`（JSON，统一封装 `{ action, ...payload }`）：
 
-| 字段 | 类型 | 说明 |
+| action | 字段 | 说明 |
 |---|---|---|
-| resume | File | 简历 PDF（必填，≤10MB，文字版） |
-| jd | string | 目标岗位 JD（必填，≥20 字） |
+| `analyze` | `resumeText`, `jdText` | AI 评分与建议，覆盖/修正规则结果 |
+| `jdSemantics` | `jdText` | JD 语义解析：核心技能 + 近义表述，用于修正关键词命中 |
+| `rewrite` | `resumeText`, `jdText`, `missingKeywords` | 基于简历既有经历的改写句（不虚构） |
+| `star` | `experience` | STAR 四步拆解 + 完整句式 |
 
-返回：`{ overallScore, dimensions[], matchedKeywords[], missingKeywords[], suggestions[], aiEnhanced, resumeLength }`
+返回统一为 `{ ok: true, data }` 或 `{ ok: false, error }`。
 
-`POST /api/rewrite`（multipart/form-data，需 DEEPSEEK_API_KEY）：
-
-| 字段 | 类型 | 说明 |
-|---|---|---|
-| resume | File | 简历 PDF（必填） |
-| jd | string | 目标岗位 JD（必填） |
-
-返回：`{ rewrites: [{ keyword, original, rewritten, reason }] }`
-
-`POST /api/star`（JSON，需 DEEPSEEK_API_KEY）：
-
-| 字段 | 类型 | 说明 |
-|---|---|---|
-| experience | string | 一段经历描述（必填，≥5 字） |
-
-返回：`{ star, parts: [{label, content}], tips[] }`
+> 诊断全程在浏览器端完成：unpdf 解析 PDF → 规则评分（`lib/scoring.ts` 始终执行）→ AI 增强并行覆盖/修正 → 输出结果。简历文本仅在内存处理，不落库。
 
 ## 🧪 本地测试
 
@@ -200,10 +190,8 @@ npm run dev
 # 2. 生成中文测试 PDF（首次需 pip install fpdf2）
 python scripts/make-test-pdf-cn.py
 
-# 3. 调用 API
-curl -X POST http://localhost:3000/api/analyze \
-  -F "resume=@scripts/test-resume-cn.pdf;type=application/pdf" \
-  -F "jd=岗位职责：负责数据分析、报表开发。任职要求：熟练使用 Python、SQL、机器学习，有实习经验者优先。"
+# 3. 本地验证：浏览器打开 http://localhost:3000 上传该 PDF 走完整诊断流程
+#    （诊断全程在浏览器端完成；无 AI Key 时自动降级为规则评分）
 ```
 
 ## ⚠️ 已知限制

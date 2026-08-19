@@ -7,9 +7,30 @@ import { ProfileProvider } from "@/lib/profile";
 import { ThemeProvider, THEME_INIT_SCRIPT } from "@/lib/theme";
 
 export const metadata: Metadata = {
-  title: "求职在线助手 - AI 简历诊断工具",
+  metadataBase: new URL("https://xiaoxin2026-personal-d1acf1a1fb0-1469931868.tcloudbaseapp.com"),
+  title: {
+    default: "求职在线助手 - AI 简历诊断工具",
+    template: "%s",
+  },
   description:
-    "上传简历 PDF，粘贴目标岗位 JD，AI 自动解析并给出匹配度评分、雷达图与可执行的改进建议。免费、隐私安全，简历处理完即删。",
+    "上传简历 PDF，粘贴目标岗位 JD，AI 自动解析并给出匹配度评分、雷达图与可执行的改进建议。免费、隐私安全，简历仅在本地解析。",
+  keywords: ["简历诊断", "AI 简历", "求职助手", "匹配度评分", "STAR 扩写", "简历编辑器"],
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    locale: "zh_CN",
+    siteName: "求职在线助手",
+    title: "求职在线助手 - AI 简历诊断工具",
+    description:
+      "上传简历 PDF，粘贴目标岗位 JD，AI 给出匹配度评分、雷达图与可执行的改进建议。免费、隐私安全。",
+  },
+  twitter: {
+    card: "summary",
+    title: "求职在线助手 - AI 简历诊断工具",
+    description: "AI 简历诊断：匹配度评分 + 雷达图 + 可执行改进建议。免费、隐私安全。",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

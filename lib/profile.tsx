@@ -3,9 +3,9 @@
 import {
   createContext,
   ReactNode,
+  useCallback,
   useContext,
-  useEffect,
-  useState,
+  useSyncExternalStore,
 } from "react";
 import type { Confidence } from "./types";
 
@@ -16,6 +16,7 @@ import type { Confidence } from "./types";
 // 3. 沉淀「能力与成长轨迹」—— 多次诊断的历史快照，构成长期职业建模的数据基础。
 
 const STORAGE_KEY = "job-helper:profile";
+// 数据结构 v1：无外层包装（导出文件即用户数据），结构变更时在此处做迁移/兼容，避免破坏已导出文件
 
 export interface ProfileSnapshot {
   id: string;
@@ -36,6 +37,41 @@ export interface PrivateProfile {
 
 const EMPTY: PrivateProfile = { enabled: false, targetRole: "", histories: [] };
 
+/** 逐 snapshot 校验：损坏的条目丢弃，避免渲染时 Invalid Date / NaN */
+function sanitizeSnapshot(s: unknown): ProfileSnapshot | null {
+  if (!s || typeof s !== "object") return null;
+  const d = s as Partial<ProfileSnapshot>;
+  const ts = typeof d.ts === "number" && Number.isFinite(d.ts) ? d.ts : 0;
+  const score =
+    typeof d.overallScore === "number" && Number.isFinite(d.overallScore)
+      ? Math.max(0, Math.min(100, Math.round(d.overallScore)))
+      : 0;
+  const dims = Array.isArray(d.dimensions)
+    ? d.dimensions
+        .filter((x) => x && typeof x === "object")
+        .slice(0, 10)
+        .map((x) => ({
+          name: String((x as { name?: unknown }).name ?? "维度"),
+          score: Math.max(
+            0,
+            Math.min(100, Number((x as { score?: unknown }).score) || 0)
+          ),
+        }))
+    : [];
+  if (ts <= 0) return null;
+  return {
+    id: String(d.id ?? `${ts}-${Math.random().toString(36).slice(2, 8)}`),
+    ts,
+    targetRole: String(d.targetRole ?? "").slice(0, 200),
+    overallScore: score,
+    dimensions: dims,
+    confidence:
+      d.confidence === "low" || d.confidence === "medium" || d.confidence === "high"
+        ? d.confidence
+        : undefined,
+  };
+}
+
 function safeParse(raw: string | null): PrivateProfile {
   if (!raw) return EMPTY;
   try {
@@ -47,7 +83,9 @@ function safeParse(raw: string | null): PrivateProfile {
         typeof p.targetScore === "number" && p.targetScore >= 0 && p.targetScore <= 100
           ? p.targetScore
           : undefined,
-      histories: Array.isArray(p.histories) ? p.histories : [],
+      histories: Array.isArray(p.histories)
+        ? p.histories.map(sanitizeSnapshot).filter((x): x is ProfileSnapshot => x !== null)
+        : [],
     };
   } catch {
     return EMPTY;
@@ -70,43 +108,67 @@ interface ProfileContextValue {
 
 const ProfileContext = createContext<ProfileContextValue | null>(null);
 
+// ===== 外部 store：localStorage 持久化 + 订阅，供 useSyncExternalStore 使用 =====
+// 本地恢复发生在客户端首次读取快照时（hydration 用 server snapshot 兜底，避免 SSR/CSR mismatch）。
+type Listener = () => void;
+const profileListeners = new Set<Listener>();
+let profileCache: PrivateProfile = EMPTY;
+let profileLoaded = false;
+
+function getProfileSnapshot(): PrivateProfile {
+  if (!profileLoaded) {
+    profileLoaded = true;
+    try {
+      profileCache = safeParse(window.localStorage.getItem(STORAGE_KEY));
+    } catch {
+      profileCache = EMPTY;
+    }
+  }
+  return profileCache;
+}
+
+function getProfileServerSnapshot(): PrivateProfile {
+  return EMPTY;
+}
+
+function subscribeProfile(listener: Listener) {
+  profileListeners.add(listener);
+  return () => profileListeners.delete(listener);
+}
+
+function commitProfile(next: PrivateProfile) {
+  profileCache = next;
+  profileLoaded = true;
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  } catch {
+    /* 存储不可用时静默降级 */
+  }
+  profileListeners.forEach((l) => l());
+}
+
 export function ProfileProvider({ children }: { children: ReactNode }) {
-  const [profile, setProfile] = useState<PrivateProfile>(EMPTY);
-
-  // 挂载后从本地恢复，避免 SSR/CSR hydration mismatch
-  useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (raw) setProfile(safeParse(raw));
-    } catch {
-      /* 忽略损坏的本地数据 */
-    }
-  }, []);
-
-  const persist = (next: PrivateProfile) => {
-    setProfile(next);
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    } catch {
-      /* 存储不可用时静默降级 */
-    }
-  };
+  const profile = useSyncExternalStore(
+    useCallback((l: Listener) => subscribeProfile(l), []),
+    getProfileSnapshot,
+    getProfileServerSnapshot
+  );
 
   const setEnabled = (v: boolean) =>
-    persist({ ...profile, enabled: v });
+    commitProfile({ ...profile, enabled: v });
 
   const setTargetRole = (v: string) =>
-    persist({ ...profile, targetRole: v });
+    commitProfile({ ...profile, targetRole: v });
 
   const setTargetScore = (v?: number) =>
-    persist({ ...profile, targetScore: v });
+    commitProfile({ ...profile, targetScore: v });
 
   const appendSnapshot = (s: Omit<ProfileSnapshot, "id">) => {
     const snap: ProfileSnapshot = { ...s, id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}` };
-    persist({ ...profile, histories: [snap, ...profile.histories].slice(0, 50) });
+    commitProfile({ ...profile, histories: [snap, ...profile.histories].slice(0, 50) });
   };
 
-  const clear = () => persist(EMPTY);
+  const clear = () => commitProfile(EMPTY);
 
   const exportProfile = () => {
     try {
@@ -127,8 +189,10 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   const importProfile = (json: string): { ok: boolean; error?: string } => {
     try {
       const p = safeParse(json);
-      if (!Array.isArray(p.histories)) return { ok: false, error: "文件格式不正确" };
-      persist(p);
+      if (p.histories.length === 0 && !json.trim()) {
+        return { ok: false, error: "文件内容为空" };
+      }
+      commitProfile(p);
       return { ok: true };
     } catch (e) {
       return { ok: false, error: (e as Error)?.message ?? "导入失败" };

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { ProfileSnapshot } from "@/lib/profile";
 import {
   ResponsiveContainer,
@@ -32,8 +32,8 @@ const SERIES = [
   { key: "表达规范", label: "表达规范", color: "var(--chart-series-6)" },
 ];
 
-function dimScoreOf(snap: ProfileSnapshot, name: string): number {
-  return snap.dimensions.find((d) => d.name === name)?.score ?? 0;
+function dimScoreOf(snap: ProfileSnapshot | undefined, name: string): number {
+  return snap?.dimensions.find((d) => d.name === name)?.score ?? 0;
 }
 
 /** 长期职业建模对比图：成长趋势 + 任选两次快照雷达对比 + 目标线 + 摘要 */
@@ -53,15 +53,13 @@ export default function CareerModelChart({
   // 任选两次快照对比：A = 基准前（默认最早），B = 基准后（默认最新）
   const [aIdx, setAIdx] = useState(0);
   const [bIdx, setBIdx] = useState(() => Math.max(0, chrono.length - 1));
-  // 快照数量变化时夹紧索引，避免越界（保持用户已选中的值，仅在越界时回退）
-  useEffect(() => {
-    const last = Math.max(0, chrono.length - 1);
-    setAIdx((p) => Math.min(p, last));
-    setBIdx((p) => Math.min(Math.max(p, 0), last));
-  }, [chrono.length]);
+  // 快照数量变化时在渲染期夹紧索引（避免越界），无需 effect 副作用
+  const last = Math.max(0, chrono.length - 1);
+  const effA = Math.min(aIdx, last);
+  const effB = Math.min(Math.max(bIdx, 0), last);
 
-  const aSnap = chrono[aIdx];
-  const bSnap = chrono[bIdx];
+  const aSnap = chrono[effA];
+  const bSnap = chrono[effB];
 
   const trendData = useMemo(
     () =>
@@ -91,16 +89,25 @@ export default function CareerModelChart({
   }, [aSnap, bSnap, targetScore]);
 
   const summary = useMemo(() => {
-    const delta = bSnap.overallScore - aSnap.overallScore;
+    // 索引越界防御：aSnap/bSnap 理论上非空（父组件保证 ≥2 条且索引已夹紧），此处兜底
+    const a = aSnap ?? chrono[0];
+    const b = bSnap ?? chrono[chrono.length - 1];
+    if (!a || !b) return null;
+    const delta = b.overallScore - a.overallScore;
     const dimDeltas = DIM_NAMES.map((name) => ({
       name,
-      delta: dimScoreOf(bSnap, name) - dimScoreOf(aSnap, name),
+      delta: dimScoreOf(b, name) - dimScoreOf(a, name),
     }));
-    const best = dimDeltas.reduce((a, b) => (b.delta > a.delta ? b : a));
-    const worst = dimDeltas.reduce((a, b) => (b.delta < a.delta ? b : a));
-    const toTarget = targetScore != null ? targetScore - bSnap.overallScore : null;
+    const best = dimDeltas.reduce((p, c) => (c.delta > p.delta ? c : p));
+    const worst = dimDeltas.reduce((p, c) => (c.delta < p.delta ? c : p));
+    const toTarget = targetScore != null ? targetScore - b.overallScore : null;
     return { delta, best, worst, toTarget };
-  }, [aSnap, bSnap, targetScore]);
+  }, [aSnap, bSnap, targetScore, chrono]);
+
+  // 数据不足（<2 条）时兜底不渲染；父组件已条件渲染，此处防索引越界
+  if (!aSnap || !bSnap) return null;
+  // 上面的兜底保证 summary 非空（其 null 条件与 aSnap/bSnap 相同）
+  const s = summary!;
 
   const tooltipStyle = {
     contentStyle: {
@@ -129,7 +136,7 @@ export default function CareerModelChart({
             <label className="block text-xs font-medium text-slate-600 dark:text-slate-300">
               对比 A（基准前）
             </label>
-            <select value={aIdx} onChange={(e) => setAIdx(Number(e.target.value))} className={selectCls}>
+            <select value={effA} onChange={(e) => setAIdx(Number(e.target.value))} className={selectCls}>
               {chrono.map((h, i) => (
                 <option key={h.id} value={i}>
                   #{i + 1} · {new Date(h.ts).toLocaleDateString()} · {h.targetRole || "--"} · {h.overallScore}
@@ -141,7 +148,7 @@ export default function CareerModelChart({
             <label className="block text-xs font-medium text-slate-600 dark:text-slate-300">
               对比 B（基准后）
             </label>
-            <select value={bIdx} onChange={(e) => setBIdx(Number(e.target.value))} className={selectCls}>
+            <select value={effB} onChange={(e) => setBIdx(Number(e.target.value))} className={selectCls}>
               {chrono.map((h, i) => (
                 <option key={h.id} value={i}>
                   #{i + 1} · {new Date(h.ts).toLocaleDateString()} · {h.targetRole || "--"} · {h.overallScore}
@@ -181,31 +188,31 @@ export default function CareerModelChart({
         <SummaryTile
           label="A 总分"
           value={aSnap.overallScore}
-          sub={`#${aIdx + 1} · ${new Date(aSnap.ts).toLocaleDateString()}`}
+          sub={`#${effA + 1} · ${new Date(aSnap.ts).toLocaleDateString()}`}
         />
         <SummaryTile
           label="B 总分"
           value={bSnap.overallScore}
-          sub={`#${bIdx + 1} · ${new Date(bSnap.ts).toLocaleDateString()}`}
+          sub={`#${effB + 1} · ${new Date(bSnap.ts).toLocaleDateString()}`}
         />
         <SummaryTile
           label="A → B 变化"
-          value={`${summary.delta >= 0 ? "+" : ""}${summary.delta}`}
-          sub={summary.delta >= 0 ? "↑ 进步" : "↓ 退步"}
-          accent={summary.delta >= 0 ? "emerald" : "red"}
+          value={`${s.delta >= 0 ? "+" : ""}${s.delta}`}
+          sub={s.delta >= 0 ? "↑ 进步" : "↓ 退步"}
+          accent={s.delta >= 0 ? "emerald" : "red"}
         />
         <SummaryTile
           label="最大进步维"
-          value={summary.best.name}
-          sub={`+${summary.best.delta}`}
+          value={s.best.name}
+          sub={`+${s.best.delta}`}
           accent="blue"
         />
-        {summary.toTarget != null && (
+        {s.toTarget != null && (
           <SummaryTile
             label="距目标"
-            value={summary.toTarget > 0 ? `还差 ${summary.toTarget}` : `已超 ${-summary.toTarget}`}
+            value={s.toTarget > 0 ? `还差 ${s.toTarget}` : `已超 ${-s.toTarget}`}
             sub={`目标 ${targetScore}`}
-            accent={summary.toTarget > 0 ? "red" : "emerald"}
+            accent={s.toTarget > 0 ? "red" : "emerald"}
           />
         )}
       </div>
@@ -260,13 +267,13 @@ export default function CareerModelChart({
                   />
                 ))}
                 <ReferenceLine
-                  x={`#${aIdx + 1}`}
+                  x={`#${effA + 1}`}
                   stroke="var(--chart-series-1)"
                   strokeDasharray="4 4"
                   label={{ value: "A", position: "top", fontSize: 11, fill: "var(--chart-series-1)" }}
                 />
                 <ReferenceLine
-                  x={`#${bIdx + 1}`}
+                  x={`#${effB + 1}`}
                   stroke="var(--chart-series-4)"
                   strokeDasharray="4 4"
                   label={{ value: "B", position: "top", fontSize: 11, fill: "var(--chart-series-4)" }}

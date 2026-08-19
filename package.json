@@ -5,8 +5,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "start": "npx serve out",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint && tsc --noEmit"
   },
   "dependencies": {
     "html-to-image": "^1.11.13",

@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useSyncExternalStore, ReactNode, useCallback } from "react";
 
 export type Theme = "light" | "dark";
 
@@ -14,39 +14,62 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
+/** 读取并校验本地主题值：非法值（损坏/手改）返回 null 走系统偏好，避免状态异常 */
+function readStoredTheme(): Theme | null {
+  try {
+    const v = window.localStorage.getItem(STORAGE_KEY);
+    return v === "light" || v === "dark" ? v : null;
+  } catch {
+    return null;
+  }
+}
+
 function applyTheme(theme: Theme) {
   const root = document.documentElement;
   root.classList.toggle("dark", theme === "dark");
   root.style.colorScheme = theme;
 }
 
+// ===== 外部 store：localStorage 持久化 + 订阅，供 useSyncExternalStore 使用 =====
+type Listener = () => void;
+const themeListeners = new Set<Listener>();
+let cachedTheme: Theme | null = null;
+
+function getThemeSnapshot(): Theme {
+  cachedTheme =
+    cachedTheme ?? readStoredTheme() ??
+    (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  return cachedTheme;
+}
+
+function getThemeServerSnapshot(): Theme {
+  return "light";
+}
+
+function subscribeTheme(listener: Listener) {
+  themeListeners.add(listener);
+  return () => themeListeners.delete(listener);
+}
+
+function commitTheme(t: Theme) {
+  cachedTheme = t;
+  applyTheme(t);
+  try {
+    window.localStorage.setItem(STORAGE_KEY, t);
+  } catch {
+    /* 忽略 */
+  }
+  themeListeners.forEach((l) => l());
+}
+
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>("light");
+  const theme = useSyncExternalStore(
+    useCallback((l: Listener) => subscribeTheme(l), []),
+    getThemeSnapshot,
+    getThemeServerSnapshot
+  );
 
-  // 挂载后从本地存储 / 系统偏好恢复（脚本已在首屏前设置好 .dark，此处仅同步 React 状态）
-  useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(STORAGE_KEY) as Theme | null;
-      const initial =
-        stored ??
-        (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-      setThemeState(initial);
-      applyTheme(initial);
-    } catch {
-      /* 忽略 */
-    }
-  }, []);
-
-  const setTheme = (t: Theme) => {
-    setThemeState(t);
-    applyTheme(t);
-    try {
-      window.localStorage.setItem(STORAGE_KEY, t);
-    } catch {
-      /* 忽略 */
-    }
-  };
-
+  const setTheme = (t: Theme) => commitTheme(t);
   const toggle = () => setTheme(theme === "dark" ? "light" : "dark");
 
   return (
@@ -63,4 +86,4 @@ export function useTheme() {
 }
 
 /** 首屏前同步执行的脚本：在 React 注水前设置 .dark，避免暗色模式闪烁（FOUC） */
-export const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem('${STORAGE_KEY}');if(!t){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}var d=document.documentElement;if(t==='dark'){d.classList.add('dark');}d.style.colorScheme=t;}catch(e){}})();`;
+export const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem('${STORAGE_KEY}');if(t!=='light'&&t!=='dark'){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}var d=document.documentElement;if(t==='dark'){d.classList.add('dark');}d.style.colorScheme=t;}catch(e){}})();`;

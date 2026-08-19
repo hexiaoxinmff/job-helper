@@ -26,31 +26,39 @@ function parseJsonArray(content) {
 }
 
 async function callDeepSeek(systemPrompt, userPrompt, maxTokens) {
-  const res = await fetch(`${BASE_URL}/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-      temperature: 0.4,
-      response_format: { type: "json_object" },
-      max_tokens: maxTokens || 1500,
-    }),
-  });
-  if (!res.ok) {
-    const txt = await res.text().catch(() => "");
-    throw new Error(`DeepSeek ${res.status}: ${txt.slice(0, 200)}`);
+  // 上游调用超时 20s，防止 DeepSeek 慢响应拖垮云函数实例
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 20000);
+  try {
+    const res = await fetch(`${BASE_URL}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        temperature: 0.4,
+        response_format: { type: "json_object" },
+        max_tokens: maxTokens || 1500,
+      }),
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      const txt = await res.text().catch(() => "");
+      throw new Error(`DeepSeek ${res.status}: ${txt.slice(0, 200)}`);
+    }
+    const data = await res.json();
+    const content = data?.choices?.[0]?.message?.content ?? "";
+    if (!content) throw new Error("DeepSeek 返回空内容");
+    return content;
+  } finally {
+    clearTimeout(timer);
   }
-  const data = await res.json();
-  const content = data?.choices?.[0]?.message?.content ?? "";
-  if (!content) throw new Error("DeepSeek 返回空内容");
-  return content;
 }
 
 async function actionAnalyze(resumeText, jdText) {
@@ -252,6 +260,9 @@ async function dispatch(payload) {
 }
 
 const PORT = 9000;
+// 请求体上限 1MB：静态前端不会发更大体积，防滥用打爆内存
+const MAX_BODY_BYTES = 1024 * 1024;
+
 const server = http.createServer(async (req, res) => {
   // 注意：不要在此设置 Access-Control-Allow-Origin。
   // 该函数在网关(WEB_SCF)后面，网关会反射并追加 Origin 作为 ACAO；
@@ -278,8 +289,21 @@ const server = http.createServer(async (req, res) => {
   }
 
   let body = "";
+  let tooLarge = false;
   try {
-    for await (const chunk of req) body += chunk;
+    for await (const chunk of req) {
+      body += chunk;
+      if (body.length > MAX_BODY_BYTES) {
+        tooLarge = true;
+        req.destroy(); // 立即断开，停止接收剩余数据
+        break;
+      }
+    }
+    if (tooLarge) {
+      res.statusCode = 413;
+      res.end(JSON.stringify({ ok: false, error: "请求体过大（上限 1MB）" }));
+      return;
+    }
     const payload = JSON.parse(body || "{}");
     const data = await dispatch(payload);
     res.statusCode = 200;
