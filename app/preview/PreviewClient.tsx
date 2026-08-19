@@ -35,7 +35,7 @@ export default function PreviewClient() {
   };
 
   return (
-    <main className="flex-1 w-full mx-auto px-4 py-10">
+    <main className="flex-1 w-full mx-auto px-4 py-10 dark:bg-neutral-950">
       <div className="max-w-3xl mx-auto flex items-center justify-between mb-6 print:hidden">
         <Link href="/editor" className="text-sm text-primary-600 hover:underline dark:text-primary-400">
           ← 返回编辑
@@ -48,7 +48,9 @@ export default function PreviewClient() {
         </div>
       </div>
 
-      <div className="print:shadow-none">
+      {/* 简历容器：白底「纸张」外观（兜住所有透明根模板，暗色下也清晰可读）
+     打印时 @media print 强制 bg-white + 解 max-w，保证纸面正确 */}
+      <div className="rounded-xl bg-white shadow-lg ring-1 ring-neutral-200/70 print:shadow-none print:ring-0 dark:shadow-neutral-950/50 dark:ring-neutral-700/40">
         <div ref={docRef} style={{ zoom: 1 }}>
           <ResumeDocument resume={resume} />
         </div>
