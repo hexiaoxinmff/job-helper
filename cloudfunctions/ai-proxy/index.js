@@ -291,12 +291,14 @@ const server = http.createServer(async (req, res) => {
   let body = "";
   let tooLarge = false;
   try {
+    // 逐块读取；超过上限后停止累积（丢弃后续数据），读完流后返回 413。
+    // 不主动 destroy 连接——网关会把中断连接转成 4xx 非标准码，统一以 413 响应。
     for await (const chunk of req) {
+      if (tooLarge) continue; // 已超限：只消耗流，不再累积
       body += chunk;
       if (body.length > MAX_BODY_BYTES) {
         tooLarge = true;
-        req.destroy(); // 立即断开，停止接收剩余数据
-        break;
+        body = ""; // 释放已累积内存
       }
     }
     if (tooLarge) {
