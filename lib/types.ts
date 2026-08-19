@@ -1,5 +1,8 @@
 // 共享类型定义
 
+/** 诊断置信度 */
+export type Confidence = "low" | "medium" | "high";
+
 /** 简历分析结果 */
 export interface AnalysisResult {
   /** 解析出的简历文本（截断预览） */
@@ -20,6 +23,20 @@ export interface AnalysisResult {
   suggestions: string[];
   /** 是否使用了 AI 增强（false 表示规则降级） */
   aiEnhanced: boolean;
+  /** 诊断置信度：低/中/高，基于输入信号质量（简历长度、JD 关键词数量等） */
+  confidence?: Confidence;
+  /** 差距补救路线：对每个缺失项给出「硬缺口/表达缺口」分类与可行动建议 */
+  gapRemediation?: GapRemediation[];
+}
+
+/** 差距补救条目 */
+export interface GapRemediation {
+  /** 缺失关键词 */
+  keyword: string;
+  /** 缺口类型：hard=硬技能缺口（需学习/补充）；expression=表达缺口（可在现有经历中补位） */
+  kind: "hard" | "expression";
+  /** 可执行的补救建议 */
+  action: string;
 }
 
 /** 单一维度得分 */
@@ -43,7 +60,13 @@ export interface AnalyzeRequest {
 // ===== 结构化简历数据模型（编辑器线使用） =====
 
 /** 可选模板 */
-export type TemplateId = "classic" | "modern" | "compact";
+export type TemplateId =
+  | "classic"
+  | "modern"
+  | "compact"
+  | "sidebar"
+  | "elegant"
+  | "creative";
 
 /** 基本信息 */
 export interface BasicInfo {

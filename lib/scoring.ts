@@ -1,4 +1,4 @@
-import type { AnalysisResult, DimensionScore } from "./types";
+import type { AnalysisResult, DimensionScore, GapRemediation } from "./types";
 import {
   SKILL_KEYWORDS,
   EDUCATION_KEYWORDS,
@@ -185,11 +185,25 @@ export function analyzeResume(
     suggestions.push("经历与成果偏弱：用 STAR 结构（情境-任务-行动-结果）重写经历，每条写成「动词+对象+量化结果」。");
   }
   if (dimScore("关键词覆盖") < 50) {
-    suggestions.push("关键词覆盖不足：把 JD 高频词自然融入项目与职责描述，避免生硬堆砌。");
+    suggestions.push("关键词覆盖不足：把 JD 高频词自然融入项目与职责描述， 避免生硬堆砌。");
   }
   if (dimScore("表达规范") < 60) {
     suggestions.push("表达规范性可提升：分点列出职责与成果，每条以强动词开头（实现/优化/主导），避免大段纯文本。");
   }
+
+  // 5. 差距补救路线（诚实诊断：区分硬缺口与表达缺口，而非笼统"学会它"）
+  const gapRemediation = buildGapRemediation(missing);
+
+  // 6. 置信度：基于输入信号质量（简历长度、JD 关键技能数量、可计算样本量）
+  const resumeLen = resumeText.replace(/\s/g, "").length;
+  const jdSkillCount = requiredSkills.length;
+  const sampleSize = requiredSkills.length + missing.length; // 已识别 JD 要求技能的样本量
+  const confidence: "low" | "medium" | "high" =
+    resumeLen < 200 || jdSkillCount === 0
+      ? "low"
+      : sampleSize >= 3 && jdSkillCount >= 3
+        ? "high"
+        : "medium";
 
   return {
     resumeText: resumeText.slice(0, 500),
@@ -201,6 +215,8 @@ export function analyzeResume(
     missingKeywords: missing.slice(0, 20),
     suggestions,
     aiEnhanced: false,
+    confidence,
+    gapRemediation,
   };
 }
 
@@ -244,4 +260,37 @@ function buildRuleSuggestions(
   }
 
   return suggestions.slice(0, 5);
+}
+
+// ========== 差距补救路线（诚实诊断） ==========
+// 区分「硬技能缺口」与「表达缺口」，给用户可行动的路线，而非笼统要求"学会它"。
+// 偏软素质 / 经验诉求的关键词，通常可在既有经历中补位，不必编造新经历；
+// 偏工具 / 技术的关键词，则属于真正需要学习或补充项目的硬性缺口。
+const SOFT_GAP_TERMS = [
+  "团队", "沟通", "协作", "领导", "实习", "经验", "责任心", "抗压",
+  "学习能力", "表达", "组织", "协调", "客户", "用户", "解决问题",
+  "执行力", "主动", "结果导向", "自我驱动",
+];
+const ENGLISH_SOFT_GAP_TERMS = [
+  "team", "communication", "collaboration", "leadership", "internship",
+  "experience", "responsible", "ownership", "communication skills",
+];
+
+function classifyGap(kw: string): "hard" | "expression" {
+  const k = kw.toLowerCase();
+  if (SOFT_GAP_TERMS.includes(kw) || ENGLISH_SOFT_GAP_TERMS.some((t) => k.includes(t))) {
+    return "expression";
+  }
+  return "hard";
+}
+
+function buildGapRemediation(missing: string[]): GapRemediation[] {
+  return missing.slice(0, 12).map((keyword) => {
+    const kind = classifyGap(keyword);
+    const action =
+      kind === "expression"
+        ? `这是软素质 / 经验诉求，可在你已有的经历中用具体事例或强动词体现（例：把「参与项目」改成「主导 / 协同 X 人完成 Y，产出 Z」），无需编造新经历。`
+        : `这是硬技能缺口，建议通过课程、开源项目或实操练习补齐，并在简历中体现「做了什么 + 产出」，而非只写名词。`;
+    return { keyword, kind, action };
+  });
 }

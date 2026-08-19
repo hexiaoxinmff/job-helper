@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useEffect, useState } from "react";
 import type { AnalysisResult } from "@/lib/types";
 import {
   Radar,
@@ -14,6 +14,14 @@ import KeywordChip from "./KeywordChip";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { track } from "@/lib/track";
 import { generateResumeRewrites } from "@/lib/ai-client";
+import { useProfile } from "@/lib/profile";
+
+function confidenceLabel(c?: "low" | "medium" | "high"): { text: string; cls: string } {
+  if (c === "high") return { text: "高", cls: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300" };
+  if (c === "medium") return { text: "中", cls: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300" };
+  if (c === "low") return { text: "低", cls: "bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-300" };
+  return { text: "—", cls: "bg-slate-200 text-slate-600" };
+}
 
 interface Props {
   result: AnalysisResult;
@@ -43,12 +51,28 @@ function scoreLabel(score: number): string {
 }
 
 export default function ResultView({ result, resumeText, jdText, onReset }: Props) {
+  const { profile, appendSnapshot } = useProfile();
   const chartData = result.dimensions.map((d) => ({
     dimension: d.name,
     score: d.score,
   }));
 
   const weights = result.weights ?? result.dimensions.map(() => 1 / result.dimensions.length);
+
+  // 私人档案：开启后自动沉淀本次诊断（仅本地、用户所有）
+  const lastSavedRef = useRef<AnalysisResult | null>(null);
+  useEffect(() => {
+    if (profile.enabled && lastSavedRef.current !== result) {
+      lastSavedRef.current = result;
+      appendSnapshot({
+        ts: Date.now(),
+        targetRole: (jdText || "").slice(0, 80),
+        overallScore: result.overallScore,
+        dimensions: result.dimensions.map((d) => ({ name: d.name, score:  d.score })),
+        confidence: result.confidence,
+      });
+    }
+  }, [result, profile.enabled, appendSnapshot, jdText]);
 
   // —— 分享卡片 ——
   const reportRef = useRef<HTMLDivElement>(null);
@@ -149,6 +173,11 @@ export default function ResultView({ result, resumeText, jdText, onReset }: Prop
 
   return (
     <section className="space-y-6">
+      {/* 免责声明（醒目）：对齐「防幻觉」合规要求 */}
+      <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-200">
+        ⚠️ AI 建议仅供参考，关键求职决策请结合自身情况与人工判断；本报告不构成任何录用保证。
+      </div>
+
       {/* 可导出的报告区 */}
       <div ref={reportRef} className="space-y-6 p-1">
         {/* 总分 */}
@@ -163,6 +192,11 @@ export default function ResultView({ result, resumeText, jdText, onReset }: Prop
             {result.aiEnhanced && (
               <span className="ml-2 inline-block rounded-full bg-purple-100 px-2 py-0.5 text-xs text-purple-700 dark:bg-purple-950 dark:text-purple-300">
                 AI 增强
+              </span>
+            )}
+            {result.confidence && (
+              <span className={`ml-2 inline-block rounded-full px-2 py-0.5 text-xs ${confidenceLabel(result.confidence).cls}`}>
+                置信度 {confidenceLabel(result.confidence).text}
               </span>
             )}
           </p>
@@ -270,6 +304,37 @@ export default function ResultView({ result, resumeText, jdText, onReset }: Prop
           </ol>
         </div>
       </div>
+
+      {/* 差距补救路线（诚实诊断：硬缺口 → 学习/补齐；表达缺口 → 在既有经历补位） */}
+      {result.gapRemediation && result.gapRemediation.length > 0 && (
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+          <h2 className="mb-1 font-semibold text-slate-800 dark:text-slate-100">差距补救路线</h2>
+          <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
+            针对缺失项给出可行动路线——避免「过度美化」导致面试翻车，也避免笼统说「要学会它」。
+          </p>
+          <div className="space-y-3">
+            {result.gapRemediation.map((g) => (
+              <div key={g.keyword} className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
+                <div className="mb-1.5 flex items-center gap-2">
+                  <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-950 dark:text-red-300">
+                    {g.keyword}
+                  </span>
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-xs ${
+                      g.kind === "expression"
+                        ? "bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300"
+                        : "bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300"
+                    }`}
+                  >
+                    {g.kind === "expression" ? "表达缺口 · 可在现有经历补位" : "硬技能缺口 · 需学习/补齐"}
+                  </span>
+                </div>
+                <p className="text-sm leading-relaxed text-slate-700 dark:text-slate-300">{g.action}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* AI 简历改写 */}
       <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">

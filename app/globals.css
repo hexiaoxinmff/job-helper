@@ -10,6 +10,13 @@
   --chart-axis: #334155;
   --chart-grid: #e2e8f0;
   --chart-stroke: #2563eb;
+  /* 多系列图表配色：总分 / 技能匹配 / 关键词覆盖 / 经历与成果 / 教育背景 / 表达规范 */
+  --chart-series-1: #2563eb; /* 总分 */
+  --chart-series-2: #16a34a; /* 技能匹配 */
+  --chart-series-3: #d97706; /* 关键词覆盖 */
+  --chart-series-4: #9333ea; /* 经历与成果 */
+  --chart-series-5: #db2777; /* 教育背景 */
+  --chart-series-6: #0891b2; /* 表达规范 */
 }
 
 .dark {
@@ -18,6 +25,12 @@
   --chart-axis: #94a3b8;
   --chart-grid: #1e293b;
   --chart-stroke: #60a5fa;
+  --chart-series-1: #60a5fa;
+  --chart-series-2: #4ade80;
+  --chart-series-3: #fbbf24;
+  --chart-series-4: #c084fc;
+  --chart-series-5: #f472b6;
+  --chart-series-6: #22d3ee;
 }
 
 @theme inline {

@@ -19,6 +19,18 @@ AI 简历诊断工具：上传简历 PDF + 粘贴目标岗位 JD，自动解析�
 **`/star` · STAR 描述生成器（独立页面）**
 7. ⭐ **STAR 扩写**：输入一句经历，AI 扩写为「情境-任务-行动-结果」的简历亮点句式，附四步拆解 + 使用建议
 
+**`/profile` · 私人职业档案（新增）**
+8. 🗂 **跨平台私人档案**：默认关闭、用户主动开启；开启后每次诊断自动沉淀「能力画像 + 成长轨迹」，仅存本地浏览器，可导出 `.json` 携带、可一键清除。破解「简历用完即弃」，把差异化护城河做出来。
+9. 🧭 **差距补救路线**：缺失项区分「硬技能缺口 / 表达缺口」并给出可行动路线，避免笼统「学会它」或过度美化。
+10. 🛡 **置信度 + 醒目免责**：诊断结果标注置信度（低/中/高），顶部固定「AI 建议仅供参考」横幅，对齐防幻觉合规要求。
+11. 📈 **长期职业建模对比图（新增）**：沉淀 ≥ 2 次诊断快照后自动显示——能力成长趋势折线图（总分 + 五维随时间变化，标注对比点与目标线）+ **任选两次快照的五维雷达对比**（不再局限于首末）+ 对比摘要与「理想岗位目标总分」对照（可持久化保存），把单次诊断升级为「长期职业教练」。
+
+**`/vertical` · 垂直人群模板（新增）**
+12. 🎯 **垂直人群起步模板**：针对跨专业转码 / 考公转产品 / 二战失利转就业 / 应届零实习 / 在职跳槽 / 海归 6 类高价值垂直人群，提供痛点诊断、定位包装建议、推荐目标岗位（联动 JD 库）与「诚实不编造」的起步简历骨架，一键载入编辑器。
+
+**`/campus` · 高校 B2B2C 入口（新增）**
+13. 🏫 **高校就业中心合作入口**：面向高校 / 院系的 B2B2C 落地页，阐述价值主张、合作三步与隐私合规，并提供「申请封闭试点」留资表单（纯前端，数据仅存本地）。对应 PRD Roadmap 的 B2B2C 试点目标。
+
 > AI 改写与 STAR 生成依赖 DeepSeek API（需配置 `DEEPSEEK_API_KEY`）；评分与建议在无 key 时自动降级为规则引擎，功能不中断。
 
 ## ✨ 本期新增能力
@@ -36,7 +48,7 @@ AI 简历诊断工具：上传简历 PDF + 粘贴目标岗位 JD，自动解析�
 | PDF 解析 | unpdf | 内置 pdf.js，无 worker 兼容问题 |
 | 可视化 | Recharts | 雷达图 |
 | AI 增强 | DeepSeek API（可选） | 未配置 key 时自动降级为规则评分 |
-| 部署 | Vercel（推荐） | 免备案、免费、自动部署 |
+| 部署 | CloudBase 静态网站托管（已上线）/ Vercel | 静态导出 `out/`，可托管到任意静态服务 |
 
 ## 🚀 快速开始
 
@@ -80,6 +92,18 @@ DEEPSEEK_API_KEY=sk-你的key
 
 > 域名：Vercel 默认给你 `xxx.vercel.app` 免费域名；想用自有域名（约 80 元/年）在 Vercel 控制台绑定即可。
 
+### 5. 部署到 CloudBase 静态网站托管（当前已上线 ✅）
+
+项目已配置 `output: "export"`，`npm run build` 产出纯静态文件到 `out/`，可托管到 CloudBase 静态网站托管（免备案、免费）。
+
+- **线上地址**：`https://xiaoxin2026-personal-d1acf1a1fb0-1469931868.tcloudbaseapp.com/`
+- **部署步骤**（使用 CloudBase MCP 或 `tcb` CLI）：
+  1. `npm run build` 生成 `out/`
+  2. 开通静态托管 `manageHosting(action="enableService")`
+  3. 上传产物 `manageHosting(action="upload", localPath="out", cloudPath="/")`
+  4. 配置文档 `manageHosting(action="setWebsiteDocument", indexDocument="index.html", errorDocument="404.html")`
+- **提示**：`next build` 会清理 `.next`/`out`；在清理受限的构建环境里，可构建到干净子目录（拷贝源码 + 复用上层 `node_modules`）后上传产物，避免清理被拦截。
+
 ## 📁 项目结构
 
 ```
@@ -102,7 +126,7 @@ job-helper/
 │   ├── KeywordChip.tsx       # 可点击展开含义的关键词 chip
 │   ├── StarGenerator.tsx     # STAR 生成器 UI（独立组件，可复用）
 │   ├── ResultView.tsx        # 简历诊断结果页（雷达图用 ErrorBoundary 包裹）
-│   ├── resume/ResumeDocument.tsx # 简历渲染（3 套模板，导出为白底）
+│   ├── resume/ResumeDocument.tsx # 简历渲染（6 套模板：经典/现代/紧凑/侧边栏/优雅/创意）
 │   └── ui/                   # Button / Card / Field / Input 基础组件（已适配暗色）
 ├── lib/
 │   ├── pdf.ts                # PDF 文本提取（unpdf）

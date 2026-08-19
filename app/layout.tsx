@@ -3,6 +3,7 @@ import "./globals.css";
 import NavBar from "@/components/NavBar";
 import PrivacyModal from "@/components/PrivacyModal";
 import { ResumeProvider } from "@/lib/resume-store";
+import { ProfileProvider } from "@/lib/profile";
 import { ThemeProvider, THEME_INIT_SCRIPT } from "@/lib/theme";
 
 export const metadata: Metadata = {
@@ -20,9 +21,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col md:pl-56">
         <ThemeProvider>
           <ResumeProvider>
-            <NavBar />
-            {children}
-            <PrivacyModal />
+            <ProfileProvider>
+              <NavBar />
+              {children}
+              <PrivacyModal />
+            </ProfileProvider>
           </ResumeProvider>
         </ThemeProvider>
       </body>
