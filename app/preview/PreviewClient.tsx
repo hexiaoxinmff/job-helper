@@ -48,10 +48,13 @@ export default function PreviewClient() {
         </div>
       </div>
 
-      {/* 简历容器：白底「纸张」外观（兜住所有透明根模板，暗色下也清晰可读）
-     打印时 @media print 强制 bg-white + 解 max-w，保证纸面正确 */}
-      <div className="rounded-xl bg-white shadow-lg ring-1 ring-neutral-200/70 print:shadow-none print:ring-0 dark:shadow-neutral-950/50 dark:ring-neutral-700/40">
-        <div ref={docRef} style={{ zoom: 1 }}>
+      {/* 简历容器：A4 纸面观感，与系统主题解耦，永远强制白底
+         - ResumeDocument 里所有模板正文/标题色都是「按白纸设计」的深色硬编码 hex，
+           依赖父容器 bg-white 才能清晰显示；dark 模式下若白纸失效，全部文字糊在深底上。
+         - 打印 PDF 场景本身就只看白纸效果，预览与最终导出保持一致更符合心智模型。
+         - 双保险：dark:bg-white 工具类 + inline style 兜底，防 Tailwind 抖动或某些 dark 变体覆盖。 */}
+      <div className="rounded-xl bg-white shadow-lg ring-1 ring-neutral-200/70 print:shadow-none print:ring-0 dark:bg-white dark:shadow-neutral-950/50 dark:ring-neutral-700/40">
+        <div ref={docRef} style={{ zoom: 1, background: "#fff" }}>
           <ResumeDocument resume={resume} />
         </div>
       </div>
