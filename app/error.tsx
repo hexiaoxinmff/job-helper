@@ -15,17 +15,17 @@ export default function Error({
   }, [error]);
 
   return (
-    <main className="flex-1 w-full max-w-3xl mx-auto px-md py-20">
-      <div className="rounded-2xl border border-neutral-200 bg-white p-xl text-center dark:border-neutral-800 dark:bg-neutral-900">
-        <div className="mb-sm text-4xl">⚠️</div>
+    <main className="flex-1 w-full max-w-3xl mx-auto px-4 py-20">
+      <div className="rounded-2xl border border-neutral-200 bg-white p-8 text-center dark:border-neutral-800 dark:bg-neutral-900">
+        <div className="mb-3 text-4xl">⚠️</div>
         <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">页面出错了</h1>
-        <p className="mt-xs text-sm text-neutral-600 dark:text-neutral-300">
+        <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-300">
           抱歉，页面渲染时遇到了问题，你可以重试或返回首页。
         </p>
         {error.digest && (
           <p className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">错误码：{error.digest}</p>
         )}
-        <div className="mt-lg flex justify-center gap-sm">
+        <div className="mt-6 flex justify-center gap-3">
           <button
             onClick={retry}
             className="rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-700"

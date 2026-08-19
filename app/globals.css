@@ -205,95 +205,95 @@
   --color-foreground: var(--foreground);
 
   /* 中性灰度 */
-  --color-neutral-50: var(--jh-neutral-50);
-  --color-neutral-100: var(--jh-neutral-100);
-  --color-neutral-200: var(--jh-neutral-200);
-  --color-neutral-300: var(--jh-neutral-300);
-  --color-neutral-400: var(--jh-neutral-400);
-  --color-neutral-500: var(--jh-neutral-500);
-  --color-neutral-600: var(--jh-neutral-600);
-  --color-neutral-700: var(--jh-neutral-700);
-  --color-neutral-800: var(--jh-neutral-800);
-  --color-neutral-900: var(--jh-neutral-900);
-  --color-neutral-950: var(--jh-neutral-950);
+  --color-neutral-50: var(--jh-neutral-50, #f8fafc);
+  --color-neutral-100: var(--jh-neutral-100, #f1f5f9);
+  --color-neutral-200: var(--jh-neutral-200, #e2e8f0);
+  --color-neutral-300: var(--jh-neutral-300, #cbd5e1);
+  --color-neutral-400: var(--jh-neutral-400, #94a3b8);
+  --color-neutral-500: var(--jh-neutral-500, #64748b);
+  --color-neutral-600: var(--jh-neutral-600, #475569);
+  --color-neutral-700: var(--jh-neutral-700, #334155);
+  --color-neutral-800: var(--jh-neutral-800, #1e293b);
+  --color-neutral-900: var(--jh-neutral-900, #0f172a);
+  --color-neutral-950: var(--jh-neutral-950, #020617);
 
   /* 主色 */
-  --color-primary-50: var(--jh-primary-50);
-  --color-primary-100: var(--jh-primary-100);
-  --color-primary-200: var(--jh-primary-200);
-  --color-primary-300: var(--jh-primary-300);
-  --color-primary-400: var(--jh-primary-400);
-  --color-primary-500: var(--jh-primary-500);
-  --color-primary-600: var(--jh-primary-600);
-  --color-primary-700: var(--jh-primary-700);
-  --color-primary-800: var(--jh-primary-800);
-  --color-primary-900: var(--jh-primary-900);
-  --color-primary-950: var(--jh-primary-950);
+  --color-primary-50: var(--jh-primary-50, #eff6ff);
+  --color-primary-100: var(--jh-primary-100, #dbeafe);
+  --color-primary-200: var(--jh-primary-200, #bfdbfe);
+  --color-primary-300: var(--jh-primary-300, #93c5fd);
+  --color-primary-400: var(--jh-primary-400, #60a5fa);
+  --color-primary-500: var(--jh-primary-500, #3b82f6);
+  --color-primary-600: var(--jh-primary-600, #2563eb);
+  --color-primary-700: var(--jh-primary-700, #1d4ed8);
+  --color-primary-800: var(--jh-primary-800, #1e40af);
+  --color-primary-900: var(--jh-primary-900, #1e3a8a);
+  --color-primary-950: var(--jh-primary-950, #172554);
 
   /* 成功 */
-  --color-success-50: var(--jh-success-50);
-  --color-success-100: var(--jh-success-100);
-  --color-success-200: var(--jh-success-200);
-  --color-success-300: var(--jh-success-300);
-  --color-success-400: var(--jh-success-400);
-  --color-success-500: var(--jh-success-500);
-  --color-success-600: var(--jh-success-600);
-  --color-success-700: var(--jh-success-700);
-  --color-success-800: var(--jh-success-800);
-  --color-success-900: var(--jh-success-900);
-  --color-success-950: var(--jh-success-950);
+  --color-success-50: var(--jh-success-50, #ecfdf5);
+  --color-success-100: var(--jh-success-100, #d1fae5);
+  --color-success-200: var(--jh-success-200, #a7f3d0);
+  --color-success-300: var(--jh-success-300, #6ee7b7);
+  --color-success-400: var(--jh-success-400, #34d399);
+  --color-success-500: var(--jh-success-500, #10b981);
+  --color-success-600: var(--jh-success-600, #059669);
+  --color-success-700: var(--jh-success-700, #047857);
+  --color-success-800: var(--jh-success-800, #065f46);
+  --color-success-900: var(--jh-success-900, #064e3b);
+  --color-success-950: var(--jh-success-950, #022c22);
 
   /* 警告 */
-  --color-warning-50: var(--jh-warning-50);
-  --color-warning-100: var(--jh-warning-100);
-  --color-warning-200: var(--jh-warning-200);
-  --color-warning-300: var(--jh-warning-300);
-  --color-warning-400: var(--jh-warning-400);
-  --color-warning-500: var(--jh-warning-500);
-  --color-warning-600: var(--jh-warning-600);
-  --color-warning-700: var(--jh-warning-700);
-  --color-warning-800: var(--jh-warning-800);
-  --color-warning-900: var(--jh-warning-900);
-  --color-warning-950: var(--jh-warning-950);
+  --color-warning-50: var(--jh-warning-50, #fffbeb);
+  --color-warning-100: var(--jh-warning-100, #fef3c7);
+  --color-warning-200: var(--jh-warning-200, #fde68a);
+  --color-warning-300: var(--jh-warning-300, #fcd34d);
+  --color-warning-400: var(--jh-warning-400, #fbbf24);
+  --color-warning-500: var(--jh-warning-500, #f59e0b);
+  --color-warning-600: var(--jh-warning-600, #d97706);
+  --color-warning-700: var(--jh-warning-700, #b45309);
+  --color-warning-800: var(--jh-warning-800, #92400e);
+  --color-warning-900: var(--jh-warning-900, #78350f);
+  --color-warning-950: var(--jh-warning-950, #451a03);
 
   /* 危险 */
-  --color-danger-50: var(--jh-danger-50);
-  --color-danger-100: var(--jh-danger-100);
-  --color-danger-200: var(--jh-danger-200);
-  --color-danger-300: var(--jh-danger-300);
-  --color-danger-400: var(--jh-danger-400);
-  --color-danger-500: var(--jh-danger-500);
-  --color-danger-600: var(--jh-danger-600);
-  --color-danger-700: var(--jh-danger-700);
-  --color-danger-800: var(--jh-danger-800);
-  --color-danger-900: var(--jh-danger-900);
-  --color-danger-950: var(--jh-danger-950);
+  --color-danger-50: var(--jh-danger-50, #fef2f2);
+  --color-danger-100: var(--jh-danger-100, #fee2e2);
+  --color-danger-200: var(--jh-danger-200, #fecaca);
+  --color-danger-300: var(--jh-danger-300, #fca5a5);
+  --color-danger-400: var(--jh-danger-400, #f87171);
+  --color-danger-500: var(--jh-danger-500, #ef4444);
+  --color-danger-600: var(--jh-danger-600, #dc2626);
+  --color-danger-700: var(--jh-danger-700, #b91c1c);
+  --color-danger-800: var(--jh-danger-800, #991b1b);
+  --color-danger-900: var(--jh-danger-900, #7f1d1d);
+  --color-danger-950: var(--jh-danger-950, #450a0a);
 
   /* 信息 */
-  --color-info-50: var(--jh-info-50);
-  --color-info-100: var(--jh-info-100);
-  --color-info-200: var(--jh-info-200);
-  --color-info-300: var(--jh-info-300);
-  --color-info-400: var(--jh-info-400);
-  --color-info-500: var(--jh-info-500);
-  --color-info-600: var(--jh-info-600);
-  --color-info-700: var(--jh-info-700);
-  --color-info-800: var(--jh-info-800);
-  --color-info-900: var(--jh-info-900);
-  --color-info-950: var(--jh-info-950);
+  --color-info-50: var(--jh-info-50, #f0f9ff);
+  --color-info-100: var(--jh-info-100, #e0f2fe);
+  --color-info-200: var(--jh-info-200, #bae6fd);
+  --color-info-300: var(--jh-info-300, #7dd3fc);
+  --color-info-400: var(--jh-info-400, #38bdf8);
+  --color-info-500: var(--jh-info-500, #0ea5e9);
+  --color-info-600: var(--jh-info-600, #0284c7);
+  --color-info-700: var(--jh-info-700, #0369a1);
+  --color-info-800: var(--jh-info-800, #075985);
+  --color-info-900: var(--jh-info-900, #0c4a6e);
+  --color-info-950: var(--jh-info-950, #082f49);
 
   /* 强调（AI 增强 / STAR） */
-  --color-accent-50: var(--jh-accent-50);
-  --color-accent-100: var(--jh-accent-100);
-  --color-accent-200: var(--jh-accent-200);
-  --color-accent-300: var(--jh-accent-300);
-  --color-accent-400: var(--jh-accent-400);
-  --color-accent-500: var(--jh-accent-500);
-  --color-accent-600: var(--jh-accent-600);
-  --color-accent-700: var(--jh-accent-700);
-  --color-accent-800: var(--jh-accent-800);
-  --color-accent-900: var(--jh-accent-900);
-  --color-accent-950: var(--jh-accent-950);
+  --color-accent-50: var(--jh-accent-50, #faf5ff);
+  --color-accent-100: var(--jh-accent-100, #f3e8ff);
+  --color-accent-200: var(--jh-accent-200, #e9d5ff);
+  --color-accent-300: var(--jh-accent-300, #d8b4fe);
+  --color-accent-400: var(--jh-accent-400, #c084fc);
+  --color-accent-500: var(--jh-accent-500, #a855f7);
+  --color-accent-600: var(--jh-accent-600, #9333ea);
+  --color-accent-700: var(--jh-accent-700, #7e22ce);
+  --color-accent-800: var(--jh-accent-800, #6b21a8);
+  --color-accent-900: var(--jh-accent-900, #581c87);
+  --color-accent-950: var(--jh-accent-950, #3b0764);
 
   /* 圆角 */
   --radius-sm: var(--jh-radius-sm);
@@ -314,16 +314,10 @@
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
     "PingFang SC", "Microsoft YaHei", sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-
-  /* 命名间距（p- / m- / gap- / space- 语义类） */
-  --spacing-xs: var(--jh-space-xs);
-  --spacing-sm: var(--jh-space-sm);
-  --spacing-md: var(--jh-space-md);
-  --spacing-lg: var(--jh-space-lg);
-  --spacing-xl: var(--jh-space-xl);
-  --spacing-2xl: var(--jh-space-2xl);
-  --spacing-3xl: var(--jh-space-3xl);
-  --spacing-4xl: var(--jh-space-4xl);
+  /* 间距：只暴露 CSS 变量（--jh-space-*）供需要处直接引用，不注册命名 --spacing-* token。
+     原因：Tailwind v4 中 max-w-* 档位与 --spacing-* 共享 namespace（max-w-3xl = var(--spacing-3xl)），
+     命名 spacing 会被 max-w 误消费并污染容器最大宽度（见 revert-spacing-tokens.cjs）。
+     间距值仍由 Tailwind 默认 --spacing 基础变量 + 数字类（p-4 = calc(var(--spacing)*4)）满足变量化要求。 */
 }
 
 html {

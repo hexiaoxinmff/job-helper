@@ -22,7 +22,7 @@ export default function NavBar() {
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   const itemClass = (href: string) =>
-    `flex items-center gap-xs px-sm py-xs rounded-lg text-sm transition-colors ${
+    `flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
       isActive(href)
         ? "bg-primary-50 text-primary-700 font-medium dark:bg-primary-950 dark:text-primary-300"
         : "text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:text-neutral-100 dark:hover:bg-neutral-800"
@@ -32,7 +32,7 @@ export default function NavBar() {
     <>
       {/* 移动端：汉堡按钮 + 折叠面板（<768px） */}
       <nav className="md:hidden sticky top-0 z-30 border-b border-neutral-200 bg-white/90 backdrop-blur print:hidden dark:border-neutral-800 dark:bg-neutral-900/90">
-        <div className="max-w-3xl mx-auto px-md h-12 flex items-center justify-between">
+        <div className="max-w-3xl mx-auto px-4 h-12 flex items-center justify-between">
           <Link href="/" className="font-semibold text-neutral-900 text-base dark:text-neutral-100">
             求职在线助手
           </Link>
@@ -73,13 +73,13 @@ export default function NavBar() {
         </div>
 
         {menuOpen && (
-          <div className="border-t border-neutral-200 bg-white px-sm py-xs shadow-lg dark:border-neutral-800 dark:bg-neutral-900">
+          <div className="border-t border-neutral-200 bg-white px-3 py-2 shadow-lg dark:border-neutral-800 dark:bg-neutral-900">
             {NAV_ITEMS.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={() => setMenuOpen(false)}
-                className={`block px-sm py-2.5 rounded-lg text-sm transition-colors ${
+                className={`block px-3 py-2.5 rounded-lg text-sm transition-colors ${
                   isActive(item.href)
                     ? "bg-primary-50 text-primary-700 font-medium dark:bg-primary-950 dark:text-primary-300"
                     : "text-neutral-600 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800"
@@ -94,14 +94,14 @@ export default function NavBar() {
 
       {/* 桌面端：左侧固定导航栏（≥768px） */}
       <aside className="hidden md:flex fixed inset-y-0 left-0 w-56 flex-col border-r border-neutral-200 bg-white z-30 print:hidden dark:border-neutral-800 dark:bg-neutral-900">
-        <div className="px-5 pt-lg pb-md border-b border-neutral-100 dark:border-neutral-800">
+        <div className="px-5 pt-6 pb-4 border-b border-neutral-100 dark:border-neutral-800">
           <Link href="/" className="font-semibold text-neutral-900 text-lg block dark:text-neutral-100">
             求职在线助手
           </Link>
           <p className="text-xs text-neutral-400 mt-1">AI 求职工具箱</p>
         </div>
 
-        <nav className="flex-1 px-sm py-md space-y-1">
+        <nav className="flex-1 px-3 py-4 space-y-1">
           {NAV_ITEMS.map((item) => (
             <Link key={item.href} href={item.href} className={itemClass(item.href)}>
               {item.label}
@@ -109,8 +109,8 @@ export default function NavBar() {
           ))}
         </nav>
 
-        <div className="px-5 py-md border-t border-neutral-100 text-xs text-neutral-400 leading-relaxed dark:border-neutral-800">
-          <div className="flex items-center justify-between gap-xs">
+        <div className="px-5 py-4 border-t border-neutral-100 text-xs text-neutral-400 leading-relaxed dark:border-neutral-800">
+          <div className="flex items-center justify-between gap-2">
             <span>外观</span>
             <ThemeToggle className="h-8 w-8" />
           </div>

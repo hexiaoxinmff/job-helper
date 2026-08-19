@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
  */
 export default function PrivacyNote({ children }: { children: ReactNode }) {
   return (
-    <p className="mt-xl text-xs text-neutral-400 text-center dark:text-neutral-500">
+    <p className="mt-8 text-xs text-neutral-400 text-center dark:text-neutral-500">
       🔒 {children}
     </p>
   );

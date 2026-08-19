@@ -174,22 +174,22 @@ export default function UploadPage() {
   };
 
   return (
-    <main className="flex-1 w-full max-w-3xl mx-auto px-md py-2xl">
-      <header className="text-center mb-2xl">
+    <main className="flex-1 w-full max-w-3xl mx-auto px-4 py-10">
+      <header className="text-center mb-10">
         <h1 className="text-3xl font-bold text-neutral-900 dark:text-neutral-100">简历诊断</h1>
-        <p className="mt-sm text-neutral-600 dark:text-neutral-300">
+        <p className="mt-3 text-neutral-600 dark:text-neutral-300">
           上传简历 PDF + 粘贴目标岗位 JD，AI 帮你诊断匹配度，给出可执行的改进建议
         </p>
       </header>
 
       {!result ? (
-        <section className="space-y-lg">
+        <section className="space-y-6">
           {/* 上传区 */}
           <div
             role="button"
             tabIndex={0}
             aria-label="选择或拖拽上传简历 PDF"
-            className={`border-2 border-dashed rounded-2xl p-xl text-center transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 ${
+            className={`border-2 border-dashed rounded-2xl p-8 text-center transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 ${
               isDragging
                 ? "border-primary-500 bg-primary-50 dark:bg-primary-950/40"
                 : resumeFile
@@ -221,7 +221,7 @@ export default function UploadPage() {
               className="hidden"
               onChange={(e) => handleFile(e.target.files?.[0])}
             />
-            <div className="text-4xl mb-sm">
+            <div className="text-4xl mb-3">
               {resumeFile ? "✅" : "📄"}
             </div>
             {resumeFile ? (
@@ -245,11 +245,11 @@ export default function UploadPage() {
 
           {/* JD 输入区 */}
           <div>
-            <div className="flex flex-wrap items-center justify-between mb-xs gap-sm">
+            <div className="flex flex-wrap items-center justify-between mb-2 gap-3">
               <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-200">
                 目标岗位 JD（职位描述）
               </label>
-              <div className="flex items-center gap-xs">
+              <div className="flex items-center gap-2">
                 <select
                   value={jdLocale}
                   onChange={(e) => {
@@ -261,7 +261,7 @@ export default function UploadPage() {
                     }
                   }}
                   aria-label="JD 语言"
-                  className="text-sm rounded-lg border border-neutral-300 bg-white px-xs py-1.5 text-neutral-600 outline-none focus:border-primary-500 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+                  className="text-sm rounded-lg border border-neutral-300 bg-white px-2 py-1.5 text-neutral-600 outline-none focus:border-primary-500 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
                 >
                   {JD_LOCALES.map((l) => (
                     <option key={l.id} value={l.id}>
@@ -278,7 +278,7 @@ export default function UploadPage() {
                       setJdText(tpl.jd[jdLocale]);
                     }
                   }}
-                  className="text-sm rounded-lg border border-neutral-300 bg-white px-xs py-1.5 text-neutral-600 outline-none focus:border-primary-500 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+                  className="text-sm rounded-lg border border-neutral-300 bg-white px-2 py-1.5 text-neutral-600 outline-none focus:border-primary-500 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
                 >
                   <option value="">加载示例 JD…</option>
                   {JD_LIBRARY.map((x) => (
@@ -297,12 +297,12 @@ export default function UploadPage() {
                   ? "粘贴招聘 JD，例如：\n岗位职责：负责数据分析和报表开发…\n任职要求：熟练使用 Python、SQL，有机器学习经验者优先…"
                   : "Paste a job description, e.g.:\nResponsibilities: data analysis and reporting…\nRequirements: proficient in Python, SQL, machine learning preferred…"
               }
-              className="w-full h-40 rounded-xl border border-neutral-300 bg-white px-md py-sm text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-y dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
+              className="w-full h-40 rounded-xl border border-neutral-300 bg-white px-4 py-3 text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-y dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
             />
           </div>
 
           {/* AI 增强开关：关闭后仅规则评分，不发任何外部请求（隐私红线） */}
-          <div className="flex items-center justify-between gap-sm rounded-xl border border-neutral-200 bg-neutral-50 px-md py-sm dark:border-neutral-700 dark:bg-neutral-800/50">
+          <div className="flex items-center justify-between gap-3 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 dark:border-neutral-700 dark:bg-neutral-800/50">
             <div>
               <p className="text-sm font-medium text-neutral-700 dark:text-neutral-200">AI 增强诊断</p>
               <p className="text-xs text-neutral-500 mt-0.5 dark:text-neutral-400">
@@ -330,7 +330,7 @@ export default function UploadPage() {
           {error && (
             <p
               role="alert"
-              className="text-sm text-danger-600 bg-danger-50 border border-danger-200 rounded-lg px-md py-sm dark:bg-danger-950/40 dark:border-danger-900 dark:text-danger-400"
+              className="text-sm text-danger-600 bg-danger-50 border border-danger-200 rounded-lg px-4 py-3 dark:bg-danger-950/40 dark:border-danger-900 dark:text-danger-400"
             >
               {error}
             </p>
@@ -345,7 +345,7 @@ export default function UploadPage() {
           </button>
 
           {loading && progress >= 0 && (
-            <div className="space-y-xs" aria-live="polite">
+            <div className="space-y-2" aria-live="polite">
               <div className="h-1.5 rounded-full bg-neutral-200 overflow-hidden dark:bg-neutral-800">
                 <div
                   className="h-full rounded-full bg-primary-600 transition-all duration-700"
@@ -354,7 +354,7 @@ export default function UploadPage() {
                   }}
                 />
               </div>
-              <div className="flex items-center gap-xs justify-center">
+              <div className="flex items-center gap-2 justify-center">
                 <span className="w-4 h-4 border-2 border-primary-600 border-t-transparent rounded-full animate-spin" />
                 <p className="text-sm text-neutral-600 dark:text-neutral-300">{PROGRESS_STEPS[progress]}</p>
               </div>

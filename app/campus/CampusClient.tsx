@@ -81,29 +81,29 @@ export default function CampusClient() {
   };
 
   return (
-    <main className="flex-1 w-full max-w-4xl mx-auto px-md py-2xl">
+    <main className="flex-1 w-full max-w-4xl mx-auto px-4 py-10">
       {/* Hero */}
-      <header className="mb-2xl text-center">
-        <span className="inline-block rounded-full bg-primary-100 px-sm py-1 text-xs font-medium text-primary-700 dark:bg-primary-950 dark:text-primary-300">
+      <header className="mb-10 text-center">
+        <span className="inline-block rounded-full bg-primary-100 px-3 py-1 text-xs font-medium text-primary-700 dark:bg-primary-950 dark:text-primary-300">
           B2B2C · 高校就业中心合作
         </span>
-        <h1 className="mt-md text-3xl font-bold text-neutral-900 dark:text-neutral-100 sm:text-4xl">
+        <h1 className="mt-4 text-3xl font-bold text-neutral-900 dark:text-neutral-100 sm:text-4xl">
           把「求职在线助手」接入你的就业指导
         </h1>
-        <p className="mx-auto mt-md max-w-2xl text-neutral-600 dark:text-neutral-300">
+        <p className="mx-auto mt-4 max-w-2xl text-neutral-600 dark:text-neutral-300">
           面向高校就业中心 / 院系的封闭试点方案：用跨平台的私人职业档案与诚实诊断，
           帮学生从「简历空白」到「匹配上岗」，同时守护隐私合规。
         </p>
-        <div className="mt-lg flex flex-wrap justify-center gap-sm">
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
           <a
             href="#apply"
-            className="rounded-xl bg-primary-600 px-5 py-sm font-medium text-white transition-colors hover:bg-primary-700"
+            className="rounded-xl bg-primary-600 px-5 py-3 font-medium text-white transition-colors hover:bg-primary-700"
           >
             申请封闭试点
           </a>
           <Link
             href="/"
-            className="rounded-xl border border-neutral-300 bg-white px-5 py-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800"
+            className="rounded-xl border border-neutral-300 bg-white px-5 py-3 font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800"
           >
             体验学生端工具
           </Link>
@@ -111,31 +111,31 @@ export default function CampusClient() {
       </header>
 
       {/* Why */}
-      <section className="mb-2xl">
+      <section className="mb-10">
         <h2 className="mb-5 text-xl font-semibold text-neutral-800 dark:text-neutral-100">为什么是高校？</h2>
-        <div className="grid grid-cols-1 gap-md sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {WHY.map((w) => (
             <div key={w.title} className="rounded-2xl border border-neutral-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900">
-              <div className="flex items-center gap-sm">
+              <div className="flex items-center gap-3">
                 <span className="text-2xl">{w.emoji}</span>
                 <p className="font-semibold text-neutral-800 dark:text-neutral-100">{w.title}</p>
               </div>
-              <p className="mt-xs text-sm leading-relaxed text-neutral-600 dark:text-neutral-300">{w.desc}</p>
+              <p className="mt-2 text-sm leading-relaxed text-neutral-600 dark:text-neutral-300">{w.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* How it works */}
-      <section className="mb-2xl">
+      <section className="mb-10">
         <h2 className="mb-5 text-xl font-semibold text-neutral-800 dark:text-neutral-100">合作三步</h2>
-        <div className="grid grid-cols-1 gap-md sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {STEPS.map((s) => (
             <div key={s.n} className="rounded-2xl border border-neutral-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900">
               <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-600 text-sm font-bold text-white">
                 {s.n}
               </span>
-              <p className="mt-sm font-medium text-neutral-800 dark:text-neutral-100">{s.title}</p>
+              <p className="mt-3 font-medium text-neutral-800 dark:text-neutral-100">{s.title}</p>
               <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-300">{s.desc}</p>
             </div>
           ))}
@@ -143,9 +143,9 @@ export default function CampusClient() {
       </section>
 
       {/* Tools for students */}
-      <section className="mb-2xl rounded-2xl border border-neutral-200 bg-white p-lg dark:border-neutral-800 dark:bg-neutral-900">
-        <h2 className="mb-sm font-semibold text-neutral-800 dark:text-neutral-100">学生端能力（机构可统一分发）</h2>
-        <div className="grid grid-cols-1 gap-sm sm:grid-cols-2">
+      <section className="mb-10 rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900">
+        <h2 className="mb-3 font-semibold text-neutral-800 dark:text-neutral-100">学生端能力（机构可统一分发）</h2>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <ToolCard href="/" title="简历诊断" desc="上传 PDF + JD，秒出匹配度雷达图与改进建议" />
           <ToolCard href="/star" title="STAR 生成器" desc="把干瘪经历扩写成面试级亮点句式" />
           <ToolCard href="/profile" title="私人职业档案" desc="沉淀成长轨迹，长期职业建模" />
@@ -154,8 +154,8 @@ export default function CampusClient() {
       </section>
 
       {/* Apply form */}
-      <section id="apply" className="scroll-mt-lg">
-        <div className="rounded-2xl border border-neutral-200 bg-white p-lg dark:border-neutral-800 dark:bg-neutral-900">
+      <section id="apply" className="scroll-mt-6">
+        <div className="rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900">
           <h2 className="mb-1 font-semibold text-neutral-800 dark:text-neutral-100">申请封闭试点</h2>
           <p className="mb-5 text-sm text-neutral-500 dark:text-neutral-400">
             填写以下信息即可提交申请（纯前端留资，数据仅存你本地浏览器，不会上传）。
@@ -164,14 +164,14 @@ export default function CampusClient() {
           {lead ? (
             <div className="rounded-xl border border-success-200 bg-success-50 p-5 text-sm text-success-800 dark:border-success-900 dark:bg-success-950/40 dark:text-success-200">
               <p className="font-medium">✅ 申请已提交（本地留存）</p>
-              <p className="mt-xs">
+              <p className="mt-2">
                 {lead.school}
                 {lead.dept ? ` · ${lead.dept}` : ""} · 规模 {lead.scale}
               </p>
               <p className="mt-1 text-xs text-success-700 dark:text-success-300">
                 这是演示用留资：真实试点请联系产品方开通机构入口。你可在浏览器本地存储查看 / 清除该记录。
               </p>
-              <div className="mt-sm">
+              <div className="mt-3">
                 <button
                   onClick={() => {
                     setLead(null);
@@ -181,15 +181,15 @@ export default function CampusClient() {
                       /* ignore */
                     }
                   }}
-                  className="rounded-lg border border-success-300 px-sm py-1.5 text-success-700 hover:bg-success-100 dark:border-success-800 dark:text-success-300 dark:hover:bg-success-950"
+                  className="rounded-lg border border-success-300 px-3 py-1.5 text-success-700 hover:bg-success-100 dark:border-success-800 dark:text-success-300 dark:hover:bg-success-950"
                 >
                   清除本地申请记录
                 </button>
               </div>
             </div>
           ) : (
-            <div className="space-y-md">
-              <div className="grid grid-cols-1 gap-md sm:grid-cols-2">
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <Field label="学校名称 *">
                   <Input
                     value={form.school}
@@ -223,7 +223,7 @@ export default function CampusClient() {
                 <select
                   value={form.scale}
                   onChange={(e) => setForm({ ...form, scale: e.target.value })}
-                  className="w-full rounded-lg border border-neutral-300 bg-white px-sm py-xs text-sm text-neutral-800 outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-100 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:focus:ring-primary-900/40"
+                  className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-800 outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-100 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:focus:ring-primary-900/40"
                 >
                   {["1000 人以下", "1000-5000 人", "5000-10000 人", "10000 人以上"].map((s) => (
                     <option key={s} value={s}>
@@ -238,14 +238,14 @@ export default function CampusClient() {
                   onChange={(e) => setForm({ ...form, note: e.target.value })}
                   rows={3}
                   placeholder="试点时间、特殊需求等（选填）"
-                  className="w-full rounded-lg border border-neutral-300 bg-white px-sm py-xs text-sm text-neutral-800 outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-100 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:focus:ring-primary-900/40"
+                  className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-800 outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-100 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:focus:ring-primary-900/40"
                 />
               </Field>
 
               {error && (
                 <p
                   role="alert"
-                  className="rounded-lg border border-danger-200 bg-danger-50 px-md py-sm text-sm text-danger-600 dark:border-danger-900 dark:bg-danger-950/40 dark:text-danger-400"
+                  className="rounded-lg border border-danger-200 bg-danger-50 px-4 py-3 text-sm text-danger-600 dark:border-danger-900 dark:bg-danger-950/40 dark:text-danger-400"
                 >
                   {error}
                 </p>
@@ -253,7 +253,7 @@ export default function CampusClient() {
 
               <button
                 onClick={submit}
-                className="w-full rounded-xl bg-primary-600 py-sm font-medium text-white transition-colors hover:bg-primary-700"
+                className="w-full rounded-xl bg-primary-600 py-3 font-medium text-white transition-colors hover:bg-primary-700"
               >
                 提交申请
               </button>
@@ -274,7 +274,7 @@ function ToolCard({ href, title, desc }: { href: string; title: string; desc: st
   return (
     <Link
       href={href}
-      className="block rounded-xl border border-neutral-200 p-md transition-colors hover:border-primary-400 hover:bg-primary-50/40 dark:border-neutral-700 dark:hover:border-primary-700 dark:hover:bg-primary-950/30"
+      className="block rounded-xl border border-neutral-200 p-4 transition-colors hover:border-primary-400 hover:bg-primary-50/40 dark:border-neutral-700 dark:hover:border-primary-700 dark:hover:bg-primary-950/30"
     >
       <p className="font-medium text-neutral-800 dark:text-neutral-100">{title}</p>
       <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">{desc}</p>

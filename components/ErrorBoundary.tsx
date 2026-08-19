@@ -35,12 +35,12 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     if (error) {
       if (this.props.fallback) return this.props.fallback(error, this.reset);
       return (
-        <div className="rounded-2xl border border-danger-200 bg-danger-50 p-lg text-center dark:border-danger-900 dark:bg-danger-950/40">
+        <div className="rounded-2xl border border-danger-200 bg-danger-50 p-6 text-center dark:border-danger-900 dark:bg-danger-950/40">
           <p className="text-sm font-medium text-danger-700 dark:text-danger-300">加载出错了</p>
           <p className="mt-1 text-xs text-danger-600 dark:text-danger-400">{error.message}</p>
           <button
             onClick={this.reset}
-            className="mt-sm rounded-lg bg-danger-600 px-md py-xs text-sm text-white transition-colors hover:bg-danger-700"
+            className="mt-3 rounded-lg bg-danger-600 px-4 py-2 text-sm text-white transition-colors hover:bg-danger-700"
           >
             重试
           </button>
