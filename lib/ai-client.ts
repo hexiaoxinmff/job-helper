@@ -111,16 +111,19 @@ export function generateStarDescription(experience: string): Promise<StarResult 
 }
 
 /** AI 模拟面试：基于简历 + JD + 诊断缺口生成追问列表（#6） */
-export function generateInterviewQuestions(
+export async function generateInterviewQuestions(
   resumeText: string,
   jdText: string,
   missingKeywords: string[]
 ): Promise<InterviewQuestion[] | null> {
-  return callAiProxy<InterviewQuestion[]>("interview", {
+  // 云函数返回 { questions: [...] }，这里解包成数组供调用方直接使用
+  const r = await callAiProxy<{ questions?: InterviewQuestion[] }>("interview", {
     resumeText,
     jdText,
     missingKeywords,
   });
+  if (!r) return null;
+  return Array.isArray(r.questions) ? r.questions : null;
 }
 
 /** AI 点评面试回答：评分 + 点评 + 参考回答 */
