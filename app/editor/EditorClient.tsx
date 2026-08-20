@@ -7,6 +7,7 @@ import { Field } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import ImportDialog from "@/components/ImportDialog";
+import PromptDialog from "@/components/PromptDialog";
 import { TEMPLATE_META, type TemplateMeta } from "@/components/resume/template-meta";
 import type { ParsedResumeInput } from "@/lib/resume-import";
 import Link from "next/link";
@@ -139,6 +140,14 @@ function VersionBar() {
     renameVersion,
     deleteVersion,
   } = useResume();
+
+  // 输入弹窗状态：null=关闭；add=新建空白；rename=重命名某版本（带默认名与目标 id）
+  type PromptState =
+    | { kind: "add" }
+    | { kind: "rename"; id: string; name: string }
+    | null;
+  const [prompt, setPrompt] = useState<PromptState>(null);
+
   return (
     <Card className="print:hidden">
       <div className="mb-3 flex items-center justify-between gap-3">
@@ -149,10 +158,7 @@ function VersionBar() {
           <Button
             size="sm"
             variant="secondary"
-            onClick={() => {
-              const n = window.prompt("新版本名称（留空自动命名）");
-              if (n !== null) addVersion(n || undefined);
-            }}
+            onClick={() => setPrompt({ kind: "add" })}
           >
             ＋ 新建空白
           </Button>
@@ -178,10 +184,7 @@ function VersionBar() {
               type="button"
               title="重命名"
               aria-label={`重命名版本「${v.name}」`}
-              onClick={() => {
-                const n = window.prompt("重命名版本", v.name);
-                if (n && n.trim()) renameVersion(v.id, n);
-              }}
+              onClick={() => setPrompt({ kind: "rename", id: v.id, name: v.name })}
               className="inline-flex h-8 w-8 items-center justify-center rounded text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-700 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
             >
               ✎
@@ -205,6 +208,37 @@ function VersionBar() {
       <p className="mt-2 text-xs text-neutral-400 dark:text-neutral-500">
         不同岗位方向各建一份版本（如「前端-秋招」「国企-综合岗」），投递追踪里可记录这次投递用了哪份简历。
       </p>
+
+      {/* 输入弹窗：新建空白 / 重命名复用同一个 PromptDialog，按 kind 区分行为 */}
+      {prompt?.kind === "add" && (
+        <PromptDialog
+          open
+          title="新建简历版本"
+          description="为不同岗位方向单独保存一份简历，留空将自动按版本号命名。"
+          placeholder="如：前端-秋招"
+          defaultValue=""
+          onCancel={() => setPrompt(null)}
+          onConfirm={(v) => {
+            // 留空即交由 addVersion 走自动命名；非空则用 trim 后的名字
+            const name = v.trim();
+            addVersion(name || undefined);
+            setPrompt(null);
+          }}
+        />
+      )}
+      {prompt?.kind === "rename" && (
+        <PromptDialog
+          open
+          title="重命名版本"
+          defaultValue={prompt.name}
+          onCancel={() => setPrompt(null)}
+          onConfirm={(v) => {
+            const name = v.trim();
+            if (name) renameVersion(prompt.id, name);
+            setPrompt(null);
+          }}
+        />
+      )}
     </Card>
   );
 }
