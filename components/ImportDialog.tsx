@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { parseResumeByRules, type ParsedResumeInput } from "@/lib/resume-import";
 import { parseResumeByAi } from "@/lib/ai-client";
 import { extractTextFromPdf, looksLikePdf } from "@/lib/pdf";
+import { Button } from "@/components/ui/Button";
 
 /**
  * 简历导入弹窗：上传 PDF / 粘贴文字 → 规则解析（本地，无 AI）→ 填入；
@@ -217,31 +218,31 @@ export default function ImportDialog({
           )}
 
           <div className="flex flex-wrap gap-2">
-            <button
+            <Button
               type="button"
+              variant="primary"
+              size="md"
+              loading={parsing}
+              disabled={reading || !text.trim()}
               onClick={runRules}
-              disabled={reading || parsing || !text.trim()}
-              className="inline-flex items-center justify-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
             >
-              {parsing ? "解析中…" : "规则解析并预览"}
-            </button>
+              规则解析并预览
+            </Button>
             {ruleResult && (
-              <button
-                type="button"
-                onClick={applyRule}
-                className="inline-flex items-center justify-center rounded-lg border border-primary-300 bg-primary-50 px-4 py-2 text-sm font-medium text-primary-700 transition-colors hover:bg-primary-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:border-primary-800 dark:bg-primary-950/40 dark:text-primary-300"
-              >
+              <Button type="button" variant="soft" size="md" onClick={applyRule}>
                 填入编辑器（保留已有内容）
-              </button>
+              </Button>
             )}
-            <button
+            <Button
               type="button"
+              variant="outline"
+              size="md"
+              loading={aiLoading}
+              disabled={reading || !text.trim()}
               onClick={runAi}
-              disabled={reading || aiLoading || !text.trim()}
-              className="inline-flex items-center justify-center rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-2 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200"
             >
-              {aiLoading ? "AI 解析中…" : "✨ AI 智能补全（完整识别）"}
-            </button>
+              ✨ AI 智能补全（完整识别）
+            </Button>
           </div>
           <p className="text-[11px] leading-relaxed text-neutral-400 dark:text-neutral-500">
             隐私说明：规则解析在本地浏览器完成，不上传任何内容；「AI 智能补全」会将简历文本发送至
@@ -250,16 +251,17 @@ export default function ImportDialog({
         </div>
 
         <div className="mt-5 flex justify-end">
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="md"
             onClick={() => {
               reset();
               onClose();
             }}
-            className="rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-2 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700"
           >
             关闭
-          </button>
+          </Button>
         </div>
       </div>
     </div>

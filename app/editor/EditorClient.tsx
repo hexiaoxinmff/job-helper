@@ -147,6 +147,8 @@ function VersionBar() {
     | { kind: "rename"; id: string; name: string }
     | null;
   const [prompt, setPrompt] = useState<PromptState>(null);
+  // 删除确认弹窗：记录目标版本，open=deleteTarget!==null
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
 
   return (
     <Card className="print:hidden">
@@ -194,9 +196,7 @@ function VersionBar() {
                 type="button"
                 title="删除版本"
                 aria-label={`删除版本「${v.name}」`}
-                onClick={() => {
-                  if (window.confirm(`删除版本「${v.name}」？此操作不可恢复。`)) deleteVersion(v.id);
-                }}
+                onClick={() => setDeleteTarget({ id: v.id, name: v.name })}
                 className="inline-flex h-8 w-8 items-center justify-center rounded text-neutral-400 opacity-100 transition-opacity hover:bg-neutral-100 hover:text-danger-500 sm:opacity-0 sm:group-hover:opacity-100 dark:hover:bg-neutral-800"
               >
                 ✕
@@ -239,6 +239,20 @@ function VersionBar() {
           }}
         />
       )}
+
+      {/* 删除确认（danger）：替代 window.confirm，初始焦点在取消按钮防误触 */}
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title="删除版本"
+        description={deleteTarget ? `删除版本「${deleteTarget.name}」？此操作不可恢复。` : undefined}
+        danger
+        okLabel="删除"
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={() => {
+          if (deleteTarget) deleteVersion(deleteTarget.id);
+          setDeleteTarget(null);
+        }}
+      />
     </Card>
   );
 }

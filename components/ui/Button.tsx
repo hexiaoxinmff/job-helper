@@ -1,12 +1,14 @@
-import { ButtonHTMLAttributes } from "react";
+import { ButtonHTMLAttributes, type Ref } from "react";
 
-type Variant = "primary" | "secondary" | "ghost" | "danger" | "outline";
+type Variant = "primary" | "secondary" | "ghost" | "danger" | "outline" | "soft";
 type Size = "sm" | "md" | "lg";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant;
   size?: Size;
   loading?: boolean;
+  /** React 19 ref-as-prop：透传给内部 <button>，供弹窗等场景做初始焦点管理 */
+  ref?: Ref<HTMLButtonElement>;
 }
 
 const base =
@@ -25,6 +27,8 @@ const variants: Record<Variant, string> = {
     "bg-transparent text-neutral-600 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800",
   outline:
     "border border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800",
+  // 浅底强调按钮：primary 的弱化版本，用于「次要但同主色系」的确认操作（如解析结果填入）
+  soft: "border border-primary-300 bg-primary-50 text-primary-700 hover:bg-primary-100 dark:border-primary-800 dark:bg-primary-950/40 dark:text-primary-300 dark:hover:bg-primary-900/40",
   danger:
     "bg-danger-600 text-white shadow-sm hover:bg-danger-700 hover:shadow-md active:bg-danger-800",
 };
@@ -43,10 +47,12 @@ export function Button({
   disabled,
   className = "",
   children,
+  ref,
   ...rest
 }: ButtonProps) {
   return (
     <button
+      ref={ref}
       className={`${base} ${variants[variant]} ${sizes[size]} ${className}`}
       disabled={disabled || loading}
       {...rest}

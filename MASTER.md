@@ -205,6 +205,7 @@
 | `secondary` | `bg-neutral-100` 灰                       | 次级操作        |
 | `outline`   | 白底 + 边框                                  | 并行操作（复制/再测） |
 | `ghost`     | 透明                                       | 弱操作（重新生成）   |
+| `soft`      | primary 浅底 + primary 文字 + primary 边框     | 次要但同主色系确认（解析结果填入） |
 | `danger`    | `bg-danger-600`                          | 破坏性操作       |
 
 - 尺寸：`sm` px-3 py-1.5 / `md` px-4 py-2 / `lg` px-4 py-3.5（全宽主操作）。

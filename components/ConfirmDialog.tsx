@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, type ReactNode } from "react";
+import { Button } from "@/components/ui/Button";
 
 /**
  * 应用内确认弹窗：替代 window.confirm / alert，提供一致的视觉与键盘/可访问性体验。
@@ -72,9 +73,6 @@ export default function ConfirmDialog({
 
   const titleId = "confirm-dialog-title";
   const descId = "confirm-dialog-desc";
-  const okCls = danger
-    ? "bg-danger-600 hover:bg-danger-700 focus-visible:ring-danger-400"
-    : "bg-primary-600 hover:bg-primary-700 focus-visible:ring-primary-400";
 
   return (
     <div
@@ -109,21 +107,18 @@ export default function ConfirmDialog({
         )}
 
         <div className="mt-6 flex justify-end gap-2">
-          <button
+          <Button
             ref={cancelRef}
             type="button"
+            variant="outline"
+            size="md"
             onClick={onCancel}
-            className="inline-flex items-center justify-center rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-2 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700 dark:focus-visible:ring-offset-neutral-900"
           >
             {cancelLabel}
-          </button>
-          <button
-            type="button"
-            onClick={onConfirm}
-            className={`inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-neutral-900 ${okCls}`}
-          >
+          </Button>
+          <Button type="button" variant={danger ? "danger" : "primary"} size="md" onClick={onConfirm}>
             {okLabel}
-          </button>
+          </Button>
         </div>
       </div>
     </div>
