@@ -32,8 +32,13 @@ export default function StarGenerator() {
   }, []);
 
   const runStar = async () => {
-    if (!experience.trim()) {
+    const trimmed = experience.trim();
+    if (!trimmed) {
       setStarMsg("请先输入一段经历描述");
+      return;
+    }
+    if (trimmed.length < 5) {
+      setStarMsg("经历描述太短，请至少输入 5 个字（如「负责电商订单数据分析」）");
       return;
     }
     setStarLoading(true);
@@ -42,7 +47,7 @@ export default function StarGenerator() {
     setCopied(false);
     track("star_generate_click");
     try {
-      const res = await generateStarDescription(experience);
+      const res = await generateStarDescription(trimmed);
       if (!res) {
         setStarMsg("STAR 生成暂不可用，请稍后重试");
         track("star_generate_error", { reason: "null" });
