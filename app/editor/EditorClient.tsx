@@ -510,18 +510,18 @@ export default function EditorClient() {
 
   return (
     <main className="flex-1 w-full max-w-3xl mx-auto px-4 py-10">
-      <header className="mb-6 flex items-start justify-between gap-4">
+      <header className="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-neutral-900 dark:text-neutral-100">简历编辑器</h1>
           <p className="mt-2 text-neutral-600 dark:text-neutral-300">填写内容，自动保存到本地浏览器</p>
         </div>
-        <div className="flex gap-2 print:hidden">
+        <div className="flex flex-wrap gap-2 print:hidden md:flex-nowrap">
           <Button variant="secondary" onClick={() => setImportOpen(true)}>
             导入简历
           </Button>
           <Link
             href="/preview"
-            className="inline-flex items-center justify-center rounded-lg border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-800"
+            className="inline-flex items-center justify-center whitespace-nowrap rounded-lg border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-800"
           >
             预览 / 导出
           </Link>

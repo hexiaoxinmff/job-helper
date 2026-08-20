@@ -77,7 +77,7 @@ export default function NavBar() {
   return (
     <>
       {/* 移动端：汉堡按钮 + 折叠面板（<768px） */}
-      <nav className="md:hidden sticky top-0 z-30 border-b border-neutral-200 bg-white/90 backdrop-blur print:hidden dark:border-neutral-800 dark:bg-neutral-900/90">
+      <nav className="md:hidden sticky top-0 z-30 border-b border-neutral-200 bg-white/90 backdrop-blur print:hidden pt-[env(safe-area-inset-top)] dark:border-neutral-800 dark:bg-neutral-900/90">
         <div className="max-w-3xl mx-auto px-4 h-12 flex items-center justify-between">
           <Link href="/" className="font-semibold text-neutral-900 text-base dark:text-neutral-100">
             求职在线助手
@@ -121,11 +121,12 @@ export default function NavBar() {
         {menuOpen && (
           <div className="border-t border-neutral-200 bg-white px-3 py-2 shadow-lg dark:border-neutral-800 dark:bg-neutral-900">
             {NAV_ITEMS.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setMenuOpen(false)}
-                className={`block px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  aria-current={isActive(item.href) ? "page" : undefined}
+                  onClick={() => setMenuOpen(false)}
+                  className={`block px-3 py-2.5 rounded-lg text-sm transition-colors ${
                   isActive(item.href)
                     ? "bg-primary-50 text-primary-700 font-medium dark:bg-primary-950 dark:text-primary-300"
                     : "text-neutral-600 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800"

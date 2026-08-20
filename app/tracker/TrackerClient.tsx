@@ -180,12 +180,12 @@ export default function TrackerClient() {
       )}
 
       {/* 统计 + 工具栏 */}
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+      <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="flex flex-wrap gap-2">
           <span className="rounded-full bg-neutral-100 px-3 py-1.5 text-sm text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
             共 {stats.total} 条投递
           </span>
-          <span className="rounded-full bg-amber-100 px-3 py-1.5 text-sm text-amber-700 dark:bg-amber-950 dark:text-amber-300">
+          <span className="rounded-full bg-amber-100 px-3 py-1.5 text-sm text-amber-800 dark:bg-amber-950 dark:text-amber-300">
             面试中 {stats.interview}
           </span>
           <span className="rounded-full bg-success-100 px-3 py-1.5 text-sm text-success-700 dark:bg-success-950 dark:text-success-300">

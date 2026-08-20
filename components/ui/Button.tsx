@@ -10,7 +10,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const base =
-  "inline-flex items-center justify-center gap-2 rounded-xl font-medium transition-all select-none " +
+  "inline-flex items-center justify-center gap-2 rounded-xl font-medium transition-all select-none whitespace-nowrap " +
   // 键盘焦点环（WCAG 2.4.7）：offset 跟随页面背景 token，亮暗自动
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background " +
   "disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.98]";

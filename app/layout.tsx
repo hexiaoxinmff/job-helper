@@ -41,8 +41,18 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="zh-CN" className="h-full antialiased" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        <meta name="theme-color" content="#2563eb" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="求职在线助手" />
       </head>
-      <body className="min-h-full flex flex-col md:pl-56">
+      <body className="min-h-full flex flex-col md:pl-56 pb-[env(safe-area-inset-bottom)]">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-primary-600 focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-white focus:shadow-lg"
+        >
+          跳到主内容
+        </a>
         <ThemeProvider>
           <ResumeProvider>
             <ProfileProvider>
@@ -50,7 +60,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                 <TrackerProvider>
                   <RemediationProvider>
                     <NavBar />
-                    {children}
+                    <div id="main-content" tabIndex={-1} className="flex-1 flex flex-col outline-none">
+                      {children}
+                    </div>
                     <PrivacyModal />
                   </RemediationProvider>
                 </TrackerProvider>

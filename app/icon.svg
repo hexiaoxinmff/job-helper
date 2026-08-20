@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="求职在线助手">
+  <rect width="64" height="64" rx="14" fill="#2563eb"/>
+  <path d="M32 13 L55 25.5 32 38 9 25.5 Z" fill="#ffffff"/>
+  <path d="M17 30 v9.5 c0 4.2 6.1 7.5 15 7.5 s15-3.3 15-7.5 V30" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="55" cy="25.5" r="3" fill="#ffffff"/>
+  <path d="M20 46 h24" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.85"/>
+</svg>
