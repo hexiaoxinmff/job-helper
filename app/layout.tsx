@@ -41,7 +41,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="zh-CN" className="h-full antialiased" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
-        <meta name="theme-color" content="#2563eb" />
+        <meta name="theme-color" content="#4f46e5" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="求职在线助手" />

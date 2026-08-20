@@ -345,7 +345,7 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
             <div className="w-full space-y-3 md:w-1/2">
               {result.dimensions.map((d, i) => (
                 <div key={d.name} className="flex items-start gap-3">
-                  <span className={`w-14 shrink-0 text-lg font-semibold ${scoreColor(d.score)}`}>
+                  <span className={`w-14 shrink-0 text-lg font-semibold tabular-nums ${scoreColor(d.score)}`}>
                     {d.score}
                   </span>
                   <div className="flex-1">

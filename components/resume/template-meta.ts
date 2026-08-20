@@ -30,7 +30,7 @@ export const TEMPLATE_META: TemplateMeta[] = [
   { id: "light-blue", label: "浅蓝清新", desc: "浅蓝底纹分模块，清爽", accent: "#4a90d9", layout: "single" },
   { id: "sidebar-navy", label: "侧栏深蓝", desc: "深蓝侧栏 + 主内容区", accent: "#1d3557", layout: "split" },
   { id: "military-green", label: "军绿稳重", desc: "墨绿头图，沉稳可靠", accent: "#5c7351", layout: "banner" },
-  { id: "topbar-modern", label: "顶部色条", desc: "渐变蓝顶条，现代大方", accent: "#2563eb", layout: "banner" },
+  { id: "topbar-modern", label: "顶部色条", desc: "渐变蓝顶条，现代大方", accent: "#4f46e5", layout: "banner" },
   { id: "magazine", label: "杂志风", desc: "衬线大标题，文艺设计感", accent: "#c9b458", layout: "magazine" },
 ];
 

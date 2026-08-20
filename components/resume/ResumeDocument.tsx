@@ -836,31 +836,31 @@ function TopbarModernTemplate({ resume }: { resume: Resume }) {
     <div style={{ paddingBottom: 26, minHeight: "100%" }}>
       <div
         style={{
-          background: "linear-gradient(120deg,#2563eb,#3b82f6,#60a5fa)",
+          background: "linear-gradient(120deg,#4f46e5,#6366f1,#818cf8)",
           padding: "24px 44px 20px",
           display: "flex",
           alignItems: "center",
           gap: 18,
-          borderBottom: "4px solid #1d4ed8",
+          borderBottom: "4px solid #4338ca",
         }}
       >
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 26, fontWeight: 800, color: "#fff" }}>{b.name || "你的名字"}</div>
-          {b.title && <div style={{ fontSize: 12.5, color: "#dbeafe", fontWeight: 600, marginTop: 2 }}>求职意向：{b.title}</div>}
-          <ContactLine resume={resume} style={{ marginTop: 7, fontSize: 11, color: "#e0edff" }} />
+          {b.title && <div style={{ fontSize: 12.5, color: "#e0e7ff", fontWeight: 600, marginTop: 2 }}>求职意向：{b.title}</div>}
+          <ContactLine resume={resume} style={{ marginTop: 7, fontSize: 11, color: "#eef2ff" }} />
         </div>
         <AvatarFrame
           resume={resume}
-          style={{ borderColor: "#bcd6fb", background: "repeating-linear-gradient(45deg,#3d82f5,#3d82f5 6px,#3678e8 6px,#3678e8 12px)", color: "#cfe0fc" }}
+          style={{ borderColor: "#c7d2fe", background: "repeating-linear-gradient(45deg,#6366f1,#6366f1 6px,#5b55e8 6px,#5b55e8 12px)", color: "#dde2fd" }}
         />
       </div>
       <div style={{ padding: "0 44px" }}>
-        {b.summary && <Sec title="个人简介" accent="#1d4ed8"><Desc>{b.summary}</Desc></Sec>}
-        <Sec title="个人优势" accent="#1d4ed8"><AdvantagesItems resume={resume} bulletColor="#3b82f6" /></Sec>
-        <Sec title="教育背景" accent="#1d4ed8"><EduItems resume={resume} /></Sec>
-        <Sec title="项目经历" accent="#1d4ed8"><ProjectItems resume={resume} /></Sec>
-        <Sec title="校园经历" accent="#1d4ed8"><ActivityItems resume={resume} /></Sec>
-        <Sec title="技能证书" accent="#1d4ed8"><SkillsBlock resume={resume} /><PortfolioItems resume={resume} /></Sec>
+        {b.summary && <Sec title="个人简介" accent="#4338ca"><Desc>{b.summary}</Desc></Sec>}
+        <Sec title="个人优势" accent="#4338ca"><AdvantagesItems resume={resume} bulletColor="#6366f1" /></Sec>
+        <Sec title="教育背景" accent="#4338ca"><EduItems resume={resume} /></Sec>
+        <Sec title="项目经历" accent="#4338ca"><ProjectItems resume={resume} /></Sec>
+        <Sec title="校园经历" accent="#4338ca"><ActivityItems resume={resume} /></Sec>
+        <Sec title="技能证书" accent="#4338ca"><SkillsBlock resume={resume} /><PortfolioItems resume={resume} /></Sec>
       </div>
     </div>
   );

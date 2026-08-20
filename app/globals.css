@@ -28,18 +28,18 @@
   --jh-neutral-900: #0f172a;
   --jh-neutral-950: #020617;
 
-  /* ---- 主色（blue 系） ---- */
-  --jh-primary-50: #eff6ff;
-  --jh-primary-100: #dbeafe;
-  --jh-primary-200: #bfdbfe;
-  --jh-primary-300: #93c5fd;
-  --jh-primary-400: #60a5fa;
-  --jh-primary-500: #3b82f6;
-  --jh-primary-600: #2563eb;
-  --jh-primary-700: #1d4ed8;
-  --jh-primary-800: #1e40af;
-  --jh-primary-900: #1e3a8a;
-  --jh-primary-950: #172554;
+  /* ---- 主色（indigo 系，Stripe-inspired 靛蓝紫罗兰：主操作/导航/链接/进度） ---- */
+  --jh-primary-50: #eef2ff;
+  --jh-primary-100: #e0e7ff;
+  --jh-primary-200: #c7d2fe;
+  --jh-primary-300: #a5b4fc;
+  --jh-primary-400: #818cf8;
+  --jh-primary-500: #6366f1;
+  --jh-primary-600: #4f46e5;
+  --jh-primary-700: #4338ca;
+  --jh-primary-800: #3730a3;
+  --jh-primary-900: #312e81;
+  --jh-primary-950: #1e1b4b;
 
   /* ---- 成功（emerald 系） ---- */
   --jh-success-50: #ecfdf5;
@@ -126,12 +126,12 @@
   --jh-radius-3xl: 1.5rem;
   --jh-radius-full: 9999px;
 
-  /* ---- 阴影 ---- */
-  --jh-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --jh-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --jh-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --jh-shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-  --jh-shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+  /* ---- 阴影（Stripe-inspired 蓝调多层阴影：品牌蓝灰色远景 + 中性近景，营造大气深度） ---- */
+  --jh-shadow-sm: 0 1px 2px 0 rgb(50 50 93 / 0.15), 0 1px 3px 0 rgb(0 0 0 / 0.05);
+  --jh-shadow-md: 0 4px 6px -1px rgb(50 50 93 / 0.15), 0 2px 4px -2px rgb(0 0 0 / 0.08);
+  --jh-shadow-lg: 0 10px 15px -3px rgb(50 50 93 / 0.18), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --jh-shadow-xl: 0 20px 25px -5px rgb(50 50 93 / 0.22), 0 8px 10px -6px rgb(0 0 0 / 0.12);
+  --jh-shadow-2xl: 0 25px 50px -12px rgb(50 50 93 / 0.3);
 
   /* ---- 间距（命名语义；数字间距基于 Tailwind --spacing 计算） ---- */
   --jh-space-xs: 0.5rem; /* = 2 */
@@ -174,21 +174,21 @@
   --jh-border-strong: #334155;
   --jh-overlay: rgb(2 6 23 / 0.6);
 
-  /* ---- 阴影（暗色加深） ---- */
-  --jh-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.4);
-  --jh-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.45), 0 2px 4px -2px rgb(0 0 0 / 0.4);
-  --jh-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.4);
-  --jh-shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.45);
-  --jh-shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.6);
+  /* ---- 阴影（暗色：蓝调加深，保持品牌氛围） ---- */
+  --jh-shadow-sm: 0 1px 2px 0 rgb(3 3 39 / 0.5);
+  --jh-shadow-md: 0 4px 6px -1px rgb(3 3 39 / 0.55), 0 2px 4px -2px rgb(0 0 0 / 0.5);
+  --jh-shadow-lg: 0 10px 15px -3px rgb(3 3 39 / 0.6), 0 4px 6px -4px rgb(0 0 0 / 0.5);
+  --jh-shadow-xl: 0 20px 25px -5px rgb(3 3 39 / 0.6), 0 8px 10px -6px rgb(0 0 0 / 0.55);
+  --jh-shadow-2xl: 0 25px 50px -12px rgb(3 3 39 / 0.7);
 
   --background: var(--jh-bg);
   --foreground: var(--jh-fg);
 
-  /* ---- 图表配色（暗色提亮） ---- */
+  /* ---- 图表配色（暗色提亮，跟随 indigo 主色） ---- */
   --chart-axis: #94a3b8;
   --chart-grid: #1e293b;
-  --chart-stroke: #60a5fa;
-  --chart-series-1: #60a5fa;
+  --chart-stroke: #818cf8;
+  --chart-series-1: #818cf8;
   --chart-series-2: #4ade80;
   --chart-series-3: #fbbf24;
   --chart-series-4: #c084fc;
@@ -224,17 +224,17 @@
   --color-neutral-950: var(--jh-neutral-950, #020617);
 
   /* 主色 */
-  --color-primary-50: var(--jh-primary-50, #eff6ff);
-  --color-primary-100: var(--jh-primary-100, #dbeafe);
-  --color-primary-200: var(--jh-primary-200, #bfdbfe);
-  --color-primary-300: var(--jh-primary-300, #93c5fd);
-  --color-primary-400: var(--jh-primary-400, #60a5fa);
-  --color-primary-500: var(--jh-primary-500, #3b82f6);
-  --color-primary-600: var(--jh-primary-600, #2563eb);
-  --color-primary-700: var(--jh-primary-700, #1d4ed8);
-  --color-primary-800: var(--jh-primary-800, #1e40af);
-  --color-primary-900: var(--jh-primary-900, #1e3a8a);
-  --color-primary-950: var(--jh-primary-950, #172554);
+  --color-primary-50: var(--jh-primary-50, #eef2ff);
+  --color-primary-100: var(--jh-primary-100, #e0e7ff);
+  --color-primary-200: var(--jh-primary-200, #c7d2fe);
+  --color-primary-300: var(--jh-primary-300, #a5b4fc);
+  --color-primary-400: var(--jh-primary-400, #818cf8);
+  --color-primary-500: var(--jh-primary-500, #6366f1);
+  --color-primary-600: var(--jh-primary-600, #4f46e5);
+  --color-primary-700: var(--jh-primary-700, #4338ca);
+  --color-primary-800: var(--jh-primary-800, #3730a3);
+  --color-primary-900: var(--jh-primary-900, #312e81);
+  --color-primary-950: var(--jh-primary-950, #1e1b4b);
 
   /* 成功 */
   --color-success-50: var(--jh-success-50, #ecfdf5);
@@ -317,7 +317,7 @@
   --shadow-xl: var(--jh-shadow-xl);
   --shadow-2xl: var(--jh-shadow-2xl);
 
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "SF Pro Display", "Segoe UI", Roboto,
     "PingFang SC", "Microsoft YaHei", sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   /* 间距：只暴露 CSS 变量（--jh-space-*）供需要处直接引用，不注册命名 --spacing-* token。
