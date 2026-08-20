@@ -28,18 +28,18 @@
   --jh-neutral-900: #0f172a;
   --jh-neutral-950: #020617;
 
-  /* ---- 主色（indigo 系，Stripe-inspired 靛蓝紫罗兰：主操作/导航/链接/进度） ---- */
-  --jh-primary-50: #eef2ff;
-  --jh-primary-100: #e0e7ff;
-  --jh-primary-200: #c7d2fe;
-  --jh-primary-300: #a5b4fc;
-  --jh-primary-400: #818cf8;
-  --jh-primary-500: #6366f1;
-  --jh-primary-600: #4f46e5;
-  --jh-primary-700: #4338ca;
-  --jh-primary-800: #3730a3;
-  --jh-primary-900: #312e81;
-  --jh-primary-950: #1e1b4b;
+  /* ---- 主色（violet 紫罗兰系，方案 A 深空极光：主操作/导航/链接/进度） ---- */
+  --jh-primary-50: #f5f3ff;
+  --jh-primary-100: #ede9fe;
+  --jh-primary-200: #ddd6fe;
+  --jh-primary-300: #c4b5fd;
+  --jh-primary-400: #a78bfa;
+  --jh-primary-500: #8b5cf6;
+  --jh-primary-600: #7c3aed;
+  --jh-primary-700: #6d28d9;
+  --jh-primary-800: #5b21b6;
+  --jh-primary-900: #4c1d95;
+  --jh-primary-950: #2e1065;
 
   /* ---- 成功（emerald 系） ---- */
   --jh-success-50: #ecfdf5;
@@ -93,28 +93,28 @@
   --jh-info-900: #0c4a6e;
   --jh-info-950: #082f49;
 
-  /* ---- 强调（purple 系，AI 增强 / STAR） ---- */
+  /* ---- 强调（亮紫，AI 增强 / STAR，与 primary 深紫形成层次） ---- */
   --jh-accent-50: #faf5ff;
-  --jh-accent-100: #f3e8ff;
+  --jh-accent-100: #f5edff;
   --jh-accent-200: #e9d5ff;
   --jh-accent-300: #d8b4fe;
   --jh-accent-400: #c084fc;
   --jh-accent-500: #a855f7;
-  --jh-accent-600: #9333ea;
+  --jh-accent-600: #8b5cf6;
   --jh-accent-700: #7e22ce;
   --jh-accent-800: #6b21a8;
   --jh-accent-900: #581c87;
   --jh-accent-950: #3b0764;
 
-  /* ---- 基础语义（随主题切换） ---- */
-  --jh-bg: #f8fafc; /* 页面背景 */
+  /* ---- 基础语义（亮色 = 晨雾柔光回退；默认主题为 dark 深空极光，见 layout.tsx） ---- */
+  --jh-bg: #f6f7fb; /* 页面背景 */
   --jh-bg-elevated: #ffffff; /* 卡片/弹层背景 */
-  --jh-bg-muted: #f1f5f9; /* 次级背景（hover / 内嵌块） */
+  --jh-bg-muted: #f1f3f9; /* 次级背景（hover / 内嵌块） */
   --jh-fg: #0f172a; /* 正文 */
   --jh-fg-muted: #475569; /* 次要文字 */
   --jh-fg-faint: #94a3b8; /* 弱化文字 */
-  --jh-border: #e2e8f0; /* 默认边框 */
-  --jh-border-strong: #cbd5e1; /* 强调边框 / 输入框 */
+  --jh-border: #e5e9f2; /* 默认边框 */
+  --jh-border-strong: #c9d2e4; /* 强调边框 / 输入框 */
   --jh-overlay: rgb(15 23 42 / 0.5); /* 弹窗遮罩 */
 
   /* ---- 圆角 ---- */
@@ -126,12 +126,12 @@
   --jh-radius-3xl: 1.5rem;
   --jh-radius-full: 9999px;
 
-  /* ---- 阴影（Stripe-inspired 蓝调多层阴影：品牌蓝灰色远景 + 中性近景，营造大气深度） ---- */
-  --jh-shadow-sm: 0 1px 2px 0 rgb(50 50 93 / 0.15), 0 1px 3px 0 rgb(0 0 0 / 0.05);
-  --jh-shadow-md: 0 4px 6px -1px rgb(50 50 93 / 0.15), 0 2px 4px -2px rgb(0 0 0 / 0.08);
-  --jh-shadow-lg: 0 10px 15px -3px rgb(50 50 93 / 0.18), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --jh-shadow-xl: 0 20px 25px -5px rgb(50 50 93 / 0.22), 0 8px 10px -6px rgb(0 0 0 / 0.12);
-  --jh-shadow-2xl: 0 25px 50px -12px rgb(50 50 93 / 0.3);
+  /* ---- 阴影（亮色：紫调淡光晕） ---- */
+  --jh-shadow-sm: 0 1px 2px 0 rgb(50 50 93 / 0.1), 0 1px 3px 0 rgb(139 92 246 / 0.06);
+  --jh-shadow-md: 0 4px 10px -2px rgb(50 50 93 / 0.12), 0 6px 24px -6px rgb(139 92 246 / 0.14);
+  --jh-shadow-lg: 0 10px 18px -4px rgb(50 50 93 / 0.14), 0 10px 36px -8px rgb(139 92 246 / 0.16);
+  --jh-shadow-xl: 0 20px 28px -6px rgb(50 50 93 / 0.18), 0 16px 48px -10px rgb(139 92 246 / 0.2);
+  --jh-shadow-2xl: 0 25px 50px -12px rgb(50 50 93 / 0.22), 0 20px 60px -12px rgb(139 92 246 / 0.24);
 
   /* ---- 间距（命名语义；数字间距基于 Tailwind --spacing 计算） ---- */
   --jh-space-xs: 0.5rem; /* = 2 */
@@ -147,48 +147,48 @@
   --background: var(--jh-bg);
   --foreground: var(--jh-fg);
 
-  /* ---- 图表配色（随主题切换；系列色引用语义色板，单一来源） ---- */
+  /* ---- 图表配色（方案 A 紫系提亮） ---- */
   --chart-axis: var(--jh-fg-muted);
-  --chart-grid: var(--jh-neutral-200);
-  --chart-stroke: var(--jh-primary-600);
+  --chart-grid: #26204a;
+  --chart-stroke: var(--jh-primary-400);
   /* 多系列：总分 / 技能匹配 / 关键词覆盖 / 经历与成果 / 教育背景 / 表达规范 */
-  --chart-series-1: var(--jh-primary-600);
-  --chart-series-2: var(--jh-success-600);
-  --chart-series-3: var(--jh-warning-600);
-  --chart-series-4: var(--jh-accent-600);
-  --chart-series-5: #db2777; /* 教育背景（pink，非语义色板，作为图表专用色保留） */
-  --chart-series-6: #0891b2; /* 表达规范（cyan，同上） */
+  --chart-series-1: #a78bfa;
+  --chart-series-2: #34d399;
+  --chart-series-3: #fbbf24;
+  --chart-series-4: #c084fc;
+  --chart-series-5: #f472b6; /* 教育背景（pink，图表专用色） */
+  --chart-series-6: #22d3ee; /* 表达规范（cyan，同上） */
 }
 
 /* 暗色变量块：截图捕获态（html.export-capture）下整体失效，回退到 :root 亮色值，
    保证导出卡片背景、文字、图表（--chart-*）统一为亮色系 */
 .dark:not(.export-capture) {
-  /* ---- 基础语义（暗色） ---- */
-  --jh-bg: #020617;
-  --jh-bg-elevated: #0f172a;
-  --jh-bg-muted: #1e293b;
-  --jh-fg: #e2e8f0;
-  --jh-fg-muted: #94a3b8;
-  --jh-fg-faint: #64748b;
-  --jh-border: #1e293b;
-  --jh-border-strong: #334155;
-  --jh-overlay: rgb(2 6 23 / 0.6);
+  /* ---- 基础语义（暗色：更深邃的极光夜） ---- */
+  --jh-bg: #030010;
+  --jh-bg-elevated: #0b0719;
+  --jh-bg-muted: #130d2b;
+  --jh-fg: #f0eefc;
+  --jh-fg-muted: #9b97c4;
+  --jh-fg-faint: #5f5a80;
+  --jh-border: #1f1a40;
+  --jh-border-strong: #302757;
+  --jh-overlay: rgb(3 0 16 / 0.72);
 
-  /* ---- 阴影（暗色：蓝调加深，保持品牌氛围） ---- */
-  --jh-shadow-sm: 0 1px 2px 0 rgb(3 3 39 / 0.5);
-  --jh-shadow-md: 0 4px 6px -1px rgb(3 3 39 / 0.55), 0 2px 4px -2px rgb(0 0 0 / 0.5);
-  --jh-shadow-lg: 0 10px 15px -3px rgb(3 3 39 / 0.6), 0 4px 6px -4px rgb(0 0 0 / 0.5);
-  --jh-shadow-xl: 0 20px 25px -5px rgb(3 3 39 / 0.6), 0 8px 10px -6px rgb(0 0 0 / 0.55);
-  --jh-shadow-2xl: 0 25px 50px -12px rgb(3 3 39 / 0.7);
+  /* ---- 阴影（暗色：紫光更浓） ---- */
+  --jh-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.5), 0 1px 3px 0 rgb(139 92 246 / 0.1);
+  --jh-shadow-md: 0 4px 10px -2px rgb(0 0 0 / 0.6), 0 6px 24px -6px rgb(139 92 246 / 0.28);
+  --jh-shadow-lg: 0 10px 18px -4px rgb(0 0 0 / 0.65), 0 10px 36px -8px rgb(139 92 246 / 0.34);
+  --jh-shadow-xl: 0 20px 28px -6px rgb(0 0 0 / 0.7), 0 16px 48px -10px rgb(139 92 246 / 0.4);
+  --jh-shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.75), 0 20px 60px -12px rgb(139 92 246 / 0.45);
 
   --background: var(--jh-bg);
   --foreground: var(--jh-fg);
 
-  /* ---- 图表配色（暗色提亮，跟随 indigo 主色） ---- */
-  --chart-axis: #94a3b8;
-  --chart-grid: #1e293b;
-  --chart-stroke: #818cf8;
-  --chart-series-1: #818cf8;
+  /* ---- 图表配色（暗色提亮） ---- */
+  --chart-axis: #9b97c4;
+  --chart-grid: #1f1a40;
+  --chart-stroke: #a78bfa;
+  --chart-series-1: #a78bfa;
   --chart-series-2: #4ade80;
   --chart-series-3: #fbbf24;
   --chart-series-4: #c084fc;
@@ -327,7 +327,7 @@
 }
 
 html {
-  color-scheme: light;
+  color-scheme: dark;
 }
 html.dark:not(.export-capture) {
   color-scheme: dark;
@@ -337,6 +337,20 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
+  /* 亮色（晨雾柔光）：淡蓝 / 粉 / 黄柔光铺底 */
+  background-image:
+    radial-gradient(900px 640px at 82% -10%, rgb(139 92 246 / 0.10), transparent 60%),
+    radial-gradient(820px 600px at -6% 94%, rgb(255 224 236 / 0.65), transparent 55%),
+    radial-gradient(700px 540px at 104% 38%, rgb(214 228 255 / 0.7), transparent 55%);
+  background-attachment: fixed;
+}
+
+/* 方案 A 深空极光：紫 / 青 / 蓝极光光晕（默认主题即 dark，见 layout.tsx） */
+html.dark:not(.export-capture) body {
+  background-image:
+    radial-gradient(1000px 760px at 78% -12%, rgb(139 92 246 / 0.30), transparent 60%),
+    radial-gradient(820px 640px at -8% 92%, rgb(34 211 238 / 0.12), transparent 55%),
+    radial-gradient(700px 560px at 102% 40%, rgb(59 91 246 / 0.10), transparent 55%);
 }
 
 /* ==========================================================================

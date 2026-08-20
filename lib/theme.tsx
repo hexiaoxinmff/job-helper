@@ -36,14 +36,13 @@ const themeListeners = new Set<Listener>();
 let cachedTheme: Theme | null = null;
 
 function getThemeSnapshot(): Theme {
-  cachedTheme =
-    cachedTheme ?? readStoredTheme() ??
-    (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  // 方案 A：默认深空极光（dark）。用户显式切换后以 localStorage 为准。
+  cachedTheme = cachedTheme ?? readStoredTheme() ?? "dark";
   return cachedTheme;
 }
 
 function getThemeServerSnapshot(): Theme {
-  return "light";
+  return "dark";
 }
 
 function subscribeTheme(listener: Listener) {
@@ -85,8 +84,9 @@ export function useTheme() {
   return ctx;
 }
 
-/** 首屏前同步执行的脚本：在 React 注水前设置 .dark，避免暗色模式闪烁（FOUC） */
-export const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem('${STORAGE_KEY}');if(t!=='light'&&t!=='dark'){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}var d=document.documentElement;if(t==='dark'){d.classList.add('dark');}d.style.colorScheme=t;}catch(e){}})();`;
+/** 首屏前同步执行的脚本：在 React 注水前设置 .dark，避免暗色模式闪烁（FOUC）
+ *  方案 A：默认即深空极光（dark），除非用户显式选择过 light */
+export const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem('${STORAGE_KEY}');if(t!=='light'&&t!=='dark'){t='dark';}var d=document.documentElement;if(t==='dark'){d.classList.add('dark');}d.style.colorScheme=t;}catch(e){}})();`;
 
 // ===== 根 CSS 变量注册表（与 app/globals.css 的 :root/.dark 定义一一对应） =====
 // 组件禁止硬编码十六进制：CSS 一律写 var(--jh-*) / 语义工具类；

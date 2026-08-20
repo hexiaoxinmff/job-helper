@@ -16,8 +16,9 @@ const base =
   "disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.98]";
 
 const variants: Record<Variant, string> = {
+  // 方案 A：紫罗兰渐变主按钮（紫 → 靛蓝），hover 提亮 + 紫光阴影
   primary:
-    "bg-primary-600 text-white shadow-sm hover:bg-primary-700 hover:shadow-md active:bg-primary-800",
+    "bg-linear-to-r from-primary-500 via-primary-600 to-indigo-500 text-white shadow-md hover:shadow-lg hover:brightness-110 active:brightness-95",
   secondary:
     "bg-neutral-100 text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700",
   ghost:

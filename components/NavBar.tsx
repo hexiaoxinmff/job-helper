@@ -70,8 +70,8 @@ export default function NavBar() {
   const itemClass = (href: string) =>
     `flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
       isActive(href)
-        ? "bg-primary-50 text-primary-700 font-medium dark:bg-primary-950 dark:text-primary-300"
-        : "text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:text-neutral-100 dark:hover:bg-neutral-800"
+        ? "bg-linear-to-r from-primary-500/40 to-primary-600/25 text-primary-100 font-medium border border-primary-500/40"
+        : "text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:text-neutral-100 dark:hover:bg-white/5"
     }`;
 
   return (
@@ -140,8 +140,8 @@ export default function NavBar() {
         )}
       </nav>
 
-      {/* 桌面端：左侧固定导航栏（≥768px） */}
-      <aside className="hidden md:flex fixed inset-y-0 left-0 w-56 flex-col border-r border-neutral-200 bg-white z-30 print:hidden dark:border-neutral-800 dark:bg-neutral-900">
+      {/* 桌面端：左侧固定导航栏（≥768px，方案 A：深色玻璃） */}
+      <aside className="hidden md:flex fixed inset-y-0 left-0 w-56 flex-col border-r border-neutral-200 bg-white/80 backdrop-blur-xl z-30 print:hidden dark:border-white/10 dark:bg-[#0a0718]/85">
         <div className="px-5 pt-6 pb-4 border-b border-neutral-100 dark:border-neutral-800">
           <Link href="/" className="font-semibold text-neutral-900 text-lg block dark:text-neutral-100">
             求职在线助手
