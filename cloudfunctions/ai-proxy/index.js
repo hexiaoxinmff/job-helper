@@ -517,7 +517,7 @@ async function actionSync(payload) {
     const e = new Error("local 数据缺失"); e.status = 400; throw e;
   }
   if (!capp) capp = cloudbase.init({ env: cloudbase.SYMBOL_CURRENT_ENV });
-  const db = capp.rdb();
+  const db = capp.rdb({ database: "public" });
 
   // 1) 读云端（不存在则视为首次）
   let remote = null;
@@ -566,7 +566,7 @@ async function actionSyncClear(payload) {
   }
   if (!capp) capp = cloudbase.init({ env: cloudbase.SYMBOL_CURRENT_ENV });
   try {
-    const { error } = await capp.rdb().from("jh_sync").delete().eq("owner_id", uid);
+    const { error } = await capp.rdb({ database: "public" }).from("jh_sync").delete().eq("owner_id", uid);
     if (error) throw error;
   } catch (e) {
     console.error("[ai-proxy] sync clear fail:", e && e.message);
