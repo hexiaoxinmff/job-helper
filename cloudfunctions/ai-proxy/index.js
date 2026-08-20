@@ -13,7 +13,7 @@
 //     在 x-api-key 头携带。未配置时仅开发环境放行，生产必须配置，否则任何人都可无偿调用烧额度。
 //   - Origin 白名单校验（AI_PROXY_ALLOWED_ORIGINS，逗号分隔）：
 //     未显式配置时【不做 Origin 限制】（向后兼容，避免误伤 CloudBase 静态托管域名）；
-//     配置后仅放行白名单内 Origin。前端正式域名确认后务必配置收紧。
+//     配置后仅放行白名单内 Origin。支持完整 Origin / 裸主机名(localhost) / *.suffix 通配三种规则。
 //   - 每 IP 滑动窗口限流 + 全局并发上限，挡住单点刷量、保护函数实例。
 
 const http = require("http");
@@ -37,12 +37,41 @@ const hitCounts = new Map();
 const MAX_CONCURRENCY = 5;
 let activeCalls = 0;
 
+/**
+ * Origin 白名单校验（P0 加固）：支持三种规则（逗号分隔，AI_PROXY_ALLOWED_ORIGINS）
+ *   - 完整 Origin：https://xxx.tcloudbaseapp.com（按 scheme+host+port 精确匹配）
+ *   - 裸主机名：localhost（匹配任意端口的本地开发）
+ *   - 通配子域：*.tcloudbaseapp.com（边界安全：要求 host 以 ".suffix" 结尾，
+ *     避免 "eviltcloudbaseapp.com" 这类后缀伪装绕过）
+ * 未配置 AI_PROXY_ALLOWED_ORIGINS 时不限制（向后兼容）；无 Origin 请求（小程序/服务端）由密钥兜底。
+ */
 function isOriginAllowed(origin) {
   if (!origin) return true; // 无 Origin（小程序 / 服务端调用）由密钥兜底
   if (AI_PROXY_ALLOWED_ORIGINS.length === 0) return true; // 未配置 → 不限制（向后兼容，避免误伤托管域名）
-  return AI_PROXY_ALLOWED_ORIGINS.some(
-    (o) => origin === o || origin.endsWith(o) || origin.startsWith(o)
-  );
+  let u = null;
+  try {
+    u = new URL(origin);
+  } catch {
+    u = null;
+  }
+  const host = u ? u.hostname : origin.split(/[/?#]/)[0].split(":")[0];
+  return AI_PROXY_ALLOWED_ORIGINS.some((raw) => {
+    const rule = raw.trim();
+    if (!rule) return false;
+    if (rule.startsWith("*.")) {
+      const suffix = rule.slice(2).toLowerCase();
+      return host.toLowerCase().endsWith("." + suffix);
+    }
+    if (rule.includes("://")) {
+      try {
+        const r = new URL(rule);
+        return u !== null && r.origin === u.origin;
+      } catch {
+        return origin === rule;
+      }
+    }
+    return host.toLowerCase() === rule.toLowerCase();
+  });
 }
 
 function rateLimited(ip) {
