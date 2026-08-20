@@ -410,6 +410,7 @@ export function ResumeProvider({ children }: { children: ReactNode }) {
         ? curActive.id
         : (latestWithContent?.id ?? merged[0]?.id ?? DEFAULT_VERSION_ID);
     commitStore({ versions: merged, activeId });
+    persistNow(); // 恢复场景立即落盘，避免防抖窗口内跳转页面读到旧数据
   };
 
   return (
