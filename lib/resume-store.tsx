@@ -27,6 +27,10 @@ interface ResumeContextValue {
 
 const ResumeContext = createContext<ResumeContextValue | null>(null);
 const STORAGE_KEY = "job-helper:resume";
+// 头像单列存储：避免整份简历 JSON 因 2MB base64 头像而体积爆炸，
+// 否则每次按键做 JSON.stringify + localStorage.setItem 会阻塞主线程导致输入卡顿（P1 修复）。
+const STORAGE_KEY_AVATAR = "job-helper:avatar";
+const AVATAR_MAX_LEN = 300000; // ~300KB，远超头像显示所需，同时把单次写盘开销压到可接受范围
 /**
  * 存储结构版本：1 = { version, data } 包装 + 5 板块（basics/education/work/projects/skills）；
  * 2 = 扩展 12 板块（新增 advantages/languages/internships/activities/awards/portfolio + visibility）；
@@ -93,7 +97,8 @@ function sanitizeResume(data: unknown): Resume {
       template = LEGACY_TEMPLATE_MAP[raw];
     }
   }
-  const avatar = typeof d.avatar === "string" && d.avatar.length > 0 ? d.avatar.slice(0, 2000000) : "";
+  // 头像上限从 2MB 降到 ~300KB（P1 修复：降低单次写盘体积）
+  const avatar = typeof d.avatar === "string" && d.avatar.length > 0 ? d.avatar.slice(0, AVATAR_MAX_LEN) : "";
 
   return {
     basics,
@@ -131,12 +136,19 @@ function loadResume(raw: string | null): Resume {
   if (!raw) return createEmptyResume();
   try {
     const parsed = JSON.parse(raw) as unknown;
-    if (parsed && isObj(parsed) && "version" in parsed) {
-      // 版本号低于当前版本（v1）→ sanitize 时缺省字段自动补空；再温和迁移 advantages
-      return migrateAdvantages(sanitizeResume(parsed.data));
+    // 版本号低于当前版本（v1）→ sanitize 时缺省字段自动补空；再温和迁移 advantages
+    const base =
+      parsed && isObj(parsed) && "version" in parsed
+        ? migrateAdvantages(sanitizeResume((parsed as { data: unknown }).data))
+        : migrateAdvantages(sanitizeResume(parsed));
+    // 头像独立存储：从专用 key 合并回来（主 JSON 不含头像，保持轻量）
+    try {
+      const av = window.localStorage.getItem(STORAGE_KEY_AVATAR);
+      if (av && av.length <= AVATAR_MAX_LEN) return { ...base, avatar: av };
+    } catch {
+      /* 读头像失败不影响主数据 */
     }
-    // 旧格式：直接是 Resume 对象
-    return migrateAdvantages(sanitizeResume(parsed));
+    return base;
   } catch {
     return createEmptyResume();
   }
@@ -149,6 +161,10 @@ type Listener = () => void;
 const resumeListeners = new Set<Listener>();
 let resumeCache: Resume | null = null;
 let resumeHydrated = false;
+
+// 持久化防抖（P1 修复核心）：UI 同步更新，但落盘延迟 300ms 并合并连续按键，避免每次按键阻塞主线程。
+const PERSIST_DEBOUNCE_MS = 300;
+let persistTimer: ReturnType<typeof setTimeout> | null = null;
 
 function getResumeSnapshot(): Resume {
   if (!resumeHydrated) {
@@ -171,18 +187,40 @@ function subscribeResume(listener: Listener) {
   return () => resumeListeners.delete(listener);
 }
 
-function commitResume(next: Resume) {
-  resumeCache = next;
-  resumeHydrated = true;
+function persistNow() {
+  const next = resumeCache;
+  if (!next) return;
   try {
+    // 头像剥离到独立 key，主 JSON 只存文本数据 → 体积小、stringify 快
+    const { avatar, ...rest } = next;
     window.localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ version: STORAGE_VERSION, data: next })
+      JSON.stringify({ version: STORAGE_VERSION, data: rest })
     );
+    if (avatar && avatar.length > 0) {
+      window.localStorage.setItem(STORAGE_KEY_AVATAR, avatar.slice(0, AVATAR_MAX_LEN));
+    } else {
+      // 无头像时清掉旧头像 key，避免残留
+      window.localStorage.removeItem(STORAGE_KEY_AVATAR);
+    }
   } catch {
     /* 存储不可用时静默降级 */
   }
-  resumeListeners.forEach((l) => l());
+}
+
+function schedulePersist() {
+  if (persistTimer) clearTimeout(persistTimer);
+  persistTimer = setTimeout(() => {
+    persistTimer = null;
+    persistNow();
+  }, PERSIST_DEBOUNCE_MS);
+}
+
+function commitResume(next: Resume) {
+  resumeCache = next; // 同步更新缓存 → 订阅组件立即重渲染，输入不卡
+  resumeHydrated = true;
+  resumeListeners.forEach((l) => l()); // 同步通知订阅
+  schedulePersist(); // 异步(防抖)落盘，仅此步延后
 }
 
 export function ResumeProvider({ children }: { children: ReactNode }) {

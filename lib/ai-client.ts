@@ -7,40 +7,63 @@ const AI_PROXY_URL =
   process.env.NEXT_PUBLIC_AI_PROXY_URL ||
   "https://xiaoxin2026-personal-d1acf1a1fb0-1469931868.ap-shanghai.app.tcloudbase.com/ai-proxy";
 
-export interface AiSuggestionResult {
-  overallScore?: number;
-  dimensions: { name: string; score: number; description: string; weight?: number }[];
-  suggestions: string[];
+// 共享密钥（P0 配套）：与云函数环境变量 AI_PROXY_SECRET 同名，经 x-api-key 头携带。
+// 未配置时不带该头；此时若云端已启用密钥校验，请求会被 401 拒绝。
+const AI_PROXY_KEY = process.env.NEXT_PUBLIC_AI_PROXY_KEY || "";
+
+// 单个 AI 请求超时（P2 修复）：与云端上游 12s 对齐并略放宽到 13s，
+// 修复此前 8s 过早放弃、但云端仍跑 20s 白烧额度的问题。
+const AI_PROXY_TIMEOUT_MS = 13000;
+
+// ===== AI 结果短时缓存（P2 修复）=====
+// 相同输入（简历+JD / JD / 经历）短时间内重复请求直接命中，避免重复付费、加快二次诊断。
+const CACHE_TTL_MS = 10 * 60 * 1000; // 10 分钟
+const CACHE_MAX = 200; // 上限保护内存
+const aiCache = new Map<string, { exp: number; value: unknown }>();
+
+function hashStr(s: string): string {
+  // cyrb53：快速、低碰撞的字符串哈希，用于缓存键（无需加密强度）
+  let h1 = 0xdeadbeef;
+  let h2 = 0x41c6ce57;
+  for (let i = 0; i < s.length; i++) {
+    const ch = s.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 2654435761);
+    h2 = Math.imul(h2 ^ ch, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return (h2 >>> 0).toString(16).padStart(8, "0") + (h1 >>> 0).toString(16).padStart(8, "0");
 }
 
-export interface JdSemantics {
-  coreSkills: string[];
-  aliases: { skill: string; terms: string[] }[];
-  jdSummary: string;
+function cacheGet(key: string): unknown | null {
+  const e = aiCache.get(key);
+  if (e && Date.now() < e.exp) return e.value;
+  if (e) aiCache.delete(key);
+  return null;
 }
 
-export interface RewriteItem {
-  keyword: string;
-  original: string;
-  rewritten: string;
-  reason: string;
+function cacheSet(key: string, value: unknown): void {
+  if (aiCache.size >= CACHE_MAX) aiCache.clear();
+  aiCache.set(key, { exp: Date.now() + CACHE_TTL_MS, value });
 }
 
-export interface StarResult {
-  star: string;
-  parts: { label: string; content: string }[];
-  tips: string[];
+function buildHeaders(): Record<string, string> {
+  const h: Record<string, string> = { "Content-Type": "application/json" };
+  if (AI_PROXY_KEY) h["x-api-key"] = AI_PROXY_KEY;
+  return h;
 }
-
-const AI_PROXY_TIMEOUT_MS = 8000; // 单个 AI 请求超时，超时返回 null 由调用方降级
 
 async function callAiProxy<T>(action: string, payload: Record<string, unknown>): Promise<T | null> {
+  const cacheKey = `${action}:${hashStr(JSON.stringify(payload))}`;
+  const cached = cacheGet(cacheKey) as T | null;
+  if (cached !== null) return cached;
+
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), AI_PROXY_TIMEOUT_MS);
   try {
     const res = await fetch(AI_PROXY_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: buildHeaders(),
       body: JSON.stringify({ action, ...payload }),
       signal: controller.signal,
     });
@@ -49,7 +72,9 @@ async function callAiProxy<T>(action: string, payload: Record<string, unknown>):
       console.warn(`[ai-proxy] ${action} 失败:`, data?.error || res.status);
       return null;
     }
-    return (data.data as T) ?? null;
+    const value = (data.data as T) ?? null;
+    if (value !== null) cacheSet(cacheKey, value); // 仅缓存成功结果
+    return value;
   } catch (err) {
     if (err instanceof DOMException && err.name === "AbortError") {
       console.warn(`[ai-proxy] ${action} 超时(${AI_PROXY_TIMEOUT_MS}ms)，降级为规则结果`);
@@ -90,4 +115,29 @@ export type AiParsedResume = ParsedResumeInput;
 
 export function parseResumeByAi(text: string): Promise<AiParsedResume | null> {
   return callAiProxy<AiParsedResume>("parseResume", { resumeText: text });
+}
+
+export interface AiSuggestionResult {
+  overallScore?: number;
+  dimensions: { name: string; score: number; description: string; weight?: number }[];
+  suggestions: string[];
+}
+
+export interface JdSemantics {
+  coreSkills: string[];
+  aliases: { skill: string; terms: string[] }[];
+  jdSummary: string;
+}
+
+export interface RewriteItem {
+  keyword: string;
+  original: string;
+  rewritten: string;
+  reason: string;
+}
+
+export interface StarResult {
+  star: string;
+  parts: { label: string; content: string }[];
+  tips: string[];
 }
