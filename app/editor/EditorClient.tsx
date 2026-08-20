@@ -177,11 +177,12 @@ function VersionBar() {
             <button
               type="button"
               title="重命名"
+              aria-label={`重命名版本「${v.name}」`}
               onClick={() => {
                 const n = window.prompt("重命名版本", v.name);
                 if (n && n.trim()) renameVersion(v.id, n);
               }}
-              className="text-neutral-400 transition-colors hover:text-neutral-700 dark:hover:text-neutral-200"
+              className="inline-flex h-8 w-8 items-center justify-center rounded text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-700 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
             >
               ✎
             </button>
@@ -189,10 +190,11 @@ function VersionBar() {
               <button
                 type="button"
                 title="删除版本"
+                aria-label={`删除版本「${v.name}」`}
                 onClick={() => {
                   if (window.confirm(`删除版本「${v.name}」？此操作不可恢复。`)) deleteVersion(v.id);
                 }}
-                className="text-neutral-400 opacity-0 transition-opacity hover:text-danger-500 group-hover:opacity-100"
+                className="inline-flex h-8 w-8 items-center justify-center rounded text-neutral-400 opacity-100 transition-opacity hover:bg-neutral-100 hover:text-danger-500 sm:opacity-0 sm:group-hover:opacity-100 dark:hover:bg-neutral-800"
               >
                 ✕
               </button>

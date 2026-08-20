@@ -576,7 +576,8 @@ export default function ProfileClient() {
                       type="button"
                       onClick={() => removeRemediation(r.id)}
                       title="移除该项"
-                      className="shrink-0 text-neutral-400 transition-colors hover:text-danger-500"
+                      aria-label={`移除补位计划「${r.keyword}」`}
+                      className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-danger-500 dark:hover:bg-neutral-800"
                     >
                       ✕
                     </button>

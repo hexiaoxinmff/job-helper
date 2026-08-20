@@ -432,7 +432,8 @@ export default function TrackerClient() {
                             <button
                               onClick={() => statusFlow(it, -1)}
                               title="回退状态"
-                              className="rounded-lg border border-neutral-200 px-2 py-1 text-xs text-neutral-500 transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-400 dark:hover:bg-neutral-800"
+                              aria-label={`回退「${it.company}」投递状态`}
+                              className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-neutral-200 text-sm text-neutral-500 transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-400 dark:hover:bg-neutral-800"
                             >
                               ◀
                             </button>
@@ -441,7 +442,8 @@ export default function TrackerClient() {
                             <button
                               onClick={() => statusFlow(it, 1)}
                               title="推进状态"
-                              className="rounded-lg border border-neutral-200 px-2 py-1 text-xs text-neutral-500 transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-400 dark:hover:bg-neutral-800"
+                              aria-label={`推进「${it.company}」投递状态`}
+                              className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-neutral-200 text-sm text-neutral-500 transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-400 dark:hover:bg-neutral-800"
                             >
                               ▶
                             </button>
@@ -451,14 +453,14 @@ export default function TrackerClient() {
                           <button
                             onClick={() => openEdit(it)}
                             title="编辑"
-                            className="rounded-lg px-2 py-1 text-xs text-primary-600 hover:bg-primary-50 dark:text-primary-400 dark:hover:bg-primary-950"
+                            className="rounded-lg px-3 py-2 text-xs text-primary-600 hover:bg-primary-50 dark:text-primary-400 dark:hover:bg-primary-950"
                           >
                             编辑
                           </button>
                           <button
                             onClick={() => handleRemove(it)}
                             title="删除"
-                            className="rounded-lg px-2 py-1 text-xs text-danger-600 hover:bg-danger-50 dark:text-danger-400 dark:hover:bg-danger-950"
+                            className="rounded-lg px-3 py-2 text-xs text-danger-600 hover:bg-danger-50 dark:text-danger-400 dark:hover:bg-danger-950"
                           >
                             删除
                           </button>
@@ -508,10 +510,18 @@ export default function TrackerClient() {
                   <td className="px-4 py-3 text-neutral-600 dark:text-neutral-300">{it.source ?? "—"}</td>
                   <td className="px-4 py-3 text-xs text-neutral-500 dark:text-neutral-400">{jdLabel(it) || "—"}</td>
                   <td className="px-4 py-3 text-right">
-                    <button onClick={() => openEdit(it)} className="mr-2 text-xs text-primary-600 hover:underline dark:text-primary-400">
+                    <button
+                      onClick={() => openEdit(it)}
+                      aria-label={`编辑「${it.company} · ${it.role}」`}
+                      className="mr-1 rounded-lg px-2.5 py-2 text-xs text-primary-600 hover:bg-primary-50 hover:underline dark:text-primary-400 dark:hover:bg-primary-950"
+                    >
                       编辑
                     </button>
-                    <button onClick={() => handleRemove(it)} className="text-xs text-danger-600 hover:underline dark:text-danger-400">
+                    <button
+                      onClick={() => handleRemove(it)}
+                      aria-label={`删除「${it.company} · ${it.role}」`}
+                      className="rounded-lg px-2.5 py-2 text-xs text-danger-600 hover:bg-danger-50 hover:underline dark:text-danger-400 dark:hover:bg-danger-950"
+                    >
                       删除
                     </button>
                   </td>

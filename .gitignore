@@ -53,3 +53,7 @@ next-env.d.ts
 
 # 云函数本地依赖（部署时随目录上传，不入库）
 cloudfunctions/*/node_modules
+
+# build staging dirs
+/_jb_build*/
+/_jb_build*/*

@@ -194,7 +194,8 @@ export default function StarGenerator() {
                       </span>
                       <button
                         onClick={() => copyPart(`${p.label}：${p.content}`)}
-                        className="text-xs text-neutral-400 opacity-0 transition-opacity hover:text-neutral-600 group-hover:opacity-100 dark:text-neutral-500 dark:hover:text-neutral-300"
+                        aria-label={`复制「${p.label}」内容`}
+                        className="rounded px-2 py-1 text-xs text-neutral-400 opacity-100 transition-opacity hover:bg-neutral-100 hover:text-neutral-600 sm:opacity-0 sm:group-hover:opacity-100 dark:text-neutral-500 dark:hover:bg-neutral-700 dark:hover:text-neutral-300"
                         title="复制本步"
                       >
                         复制
