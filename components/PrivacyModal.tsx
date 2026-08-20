@@ -70,7 +70,11 @@ export default function PrivacyModal() {
         </div>
 
         <p className="mt-4 text-[15px] leading-relaxed text-neutral-600 dark:text-neutral-300">
-          简历仅在你的浏览器内解析、<span className="font-medium text-neutral-800 dark:text-neutral-100">不落库、不存储</span>；
+          简历默认仅在你的浏览器内解析、
+          <span className="font-medium text-neutral-800 dark:text-neutral-100">不落库、不上传</span>；
+          仅在你在「私人档案 → 云端同步」主动开启「同步简历」后，简历才会以
+          <span className="font-medium text-neutral-800 dark:text-neutral-100">AES-256 加密形式</span>
+          上云（密钥仅存本浏览器，服务端不可读），可随时关闭。
           开启 AI 增强时，文本会经云函数代理转发给 AI 服务商用于生成诊断建议，
           <span className="font-medium text-neutral-800 dark:text-neutral-100">不留存、不记录</span>，你可随时在诊断页关闭该功能。
           你的数据安全由你掌控，请放心使用。

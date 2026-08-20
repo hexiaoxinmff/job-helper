@@ -530,6 +530,7 @@ async function actionSync(payload) {
         tracker: Array.isArray(row.tracker) ? row.tracker : [],
         history: Array.isArray(row.history) ? row.history : [],
         profile: row.profile && typeof row.profile === "object" ? row.profile : null,
+        resumes: Array.isArray(row.resumes) ? row.resumes : [],
         updatedAt: Number(row.updated_at) || 0,
       };
     }
@@ -540,13 +541,14 @@ async function actionSync(payload) {
   // 2) 合并（条目级 last-write-wins，与前端同策略）
   const merged = mergeSyncBundles(sanitizeSyncLocal(local), remote);
 
-  // 3) 写回云端（upsert 按主键 owner_id）
+  // 3) 写回云端（upsert 按主键 owner_id；resumes 为密文 jsonb，服务端不解析内容）
   try {
     const { error } = await db.from("jh_sync").upsert({
       owner_id: uid,
       tracker: merged.tracker,
       history: merged.history,
       profile: merged.profile,
+      resumes: merged.resumes,
       updated_at: Date.now(),
     });
     if (error) throw error;
@@ -583,6 +585,9 @@ function sanitizeSyncLocal(local) {
     tracker: Array.isArray(local.tracker) ? local.tracker.filter((x) => x && x.id) : [],
     history: Array.isArray(local.history) ? local.history.filter((x) => x && x.id) : [],
     profile: local.profile && typeof local.profile === "object" ? local.profile : null,
+    resumes: Array.isArray(local.resumes)
+      ? local.resumes.filter((r) => r && r.id && typeof r.enc === "string")
+      : [],
     updatedAt: Date.now(),
   };
 }
@@ -609,6 +614,8 @@ function mergeSyncBundles(local, remote) {
       (a, b) => (b.ts || 0) - (a.ts || 0)
     ),
     profile: mergeSyncProfile(local.profile, remote ? remote.profile : null),
+    // 加密简历：按版本 id + updatedAt 取新（只比较元数据，不读取密文）
+    resumes: mergeSyncById(local.resumes, remote ? remote.resumes : [], (r) => r.updatedAt || 0),
     updatedAt: Date.now(),
   };
 }

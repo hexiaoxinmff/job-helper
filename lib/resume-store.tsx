@@ -58,6 +58,8 @@ interface ResumeContextValue {
   renameVersion: (id: string, name: string) => void;
   /** 删除版本（至少保留 1 个） */
   deleteVersion: (id: string) => void;
+  /** 云同步合并版本：按 id + updatedAt 取新（resume 已由调用方解密） */
+  mergeResumeVersions: (versions: ResumeVersion[]) => void;
 }
 
 const ResumeContext = createContext<ResumeContextValue | null>(null);
@@ -380,6 +382,23 @@ export function ResumeProvider({ children }: { children: ReactNode }) {
     commitStore({ versions: rest, activeId });
   };
 
+  const mergeResumeVersions = (versions: ResumeVersion[]) => {
+    const cur = getStoreSnapshot();
+    const map = new Map<string, ResumeVersion>();
+    for (const v of [...cur.versions, ...(Array.isArray(versions) ? versions : [])]) {
+      const clean = sanitizeVersion(v);
+      if (!clean) continue;
+      const prev = map.get(clean.id);
+      if (!prev || (clean.updatedAt ?? 0) >= (prev.updatedAt ?? 0)) map.set(clean.id, clean);
+    }
+    const merged = Array.from(map.values());
+    if (merged.length === 0) return;
+    const activeId = merged.some((v) => v.id === cur.activeId)
+      ? cur.activeId
+      : merged[0]?.id ?? merged[0]?.id ?? DEFAULT_VERSION_ID;
+    commitStore({ versions: merged, activeId });
+  };
+
   return (
     <ResumeContext.Provider
       value={{
@@ -394,6 +413,7 @@ export function ResumeProvider({ children }: { children: ReactNode }) {
         addVersion,
         renameVersion,
         deleteVersion,
+        mergeResumeVersions,
       }}
     >
       {children}

@@ -50,3 +50,6 @@ next-env.d.ts
 /lib/version.ts
 /public/version.txt
 /public/version.json
+
+# 云函数本地依赖（部署时随目录上传，不入库）
+cloudfunctions/*/node_modules

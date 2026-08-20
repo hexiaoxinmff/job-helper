@@ -1,5 +1,6 @@
-// 轻量云同步（P3）：账号标识（本地随机 uid）+ 仅同步脱敏数据到云端 PostgreSQL。
-// 隐私红线：简历正文永不上云；只同步投递台账 / 诊断历史 / 档案快照（岗位摘要/分数/时间，均无敏感正文）。
+// 轻量/完整云同步（P3）：账号标识（本地随机 uid）+ 同步数据到云端 PostgreSQL。
+// 默认仅同步脱敏数据（投递台账 / 诊断历史 / 档案快照，无敏感正文）；
+// 开启「同步简历（加密）」后，简历全文在浏览器端 AES-GCM 加密（密钥仅存本地）才上云——服务端与第三方不可读。
 // 实现：浏览器不直连数据库，经 ai-proxy 云函数 sync action（复用共享密钥 x-api-key 鉴权 + Origin 白名单 + 限流），
 // 云函数内用 service 身份读写 jh_sync 表并按 owner_id=uid 隔离。
 // 依赖：NEXT_PUBLIC_AI_PROXY_URL / NEXT_PUBLIC_AI_PROXY_KEY（与 AI 诊断同一套鉴权）。
@@ -7,10 +8,20 @@ import type { ApplicationItem } from "./tracker-store";
 import type { DiagnosisHistoryItem } from "./diagnosis-history";
 import type { PrivateProfile, ProfileSnapshot } from "./profile";
 
+/** 加密简历条目：enc 为 AES-GCM 密文（服务端不可读），name/updatedAt 为明文元数据（仅用于版本合并） */
+export interface SyncResume {
+  id: string;
+  name: string;
+  updatedAt: number;
+  enc: string;
+}
+
 export interface SyncBundle {
   tracker: ApplicationItem[];
   history: DiagnosisHistoryItem[];
   profile: PrivateProfile | null;
+  /** 加密简历（完整云同步，可选；未开启则为空数组） */
+  resumes: SyncResume[];
   updatedAt: number;
 }
 
@@ -96,6 +107,45 @@ export async function clearRemote(): Promise<{ ok: boolean; error?: string }> {
   if (!isCloudSyncConfigured()) return { ok: false, error: "未配置云端同步" };
   const r = await callSyncApi("syncClear", { uid: getSyncUid() });
   return { ok: r.ok, error: r.error };
+}
+
+// ===== 简历加密同步的开关与密钥管理（localStorage） =====
+const RESUME_SYNC_KEY = "job-helper:resume-sync-enabled";
+const RESUME_ENC_KEY = "job-helper:resume-enc-key";
+
+/** 是否开启「同步简历（加密）」 */
+export function isResumeSyncEnabled(): boolean {
+  try {
+    return window.localStorage.getItem(RESUME_SYNC_KEY) === "on";
+  } catch {
+    return false;
+  }
+}
+
+export function setResumeSyncEnabled(v: boolean): void {
+  try {
+    if (v) window.localStorage.setItem(RESUME_SYNC_KEY, "on");
+    else window.localStorage.removeItem(RESUME_SYNC_KEY);
+  } catch {
+    /* 忽略 */
+  }
+}
+
+/** 读取加密密钥（无则 null） */
+export function getResumeEncKey(): string | null {
+  try {
+    return window.localStorage.getItem(RESUME_ENC_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function setResumeEncKey(key: string): void {
+  try {
+    window.localStorage.setItem(RESUME_ENC_KEY, key);
+  } catch {
+    /* 忽略 */
+  }
 }
 
 // ===== 类型引用保留（供云端返回数据对齐） =====

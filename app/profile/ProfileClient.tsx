@@ -5,7 +5,24 @@ import { useProfile } from "@/lib/profile";
 import { useDiagnosisHistory } from "@/lib/diagnosis-history";
 import { useRemediation } from "@/lib/remediation-store";
 import { useTracker } from "@/lib/tracker-store";
-import { isCloudSyncConfigured, syncNow, clearRemote } from "@/lib/cloud-sync";
+import { useResume, type ResumeVersion } from "@/lib/resume-store";
+import type { Resume } from "@/lib/types";
+import {
+  isCloudSyncConfigured,
+  syncNow,
+  clearRemote,
+  isResumeSyncEnabled,
+  setResumeSyncEnabled,
+  getResumeEncKey,
+  setResumeEncKey,
+  type SyncResume,
+} from "@/lib/cloud-sync";
+import {
+  generateResumeKey,
+  isResumeKeyValid,
+  encryptJson,
+  decryptJson,
+} from "@/lib/resume-crypto";
 import { track } from "@/lib/track";
 import PrivacyNote from "@/components/PrivacyNote";
 import { Button } from "@/components/ui/Button";
@@ -21,10 +38,18 @@ export default function ProfileClient() {
   const { items: remediation, toggle: toggleRemediation, remove: removeRemediation, clear: clearRemediation } =
     useRemediation();
   const { items: tracker, mergeRemote: mergeTrackerRemote } = useTracker();
+  const { versions: resumeVersions, mergeResumeVersions } = useResume();
   const fileRef = useRef<HTMLInputElement>(null);
+  const keyFileRef = useRef<HTMLInputElement>(null);
   const [importMsg, setImportMsg] = useState("");
   const [syncState, setSyncState] = useState<"idle" | "syncing">("idle");
   const [syncMsg, setSyncMsg] = useState<{ kind: "ok" | "err" | "info"; text: string } | null>(null);
+  const [resumeSyncOn, setResumeSyncOn] = useState(isResumeSyncEnabled());
+  const [keyReady, setKeyReady] = useState(() => {
+    const k = getResumeEncKey();
+    return !!k && isResumeKeyValid(k);
+  });
+  const [keyMsg, setKeyMsg] = useState("");
 
   const cloudConfigured = isCloudSyncConfigured();
   const lastSync = (() => {
@@ -40,23 +65,67 @@ export default function ProfileClient() {
     setSyncState("syncing");
     setSyncMsg(null);
     track("cloud_sync_click");
+    // 组装加密简历（开启「同步简历」时）
+    let resumes: SyncResume[] = [];
+    let resumeSyncNote = "";
+    if (resumeSyncOn && keyReady) {
+      try {
+        const key = getResumeEncKey();
+        if (key) {
+          for (const v of resumeVersions) {
+            const enc = await encryptJson(key, JSON.stringify(v.resume));
+            resumes.push({ id: v.id, name: v.name, updatedAt: v.updatedAt, enc });
+          }
+          resumeSyncNote = resumes.length > 0 ? ` + 简历 ${resumes.length} 份（加密）` : "";
+        }
+      } catch {
+        resumeSyncNote = "（简历加密失败，本次未上传）";
+      }
+    }
     const r = await syncNow({
       tracker,
       history: diagHistory,
       profile: profile.histories.length > 0 || profile.enabled ? profile : null,
+      resumes,
       updatedAt: Date.now(),
     });
     if (r.ok && r.merged) {
       mergeTrackerRemote(r.merged.tracker);
       mergeHistoryRemote(r.merged.history);
       if (r.merged.profile) mergeRemoteHistories(r.merged.profile.histories);
+      // 恢复简历（解密云端密文，合并进本地版本库）
+      let resumeRestored = 0;
+      let resumeFailNote = "";
+      if (resumeSyncOn && keyReady && r.merged.resumes && r.merged.resumes.length > 0) {
+        const key = getResumeEncKey();
+        const restored: ResumeVersion[] = [];
+        for (const sr of r.merged.resumes) {
+          try {
+            if (!key) break;
+            const json = await decryptJson(key, sr.enc);
+            const resume = JSON.parse(json) as Resume;
+            restored.push({ id: sr.id, name: sr.name, updatedAt: sr.updatedAt, resume });
+            resumeRestored++;
+          } catch {
+            resumeFailNote = "（部分简历密钥不符，未恢复）";
+          }
+        }
+        if (restored.length > 0) mergeResumeVersions(restored);
+      }
       try {
         localStorage.setItem(CLOUD_META_KEY, JSON.stringify({ lastSync: Date.now() }));
       } catch {
         /* 忽略 */
       }
-      setSyncMsg({ kind: "ok", text: "同步成功：投递台账、诊断历史、档案快照已合并到云端（简历正文仍只在本地）" });
-      track("cloud_sync_ok", { tracker: r.merged.tracker.length, history: r.merged.history.length });
+      setSyncMsg({
+        kind: "ok",
+        text: `同步成功：台账/历史/档案已合并${resumeSyncNote}${resumeRestored > 0 ? `，恢复简历 ${resumeRestored} 份` : ""}${resumeFailNote}`,
+      });
+      track("cloud_sync_ok", {
+        tracker: r.merged.tracker.length,
+        history: r.merged.history.length,
+        resumes: r.merged.resumes?.length ?? 0,
+      });
     } else {
       setSyncMsg({ kind: "err", text: r.error ?? "同步失败，请稍后重试" });
       track("cloud_sync_error", { reason: r.error });
@@ -73,6 +142,61 @@ export default function ProfileClient() {
         ? { kind: "info", text: "云端数据已清除（本地数据保留）" }
         : { kind: "err", text: r.error ?? "清除失败" }
     );
+  };
+
+  // ===== 简历加密同步：开关 / 密钥导出 / 密钥导入 =====
+  const handleToggleResumeSync = async () => {
+    if (!resumeSyncOn) {
+      let key = getResumeEncKey();
+      if (!key) {
+        key = await generateResumeKey();
+        setResumeEncKey(key);
+      }
+      setResumeSyncOn(true);
+      setResumeSyncEnabled(true);
+      setKeyReady(!!key && isResumeKeyValid(key));
+      setKeyMsg("已开启。密钥已生成并仅保存在本浏览器——请立即「导出密钥」保存，换设备时需要同一密钥才能解密恢复简历。");
+      track("resume_sync_enable");
+    } else {
+      setResumeSyncOn(false);
+      setResumeSyncEnabled(false);
+      setKeyMsg("已关闭：简历不再上传云端（云端已有密文仍保留，可随时重新开启同步覆盖）。");
+      track("resume_sync_disable");
+    }
+  };
+
+  const exportResumeKey = async () => {
+    const key = getResumeEncKey();
+    if (!key) return;
+    try {
+      await navigator.clipboard.writeText(key);
+      setKeyMsg("密钥已复制到剪贴板。请安全保存（建议存到密码管理器），换设备时粘贴到「导入密钥」即可。");
+    } catch {
+      setKeyMsg("自动复制失败，请手动选中下方密钥文本复制保存。");
+    }
+    track("resume_key_export");
+  };
+
+  const importResumeKey = (key: string) => {
+    const k = (key || "").trim();
+    if (!isResumeKeyValid(k)) {
+      setKeyMsg("密钥格式不正确（应为 44 位 base64 字符串）。");
+      return;
+    }
+    setResumeEncKey(k);
+    setKeyReady(true);
+    setKeyMsg("密钥导入成功。点击「立即同步」即可解密并恢复云端简历（需开启「同步简历」）。");
+    track("resume_key_import");
+  };
+
+  const handleKeyFile = async (file: File | undefined) => {
+    if (!file) return;
+    try {
+      const text = (await file.text()).trim();
+      importResumeKey(text);
+    } catch {
+      setKeyMsg("密钥文件读取失败");
+    }
   };
 
   const handleImport = async (file: File | undefined) => {
@@ -101,18 +225,18 @@ export default function ProfileClient() {
         </p>
       </header>
 
-      {/* 云端同步（轻量：仅脱敏数据，简历正文永不上云） */}
+      {/* 云端同步（默认仅脱敏数据；开启后简历以 AES-256 加密上云） */}
       <section className="rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900">
         <div className="mb-2 flex items-center gap-2">
           <h2 className="font-semibold text-neutral-800 dark:text-neutral-100">云端同步</h2>
           <span className="rounded-full bg-success-100 px-2 py-0.5 text-xs font-medium text-success-700 dark:bg-success-950 dark:text-success-300">
-            轻量 · 匿名账号
+            匿名账号
           </span>
         </div>
         <p className="text-sm text-neutral-500 dark:text-neutral-400">
-          用匿名账号把「投递台账、诊断历史、档案快照」同步到云端，换设备也能带走。
-          <span className="font-medium text-success-600 dark:text-success-400">简历正文永不上云</span>
-          ，仅存你本地浏览器。
+          用匿名账号把「投递台账、诊断历史、档案快照」同步到云端，换设备也能带走；
+          <span className="font-medium text-success-600 dark:text-success-400">默认不上传简历</span>
+          ，开启「同步简历」后简历将以 AES-256 加密形式上云（密钥仅存本浏览器，服务端不可读）。
         </p>
         {!cloudConfigured ? (
           <p className="mt-3 rounded-lg border border-dashed border-neutral-300 px-4 py-3 text-sm text-neutral-400 dark:border-neutral-700">
@@ -131,6 +255,74 @@ export default function ProfileClient() {
                 <span className="text-xs text-neutral-400 dark:text-neutral-500">
                   上次同步：{new Date(lastSync).toLocaleString()}
                 </span>
+              )}
+            </div>
+
+            {/* 同步简历（加密）开关 + 密钥管理 */}
+            <div className="mt-4 rounded-xl border border-neutral-200 p-4 dark:border-neutral-700">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium text-neutral-700 dark:text-neutral-200">
+                    同步简历（加密）
+                  </p>
+                  <p className="mt-0.5 text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
+                    开启后，简历编辑器的全部版本将以 AES-256 加密后随同步上传；换设备导入同一密钥即可恢复
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={resumeSyncOn}
+                  aria-label="同步简历（加密）开关"
+                  onClick={() => void handleToggleResumeSync()}
+                  className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
+                    resumeSyncOn ? "bg-primary-600" : "bg-neutral-300 dark:bg-neutral-600"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                      resumeSyncOn ? "translate-x-5" : "translate-x-0.5"
+                    }`}
+                  />
+                </button>
+              </div>
+              {resumeSyncOn && (
+                <div className="mt-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button size="sm" variant="outline" onClick={() => void exportResumeKey()}>
+                      导出密钥（复制）
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => keyFileRef.current?.click()}>
+                      从文件导入密钥
+                    </Button>
+                    <input
+                      ref={keyFileRef}
+                      type="file"
+                      accept=".txt,.key,.json,text/plain"
+                      className="hidden"
+                      onChange={(e) => void handleKeyFile(e.target.files?.[0])}
+                    />
+                    <input
+                      type="text"
+                      placeholder="粘贴密钥（44 位 base64）后回车"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") importResumeKey(e.currentTarget.value);
+                      }}
+                      onBlur={(e) => {
+                        if (e.target.value.trim()) importResumeKey(e.target.value);
+                      }}
+                      className="w-56 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-xs text-neutral-700 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
+                    />
+                  </div>
+                  <p className="mt-2 text-xs text-neutral-400 dark:text-neutral-500">
+                    密钥状态：{keyReady ? "已配置 ✓" : "未配置（开启时自动生成，或导入已有密钥）"}
+                  </p>
+                  {keyMsg && (
+                    <p className="mt-2 rounded-lg bg-warning-50 px-3 py-2 text-xs leading-relaxed text-warning-700 dark:bg-warning-950 dark:text-warning-300">
+                      ⚠️ {keyMsg}
+                    </p>
+                  )}
+                </div>
               )}
             </div>
             {syncMsg && (
