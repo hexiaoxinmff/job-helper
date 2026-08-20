@@ -617,6 +617,43 @@ ${dataBlock("候选人回答", answer)}
   };
 }
 
+async function actionApplyMessage(resumeText, jdText) {
+  const trimmedResume = (resumeText || "").slice(0, 6000);
+  const trimmedJd = (jdText || "").slice(0, 3000);
+  const prompt = `你是一位资深求职顾问。请基于下面的简历与目标岗位 JD，为候选人生成 3 个可直接粘贴的自荐 / 打招呼文案（中文），用于不同渠道快速联系招聘方。
+
+${dataBlock("目标岗位JD", trimmedJd)}
+
+${dataBlock("简历内容", trimmedResume)}
+
+要求：
+1. boss：BOSS 直聘打招呼。≤60 字，突出与岗位最匹配的 1-2 个亮点（引用简历真实技能/成果），主动开口且自然，不要自谦套话。
+2. email：投递邮箱时的自荐正文。3-5 句，称谓可用「您好」，先一句话说明来意，再用简历真实亮点对接 JD 要求，末尾礼貌收尾并邀请进一步沟通。
+3. wechat：微信/聊天工具简版。≤40 字，口语化、简短，附一句可接话的话（如「如有需要我可随时补简历/x 简历」）。
+4. 全部内容必须基于简历真实信息，不虚构、不夸大、不编造数据。
+5. tips：2-3 条发送小技巧（如"发 BOSS 打招呼时附上针对性简历""邮箱标题带岗位名+姓名"）。
+
+严格按以下 JSON 输出（不输出其他内容）：
+{
+  "boss": "......",
+  "email": "......",
+  "wechat": "......",
+  "tips": ["技巧1", "技巧2"]
+}`;
+
+  const content = await callDeepSeek("你只输出合法的 JSON，不做任何解释。", prompt, 1200);
+  const parsed = parseJsonObject(content);
+  const str = (v, max) => String(v ?? "").trim().slice(0, max ?? 1500);
+  const boss = str(parsed.boss);
+  const email = str(parsed.email);
+  const wechat = str(parsed.wechat);
+  const tips = Array.isArray(parsed.tips)
+    ? parsed.tips.filter((t) => typeof t === "string").slice(0, 4)
+    : [];
+  if (!boss && !email && !wechat) throw new Error("AI 未生成有效自荐话术");
+  return { boss, email, wechat, tips };
+}
+
 async function actionSync(payload) {
   const uid = String((payload && payload.uid) || "").trim().slice(0, 64);
   const local = payload && typeof payload.local === "object" ? payload.local : null;
@@ -749,6 +786,8 @@ async function dispatch(payload) {
       return await actionInterview(payload.resumeText, payload.jdText, payload.missingKeywords);
     case "reviewAnswer":
       return await actionReviewAnswer(payload.resumeText, payload.jdText, payload.question, payload.answer);
+    case "applyMessage":
+      return await actionApplyMessage(payload.resumeText, payload.jdText);
     case "sync":
       return await actionSync(payload);
     case "syncClear":

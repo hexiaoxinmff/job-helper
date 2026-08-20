@@ -51,6 +51,18 @@ function statusIndex(s: ApplicationStatus): number {
   return APPLICATION_STATUSES.indexOf(s);
 }
 
+/** 距投递日已过去的天数 */
+function daysSince(dateStr: string): number {
+  const d = new Date(`${dateStr}T00:00:00`);
+  if (isNaN(d.getTime())) return 0;
+  return Math.floor((Date.now() - d.getTime()) / 86400000);
+}
+
+/** 已投递后迟迟未推进（≥7 天）→ 建议跟进 */
+function needsFollowUp(it: ApplicationItem): boolean {
+  return it.status === "applied" && daysSince(it.appliedAt) >= 7;
+}
+
 export default function TrackerClient() {
   const { items, add, update, move, remove, clear, exportTracker } = useTracker();
   const { versions, activeId } = useResume();
@@ -66,11 +78,21 @@ export default function TrackerClient() {
       applied: [], written: [], interview: [], offer: [], rejected: [],
     };
     for (const it of items) map[it.status].push(it);
+    // 已投递列：待跟进的置顶，其次按最近更新
+    map.applied.sort(
+      (a, b) => Number(needsFollowUp(b)) - Number(needsFollowUp(a)) || (b.updatedAt || 0) - (a.updatedAt || 0)
+    );
     return map;
   }, [items]);
 
   const stats = useMemo(() => {
-    const s = { total: items.length, interview: byStatus.interview.length, offer: byStatus.offer.length, rejected: byStatus.rejected.length };
+    const s = {
+      total: items.length,
+      followUp: items.filter(needsFollowUp).length,
+      interview: byStatus.interview.length,
+      offer: byStatus.offer.length,
+      rejected: byStatus.rejected.length,
+    };
     return s;
   }, [items, byStatus]);
 
@@ -185,6 +207,11 @@ export default function TrackerClient() {
           <span className="rounded-full bg-neutral-100 px-3 py-1.5 text-sm text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
             共 {stats.total} 条投递
           </span>
+          {stats.followUp > 0 && (
+            <span className="rounded-full bg-orange-100 px-3 py-1.5 text-sm text-orange-800 dark:bg-orange-950 dark:text-orange-300">
+              待跟进 {stats.followUp}
+            </span>
+          )}
           <span className="rounded-full bg-amber-100 px-3 py-1.5 text-sm text-amber-800 dark:bg-amber-950 dark:text-amber-300">
             面试中 {stats.interview}
           </span>
@@ -420,6 +447,11 @@ export default function TrackerClient() {
                         <span>{it.appliedAt}</span>
                         {it.source && <span>· {it.source}</span>}
                         {jdLabel(it) && <span className="w-full">🎯 {jdLabel(it)}</span>}
+                      {needsFollowUp(it) && (
+                        <span className="w-full rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700 dark:bg-orange-950 dark:text-orange-300">
+                          已投递 {daysSince(it.appliedAt)} 天未回 · 建议跟进
+                        </span>
+                      )}
                       </div>
                       {it.notes && (
                         <p className="mt-2 line-clamp-2 rounded-lg bg-neutral-50 px-2.5 py-1.5 text-xs text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
@@ -506,7 +538,14 @@ export default function TrackerClient() {
                       {STATUS_META[it.status].label}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-neutral-600 dark:text-neutral-300">{it.appliedAt}</td>
+                  <td className="px-4 py-3">
+                    <span className="text-neutral-600 dark:text-neutral-300">{it.appliedAt}</span>
+                    {needsFollowUp(it) && (
+                      <span className="ml-1.5 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700 dark:bg-orange-950 dark:text-orange-300">
+                        建议跟进
+                      </span>
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-neutral-600 dark:text-neutral-300">{it.source ?? "—"}</td>
                   <td className="px-4 py-3 text-xs text-neutral-500 dark:text-neutral-400">{jdLabel(it) || "—"}</td>
                   <td className="px-4 py-3 text-right">

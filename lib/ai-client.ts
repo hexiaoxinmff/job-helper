@@ -119,6 +119,23 @@ export function generateStarDescription(experience: string): Promise<StarResult 
   return callAiProxy<StarResult>("star", { experience });
 }
 
+/** 求职自荐话术：基于「已优化简历 + 目标 JD」生成 3 个平台可直接粘贴的打招呼/自荐文案 */
+export interface ApplyMessageResult {
+  /** BOSS 直聘打招呼 */
+  boss: string;
+  /** 邮箱投递自荐 */
+  email: string;
+  /** 微信 / 聊天自荐 */
+  wechat: string;
+  tips: string[];
+}
+export function generateApplyMessage(
+  resumeText: string,
+  jdText: string
+): Promise<ApplyMessageResult | null> {
+  return callAiProxy<ApplyMessageResult>("applyMessage", { resumeText, jdText });
+}
+
 /** AI 模拟面试：基于简历 + JD + 诊断缺口生成追问列表（#6） */
 export async function generateInterviewQuestions(
   resumeText: string,

@@ -19,8 +19,11 @@ import { useCopy } from "@/lib/use-copy";
 import {
   generateResumeRewrites,
   optimizeResumeForJd,
+  generateApplyMessage,
   type AiOptimizedResume,
+  type ApplyMessageResult,
 } from "@/lib/ai-client";
+import { analyzeAtsFriendly } from "@/lib/ats";
 import { useProfile } from "@/lib/profile";
 import { useDiagnosisHistory } from "@/lib/diagnosis-history";
 import { useRemediation } from "@/lib/remediation-store";
@@ -117,6 +120,49 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
       return [];
     }
   }, [resumeText, jdText]);
+
+  // ATS 友好度：基于已解析文本的规则检测（独立维度卡，不影响诊断主分）
+  const ats = useMemo(
+    () => analyzeAtsFriendly(resumeText, jdText, result.matchedKeywords, result.missingKeywords),
+    [resumeText, jdText, result.matchedKeywords, result.missingKeywords]
+  );
+
+  // —— 求职自荐话术（仅 AI 增强时展示）——
+  const [applyLoading, setApplyLoading] = useState(false);
+  const [applyMsg, setApplyMsg] = useState("");
+  const [applyResult, setApplyResult] = useState<ApplyMessageResult | null>(null);
+
+  const runApplyMessage = async () => {
+    setApplyLoading(true);
+    setApplyMsg("");
+    setApplyResult(null);
+    track("apply_message_click");
+    try {
+      const r = await generateApplyMessage(resumeText, jdText);
+      if (!r || (!r.boss && !r.email && !r.wechat)) {
+        setApplyMsg("AI 话术生成暂不可用，请稍后重试");
+        track("apply_message_error", { reason: "null" });
+        return;
+      }
+      setApplyResult(r);
+      track("apply_message_success");
+    } catch {
+      setApplyMsg("网络错误，请稍后重试");
+      track("apply_message_error", { reason: "network" });
+    } finally {
+      setApplyLoading(false);
+    }
+  };
+
+  // 差距补救区滚动定位（供「补位计划」下一步直达）
+  const scrollToRemediation = () => {
+    track("next_remediation");
+    if (result.gapRemediation && result.gapRemediation.length > 0) {
+      document.getElementById("gap-remediation")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      router.push("/profile");
+    }
+  };
 
   // —— 分享卡片 ——
   const reportRef = useRef<HTMLDivElement>(null);
@@ -468,7 +514,7 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
 
       {/* 差距补救路线（诚实诊断：硬缺口 → 学习/补齐；表达缺口 → 在既有经历补位；可加入 90 天补位计划） */}
       {result.gapRemediation && result.gapRemediation.length > 0 && (
-        <div className="rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900">
+        <div id="gap-remediation" className="rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900">
           <div className="mb-1 flex items-center gap-2">
             <h2 className="font-semibold text-neutral-800 dark:text-neutral-100">差距补救路线 · 90 天补位计划</h2>
             <span className="rounded-full bg-primary-100 px-2 py-0.5 text-xs font-medium text-primary-700 dark:bg-primary-950 dark:text-primary-300">
@@ -646,6 +692,157 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
       )}
 
       {/* STAR 已拆为独立页面（顶部导航可进入），此处不再展示 */}
+
+      {/* 求职自荐话术（仅 AI 增强时展示）：3 个渠道可直接粘贴的打招呼文案 */}
+      {result.aiEnhanced && (
+        <div className="rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900">
+          <div className="mb-1 flex items-center justify-between">
+            <h2 className="font-semibold text-neutral-800 dark:text-neutral-100">求职自荐话术</h2>
+            <span className="rounded-full bg-accent-100 px-2 py-0.5 text-xs text-accent-700 dark:bg-accent-950 dark:text-accent-300">P0</span>
+          </div>
+          <p className="mb-4 text-sm text-neutral-500 dark:text-neutral-400">
+            根据这份简历与 JD，生成 BOSS 直聘 / 邮箱 / 微信 三个渠道可直接粘贴的打招呼文案。不虚构、不夸大。
+          </p>
+
+          {!applyResult && !applyMsg && (
+            <button
+              onClick={runApplyMessage}
+              disabled={applyLoading}
+              className="w-full rounded-xl bg-accent-600 py-3 font-medium text-white transition-colors hover:bg-accent-700 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            >
+              {applyLoading ? "AI 生成中…" : "一键生成自荐话术"}
+            </button>
+          )}
+
+          {applyMsg && (
+            <p className="mb-3 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-neutral-600 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
+              {applyMsg}
+            </p>
+          )}
+
+          {applyResult && (
+            <div className="space-y-3">
+              {(
+                [
+                  { key: "boss", platform: "BOSS 直聘打招呼", text: applyResult.boss, hint: "≈60 字·打招呼用" },
+                  { key: "email", platform: "邮箱投递自荐", text: applyResult.email, hint: "正文·3-5 句" },
+                  { key: "wechat", platform: "微信 / 聊天自荐", text: applyResult.wechat, hint: "≈40 字·简短" },
+                ] as const
+              ).map((item) => (
+                <div key={item.key} className="rounded-xl border border-neutral-200 p-4 dark:border-neutral-700">
+                  <div className="mb-1.5 flex items-center justify-between gap-2">
+                    <span className="text-sm font-medium text-neutral-800 dark:text-neutral-100">
+                      {item.platform}
+                      <span className="ml-2 text-xs font-normal text-neutral-400 dark:text-neutral-500">{item.hint}</span>
+                    </span>
+                    <button
+                      onClick={() => copyText(item.text, item.key)}
+                      className="shrink-0 text-xs text-primary-600 hover:underline focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:text-primary-400"
+                    >
+                      {copiedKw === item.key ? "已复制 ✓" : "复制"}
+                    </button>
+                  </div>
+                  <p className="rounded-lg border border-success-200 bg-success-50 px-3 py-2 text-sm leading-relaxed text-neutral-800 dark:border-success-900 dark:bg-success-950 dark:text-neutral-100">
+                    {item.text}
+                  </p>
+                </div>
+              ))}
+              {applyResult.tips.length > 0 && (
+                <p className="rounded-lg bg-neutral-50 px-3 py-2 text-xs leading-relaxed text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
+                  💡 {applyResult.tips.join("；")}
+                </p>
+              )}
+              <button
+                onClick={() => {
+                  setApplyResult(null);
+                  setApplyMsg("");
+                }}
+                className="text-sm text-neutral-500 hover:text-neutral-700 focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-2 dark:text-neutral-400 dark:hover:text-neutral-200"
+              >
+                ← 重新生成
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ATS 友好度（规则检测，独立维度卡，不影响诊断主分） */}
+      <div className="rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900">
+        <div className="mb-1 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <h2 className="font-semibold text-neutral-800 dark:text-neutral-100">ATS 友好度</h2>
+            <span className="rounded-full bg-primary-100 px-2 py-0.5 text-xs font-medium text-primary-700 dark:bg-primary-950 dark:text-primary-300">
+              规则检测
+            </span>
+          </div>
+          <span className={`text-3xl font-bold tabular-nums ${ats.score >= 80 ? "text-success-600 dark:text-success-400" : ats.score >= 55 ? "text-warning-600 dark:text-warning-400" : "text-danger-600 dark:text-danger-400"}`}>
+            {ats.score}
+          </span>
+        </div>
+        <p className="mb-4 text-sm text-neutral-500 dark:text-neutral-400">
+          检测简历是否容易被投递系统（ATS）机器解析与检索——仅评估可解析文本，不参与你的匹配总分。
+        </p>
+        <ul className="space-y-2">
+          {ats.checks.map((c) => (
+            <li key={c.label} className="flex items-start gap-2.5 rounded-lg bg-neutral-50 px-3 py-2 dark:bg-neutral-800/60">
+              <span
+                className={`mt-0.5 h-2 w-2 shrink-0 rounded-full ${
+                  c.status === "pass"
+                    ? "bg-success-500"
+                    : c.status === "warn"
+                      ? "bg-warning-500"
+                      : "bg-danger-500"
+                }`}
+              />
+              <div>
+                <p className="text-sm font-medium text-neutral-700 dark:text-neutral-200">{c.label}</p>
+                <p className="text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">{c.tip}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* 下一步：把诊断变成行动 */}
+      <div className="rounded-2xl border border-primary-200 bg-primary-50/60 p-6 dark:border-primary-900 dark:bg-neutral-900">
+        <h2 className="font-semibold text-neutral-800 dark:text-neutral-100">下一步，把诊断变成行动</h2>
+        <p className="mb-4 mt-1 text-sm text-neutral-500 dark:text-neutral-400">基于这份诊断，选一个能立刻推进的方向。</p>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <button
+            onClick={result.aiEnhanced ? runOptimize : () => router.push("/editor")}
+            disabled={optLoading}
+            className="group rounded-xl border border-neutral-200 bg-white p-4 text-left transition-colors hover:border-primary-400 hover:bg-primary-50 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:border-primary-700 dark:hover:bg-primary-950/40"
+          >
+            <span className="text-xl">✍️</span>
+            <p className="mt-1.5 text-sm font-semibold text-neutral-800 group-hover:text-primary-700 dark:text-neutral-100 dark:group-hover:text-primary-300">
+              {result.aiEnhanced ? "优化简历" : "打开编辑器"}
+            </p>
+            <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
+              {result.aiEnhanced ? "一键按 JD 生成优化版" : "手动润色这份简历"}
+            </p>
+          </button>
+          <button
+            onClick={goInterview}
+            className="group rounded-xl border border-neutral-200 bg-white p-4 text-left transition-colors hover:border-primary-400 hover:bg-primary-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:border-primary-700 dark:hover:bg-primary-950/40"
+          >
+            <span className="text-xl">🎤</span>
+            <p className="mt-1.5 text-sm font-semibold text-neutral-800 group-hover:text-primary-700 dark:text-neutral-100 dark:group-hover:text-primary-300">
+              AI 模拟面试
+            </p>
+            <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">针对缺失项专项演练</p>
+          </button>
+          <button
+            onClick={scrollToRemediation}
+            className="group rounded-xl border border-neutral-200 bg-white p-4 text-left transition-colors hover:border-primary-400 hover:bg-primary-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:border-primary-700 dark:hover:bg-primary-950/40"
+          >
+            <span className="text-xl">🗺️</span>
+            <p className="mt-1.5 text-sm font-semibold text-neutral-800 group-hover:text-primary-700 dark:text-neutral-100 dark:group-hover:text-primary-300">
+              补位计划
+            </p>
+            <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">把缺口变成 90 天行动</p>
+          </button>
+        </div>
+      </div>
 
       {/* 操作 */}
       <div className="flex flex-col gap-3 sm:flex-row">

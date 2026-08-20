@@ -69,27 +69,60 @@ export default function PrivacyModal() {
           </h2>
         </div>
 
-        <p className="mt-4 text-[15px] leading-relaxed text-neutral-600 dark:text-neutral-300">
-          简历默认仅在你的浏览器内解析、
-          <span className="font-medium text-neutral-800 dark:text-neutral-100">不落库、不上传</span>；
-          仅在你在「私人档案 → 云端同步」主动开启「同步简历」后，简历才会以
-          <span className="font-medium text-neutral-800 dark:text-neutral-100">AES-256 加密形式</span>
-          上云（密钥仅存本浏览器，服务端不可读），可随时关闭。
-          开启 AI 增强时，文本会经云函数代理转发给 AI 服务商用于生成诊断建议，
-          <span className="font-medium text-neutral-800 dark:text-neutral-100">不留存、不记录</span>，你可随时在诊断页关闭该功能。
-          你的数据安全由你掌控，请放心使用。
+        <p className="mt-4 text-[15px] font-medium text-neutral-800 dark:text-neutral-100">
+          你的简历，只属于你。
+        </p>
+
+        <ul className="mt-4 space-y-3">
+          <li className="flex gap-3">
+            <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-success-100 text-[11px] font-bold text-success-700 dark:bg-success-950 dark:text-success-300">
+              ✓
+            </span>
+            <div>
+              <p className="text-sm font-medium text-neutral-800 dark:text-neutral-100">本地解析</p>
+              <p className="mt-0.5 text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
+                默认所有处理都在你的浏览器内完成，不落库、不上传。
+              </p>
+            </div>
+          </li>
+          <li className="flex gap-3">
+            <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary-100 text-[11px] font-bold text-primary-700 dark:bg-primary-950 dark:text-primary-300">
+              ②
+            </span>
+            <div>
+              <p className="text-sm font-medium text-neutral-800 dark:text-neutral-100">可控上云</p>
+              <p className="mt-0.5 text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
+                仅当你在「私人档案 → 云端同步」主动开启「同步简历」时，简历才以 AES-256 加密上云（密钥仅存本机，服务端不可读），可随时关闭。
+              </p>
+            </div>
+          </li>
+          <li className="flex gap-3">
+            <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent-100 text-[11px] font-bold text-accent-700 dark:bg-accent-950 dark:text-accent-300">
+              ✦
+            </span>
+            <div>
+              <p className="text-sm font-medium text-neutral-800 dark:text-neutral-100">AI 仅转发</p>
+              <p className="mt-0.5 text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
+                开启 AI 增强时，文本经云函数代理转发给 AI 服务商生成建议，不留存、不记录，可随时关闭。
+              </p>
+            </div>
+          </li>
+        </ul>
+
+        <p className="mt-4 text-xs text-neutral-400 dark:text-neutral-500">
+          你的数据，由你完全掌控。
         </p>
 
         <button
           type="button"
           onClick={acknowledge}
-          className="mt-6 w-full inline-flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-neutral-900"
+          className="mt-4 w-full inline-flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-neutral-900"
         >
-          我已知晓
+          我知晓并开始 ›
         </button>
 
         <p className="mt-3 text-center text-xs text-neutral-400 dark:text-neutral-500">
-          勾选后本承诺将不再自动弹出（清除本站数据可重新查看）
+          之后不再自动弹出（清除本站数据可重新查看）
         </p>
       </div>
     </div>
