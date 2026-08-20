@@ -236,6 +236,20 @@ export default function UploadPage() {
         <p className="mt-3 text-neutral-600 dark:text-neutral-300">
           上传简历 PDF + 粘贴目标岗位 JD，AI 帮你诊断匹配度，给出可执行的改进建议
         </p>
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+          <span className="inline-flex items-center gap-1 rounded-full bg-primary-50 px-3 py-1 text-xs font-medium text-primary-700 dark:bg-primary-950/60 dark:text-primary-300">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            简历不落盘 · 仅本地解析
+          </span>
+          <span className="inline-flex items-center gap-1 rounded-full bg-success-50 px-3 py-1 text-xs font-medium text-success-700 dark:bg-success-950/60 dark:text-success-300">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            30 秒出结果
+          </span>
+          <span className="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-3 py-1 text-xs font-medium text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 12V8H6a2 2 0 0 1 0-4h12v4"/><path d="M4 6v12a2 2 0 0 0 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+            免费 · 无账号
+          </span>
+        </div>
       </header>
 
       {/* 顶部步骤条：流程引导 */}
@@ -320,8 +334,20 @@ export default function UploadPage() {
               className="hidden"
               onChange={(e) => handleFile(e.target.files?.[0])}
             />
-            <div className="text-4xl mb-3">
-              {resumeFile ? "✅" : usingSample ? "🧪" : "📄"}
+            <div className="mb-3 flex justify-center">
+              {resumeFile ? (
+                <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-success-100 text-3xl dark:bg-success-950/60" aria-hidden="true">
+                  ✅
+                </span>
+              ) : usingSample ? (
+                <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-100 text-3xl dark:bg-primary-950/60" aria-hidden="true">
+                  🧪
+                </span>
+              ) : (
+                <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-50 to-primary-100 text-3xl ring-1 ring-primary-100 dark:from-primary-950/60 dark:to-primary-900/40 dark:ring-primary-900" aria-hidden="true">
+                  📄
+                </span>
+              )}
             </div>
             {resumeFile ? (
               <div>

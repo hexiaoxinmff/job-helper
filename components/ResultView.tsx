@@ -288,9 +288,9 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
       {/* 可导出的报告区 */}
       <div ref={reportRef} className="space-y-6 p-1">
         {/* 总分 */}
-        <div className="rounded-2xl border border-neutral-200 bg-white p-6 text-center dark:border-neutral-800 dark:bg-neutral-900">
+        <div className="rounded-2xl border border-neutral-200 bg-gradient-to-b from-primary-50/80 to-white p-6 text-center dark:border-neutral-800 dark:from-primary-950/30 dark:to-neutral-900">
           <p className="text-sm text-neutral-500 dark:text-neutral-400">整体匹配度</p>
-          <p className={`text-5xl font-bold mt-2 ${scoreColor(result.overallScore)}`}>
+          <p className={`text-6xl font-bold mt-2 tabular-nums ${scoreColor(result.overallScore)}`}>
             {result.overallScore}
             <span className="text-xl text-neutral-400 font-normal dark:text-neutral-500"> /100</span>
           </p>
@@ -313,7 +313,7 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
         <div className="rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900">
           <h2 className="mb-4 font-semibold text-neutral-800 dark:text-neutral-100">维度评分</h2>
           <div className="flex flex-col gap-6 md:flex-row">
-            <div className="h-64 w-full md:w-1/2">
+            <div className="h-64 w-full rounded-xl bg-neutral-50 p-2 dark:bg-neutral-800/50 md:w-1/2">
               <ErrorBoundary
                 fallback={(error, reset) => (
                   <div className="flex h-full flex-col items-center justify-center gap-2 text-center">

@@ -1,9 +1,9 @@
 # MASTER.md — 求职在线助手（Recall）设计系统
 
-> 文档版本：v1.0
-> 编制日期：2026-08-20
-> 性质：**唯一权威设计系统**。所有页面、组件、新功能开发前必须阅读本文件，并以其为验收基准。
-> 关联文档：《求职在线助手-PRD.md》（需求）、《UI-UX设计文档.md》（设计规范 v1.0，本文件为其可执行升级版）
+> 文档版本：v1.0  
+> 编制日期：2026-08-20  
+> 性质：**唯一权威设计系统**。所有页面、组件、新功能开发前必须阅读本文件，并以其为验收基准。  
+> 关联文档：《求职在线助手-PRD.md》（需求）、《UI-UX设计文档.md》（设计规范 v1.0，本文件为其可执行升级版）  
 > 适用范围：`job-helper`（Next.js 16 + Tailwind CSS v4 + Recharts）、后续所有 Web 端迭代；小程序端（`job-helper-mini`）仅参考色彩语义，不直接套用本文件的布局规则。
 
 ---
@@ -14,12 +14,12 @@
 
 **工具型 AI 求职助手（Web 应用，静态导出）**，不是营销站、不是内容站、不是 Saas 后台。
 
-| 维度 | 结论 | 对设计的含义 |
-|---|---|---|
+| 维度   | 结论                        | 对设计的含义                    |
+| ---- | ------------------------- | ------------------------- |
 | 核心任务 | 上传简历 + 粘贴 JD → 匹配诊断 → 改简历 | 单栏线性流程，**每屏一个主操作**，不搞多栏栅格 |
-| 使用频率 | 低频高 stakes（秋招/春招洪峰） | 首屏 3 秒破冰，30 秒出结果；不做沉浸式浏览 |
-| 用户 | 应届生/转行者，学生为主，价格敏感 | 文案直白不营销，免费感清晰，隐私承诺常驻 |
-| 信任核心 | 隐私 + 诚实诊断 | 界面是「信任的载体」：给理由、给置信度、给数据主权 |
+| 使用频率 | 低频高 stakes（秋招/春招洪峰）       | 首屏 3 秒破冰，30 秒出结果；不做沉浸式浏览  |
+| 用户   | 应届生/转行者，学生为主，价格敏感         | 文案直白不营销，免费感清晰，隐私承诺常驻      |
+| 信任核心 | 隐私 + 诚实诊断                 | 界面是「信任的载体」：给理由、给置信度、给数据主权 |
 
 ### 1.2 一句话设计定位
 
@@ -27,12 +27,12 @@
 
 ### 1.3 设计原则（对齐 PRD D-01~04，全部必须执行）
 
-| # | 原则 | 界面表达（硬性要求） |
-|---|---|---|
-| D-01 隐私优先 | 隐私承诺常驻可见（上传区底部 `PrivacyNote` + 首次 `PrivacyModal`）；AI 开关前置到核心流程，文案写明「不留存」；档案开关默认关闭 |
-| D-02 零门槛破冰 | 首屏 = 一个大上传区 + 一个「开始诊断」主按钮，不要求先填任何表单；示例 JD 一键加载 |
-| D-03 诚实而非讨好 | 结果不只一个分数：维度、命中/缺失关键词、置信度徽章、顶部免责横幅、缺口区分「硬技能/表达」两类路线 |
-| D-04 可降级 | 无 AI 时界面自动收敛：AI 依赖区块（改写/优化/置信度徽章）隐藏，核心诊断链路 100% 可用；降级是静默的 |
+| #           | 原则                                                                                | 界面表达（硬性要求） |
+| ----------- | --------------------------------------------------------------------------------- | ---------- |
+| D-01 隐私优先   | 隐私承诺常驻可见（上传区底部 `PrivacyNote` + 首次 `PrivacyModal`）；AI 开关前置到核心流程，文案写明「不留存」；档案开关默认关闭 |            |
+| D-02 零门槛破冰  | 首屏 = 一个大上传区 + 一个「开始诊断」主按钮，不要求先填任何表单；示例 JD 一键加载                                    |            |
+| D-03 诚实而非讨好 | 结果不只一个分数：维度、命中/缺失关键词、置信度徽章、顶部免责横幅、缺口区分「硬技能/表达」两类路线                                |            |
+| D-04 可降级    | 无 AI 时界面自动收敛：AI 依赖区块（改写/优化/置信度徽章）隐藏，核心诊断链路 100% 可用；降级是静默的                         |            |
 
 ### 1.4 体验基调（Tone of Voice）
 
@@ -45,18 +45,18 @@
 
 ## 2. 页面类型与设计目标
 
-| 页面 | 路由 | 类型 | 设计目标 |
-|---|---|---|---|
-| 简历诊断（核心） | `/` | 表单流 | 3 秒破冰；线性 4 步；错误具体可恢复 |
-| 诊断结果 | `ResultView` | 数据展示 | 分数即锚点；诚实分层（维度→关键词→建议→路线） |
-| 简历编辑器 | `/editor` | 工具表单 | 长表单不焦虑：分段卡片 + 实时缩略预览 |
-| 简历预览 | `/preview` | 文档渲染 | 白底 A4，打印友好，导航隐藏 |
-| STAR 生成器 | `/star` | AI 工具 | 紫色=AI 心智；四步拆解清晰 |
-| 私人档案 | `/profile` | 数据页 | 数据主权可视化；成长轨迹鼓励留存 |
-| 投递追踪 | `/tracker` | 数据页 | 表格/看板可扫读；状态色一致 |
-| AI 模拟面试 | `/interview` | AI 对话 | 会话沉浸；加载反馈明确 |
-| 垂直模板 | `/vertical` | 获客页 | 人群卡扫读；一键进编辑器 |
-| 高校入口 | `/campus` | 营销落地页 | 允许品牌化，但同令牌体系 |
+| 页面       | 路由           | 类型    | 设计目标                     |
+| -------- | ------------ | ----- | ------------------------ |
+| 简历诊断（核心） | `/`          | 表单流   | 3 秒破冰；线性 4 步；错误具体可恢复     |
+| 诊断结果     | `ResultView` | 数据展示  | 分数即锚点；诚实分层（维度→关键词→建议→路线） |
+| 简历编辑器    | `/editor`    | 工具表单  | 长表单不焦虑：分段卡片 + 实时缩略预览     |
+| 简历预览     | `/preview`   | 文档渲染  | 白底 A4，打印友好，导航隐藏          |
+| STAR 生成器 | `/star`      | AI 工具 | 紫色=AI 心智；四步拆解清晰          |
+| 私人档案     | `/profile`   | 数据页   | 数据主权可视化；成长轨迹鼓励留存         |
+| 投递追踪     | `/tracker`   | 数据页   | 表格/看板可扫读；状态色一致           |
+| AI 模拟面试  | `/interview` | AI 对话 | 会话沉浸；加载反馈明确              |
+| 垂直模板     | `/vertical`  | 获客页   | 人群卡扫读；一键进编辑器             |
+| 高校入口     | `/campus`    | 营销落地页 | 允许品牌化，但同令牌体系             |
 
 **导航顺序 = 产品漏斗**：先用（诊断）→ 改（编辑器）→ 练（面试）→ 追（追踪）→ 写（STAR）→ 沉淀（档案）→ 人群（垂直）→ 渠道（高校）。
 
@@ -68,29 +68,29 @@
 
 7 组语义色板，每组 50~950 共 11 档，**light/dark 共用档位值**，暗色通过 `dark:` 前缀切档位。组件**禁止硬编码 hex**（唯一例外见 §10 豁免）。
 
-| 色板 | 色相家族 | 用途（语义锚点，不可串用） |
-|---|---|---|
-| `neutral` | slate 灰 | 文字层级、边框、背景（90% 场景） |
-| `primary` | blue 蓝 | 主操作、导航激活、链接、主进度、总分锚点 |
-| `success` | emerald 绿 | 命中、高置信度、成功、已加入 |
-| `warning` | amber 琥珀 | 免责横幅、中置信度、≥60 分 |
-| `danger` | red 红 | 错误、缺失关键词、低分、删除、硬技能缺口 |
-| `info` | sky 天蓝 | 表达缺口、辅助信息 |
-| `accent` | purple 紫 | **AI 专属色**：AI 增强徽章、AI 改写/优化、STAR 生成器（「紫色=AI」认知锚点） |
+| 色板        | 色相家族      | 用途（语义锚点，不可串用）                                     |
+| --------- | --------- | ------------------------------------------------- |
+| `neutral` | slate 灰   | 文字层级、边框、背景（90% 场景）                                |
+| `primary` | blue 蓝    | 主操作、导航激活、链接、主进度、总分锚点                              |
+| `success` | emerald 绿 | 命中、高置信度、成功、已加入                                    |
+| `warning` | amber 琥珀  | 免责横幅、中置信度、≥60 分                                   |
+| `danger`  | red 红     | 错误、缺失关键词、低分、删除、硬技能缺口                              |
+| `info`    | sky 天蓝    | 表达缺口、辅助信息                                         |
+| `accent`  | purple 紫  | **AI 专属色**：AI 增强徽章、AI 改写/优化、STAR 生成器（「紫色=AI」认知锚点） |
 
 ### 3.2 关键语义色（随主题切换）
 
-| Token | Light | Dark | 用途 |
-|---|---|---|---|
-| `--jh-bg` | `#f8fafc` | `#020617` | 页面背景 |
-| `--jh-bg-elevated` | `#ffffff` | `#0f172a` | 卡片/弹层 |
-| `--jh-bg-muted` | `#f1f5f9` | `#1e293b` | 次级背景/hover/内嵌块 |
-| `--jh-fg` | `#0f172a` | `#e2e8f0` | 正文 |
-| `--jh-fg-muted` | `#475569` | `#94a3b8` | 次要文字 |
-| `--jh-fg-faint` | `#94a3b8` | `#64748b` | 弱化/占位（仅辅助信息，见 §10） |
-| `--jh-border` | `#e2e8f0` | `#1e293b` | 默认边框 |
-| `--jh-border-strong` | `#cbd5e1` | `#334155` | 强调边框/输入框 |
-| `--jh-overlay` | `rgb(15 23 42 / .5)` | `rgb(2 6 23 / .6)` | **弹窗遮罩唯一来源**（组件用 `bg-overlay`） |
+| Token                | Light                | Dark               | 用途                             |
+| -------------------- | -------------------- | ------------------ | ------------------------------ |
+| `--jh-bg`            | `#f8fafc`            | `#020617`          | 页面背景                           |
+| `--jh-bg-elevated`   | `#ffffff`            | `#0f172a`          | 卡片/弹层                          |
+| `--jh-bg-muted`      | `#f1f5f9`            | `#1e293b`          | 次级背景/hover/内嵌块                 |
+| `--jh-fg`            | `#0f172a`            | `#e2e8f0`          | 正文                             |
+| `--jh-fg-muted`      | `#475569`            | `#94a3b8`          | 次要文字                           |
+| `--jh-fg-faint`      | `#94a3b8`            | `#64748b`          | 弱化/占位（仅辅助信息，见 §10）             |
+| `--jh-border`        | `#e2e8f0`            | `#1e293b`          | 默认边框                           |
+| `--jh-border-strong` | `#cbd5e1`            | `#334155`          | 强调边框/输入框                       |
+| `--jh-overlay`       | `rgb(15 23 42 / .5)` | `rgb(2 6 23 / .6)` | **弹窗遮罩唯一来源**（组件用 `bg-overlay`） |
 
 ### 3.3 图表色（`--chart-series-*`）
 
@@ -115,14 +115,14 @@
 
 ### 4.2 字号层级（Tailwind 默认 scale，全站只有这几档）
 
-| 层级 | 类 | 用途 |
-|---|---|---|
-| 页面 H1 | `text-3xl font-bold` | 仅首页诊断（全站唯一 H1） |
-| 大数字 | `text-5xl font-bold` | 结果页总分（唯一视觉锚点） |
-| 卡片标题 | `text-base font-semibold`（`text-lg` 仅弹窗标题） | 卡片内 `h2`/弹窗 `h3` |
-| 正文 | `text-sm` | 默认密度（信息量大，紧凑） |
-| 辅助/弱化 | `text-xs` | 说明、时间戳、徽章 |
-| 版本号 | `text-[10px]`（豁免例外） | 侧栏/移动菜单版本行 |
+| 层级    | 类                                          | 用途               |
+| ----- | ------------------------------------------ | ---------------- |
+| 页面 H1 | `text-3xl font-bold`                       | 仅首页诊断（全站唯一 H1）   |
+| 大数字   | `text-5xl font-bold`                       | 结果页总分（唯一视觉锚点）    |
+| 卡片标题  | `text-base font-semibold`（`text-lg` 仅弹窗标题） | 卡片内 `h2`/弹窗 `h3` |
+| 正文    | `text-sm`                                  | 默认密度（信息量大，紧凑）    |
+| 辅助/弱化 | `text-xs`                                  | 说明、时间戳、徽章        |
+| 版本号   | `text-[10px]`（豁免例外）                        | 侧栏/移动菜单版本行       |
 
 - 数字用 `tabular-nums` 对齐（总分/维度分竖排对齐）。
 - 禁止随意 `text-lg/xl/2xl` 提升层级；层级靠字重与颜色区分，不靠字号堆叠。
@@ -133,12 +133,12 @@
 
 ### 5.1 圆角：全站只有三级「形状语言」
 
-| 级别 | Token | 用途 |
-|---|---|---|
-| 全圆 | `--jh-radius-full` | 徽章、chip、switch 滑块、序号圆点 |
-| 卡片 | `--jh-radius-2xl` (1rem) | **所有页面内容块** |
-| 控件 | `--jh-radius-xl` (0.75rem) | 主按钮、输入框、textarea、内嵌块 |
-| 辅助 | `--jh-radius-lg` (0.5rem) | 导航项、select、小按钮、tooltip |
+| 级别 | Token                      | 用途                     |
+| -- | -------------------------- | ---------------------- |
+| 全圆 | `--jh-radius-full`         | 徽章、chip、switch 滑块、序号圆点 |
+| 卡片 | `--jh-radius-2xl` (1rem)   | **所有页面内容块**            |
+| 控件 | `--jh-radius-xl` (0.75rem) | 主按钮、输入框、textarea、内嵌块   |
+| 辅助 | `--jh-radius-lg` (0.5rem)  | 导航项、select、小按钮、tooltip |
 
 规则：**卡片一律 2xl；主输入/主按钮一律 xl；辅助控件 lg；chip/徽章 full**。内嵌块比外层小一级（外层 2xl → 内嵌 xl）。
 
@@ -146,12 +146,12 @@
 
 亮色靠「白卡片 + 浅边框」分层，暗色靠「深色块 + 更深的边框」分层；**阴影只作为浮层/交互反馈**，禁止大面积投影。
 
-| Token | 用途 |
-|---|---|
-| `shadow-sm` | 卡片默认（几乎不可见） |
-| `shadow-md` | hover 浮起 |
-| `shadow-lg` | 移动端折叠面板 |
-| `shadow-xl`/`2xl` | 弹窗 |
+| Token             | 用途          |
+| ----------------- | ----------- |
+| `shadow-sm`       | 卡片默认（几乎不可见） |
+| `shadow-md`       | hover 浮起    |
+| `shadow-lg`       | 移动端折叠面板     |
+| `shadow-xl`/`2xl` | 弹窗          |
 
 ### 5.3 间距
 
@@ -180,10 +180,10 @@
 
 ### 6.2 断点规则（全站仅两档）
 
-| 断点 | 行为 |
-|---|---|
-| `< 768px`（默认） | 移动顶栏（sticky h-12）+ 折叠导航；内容区单栏；按钮竖排 |
-| `≥ 768px`（`md:`） | 左侧固定 224px 侧栏；主内容 `md:pl-56`；操作区横排 |
+| 断点               | 行为                                                         |
+| ---------------- | ---------------------------------------------------------- |
+| `< 768px`（默认）    | 移动顶栏（sticky h-12）+ 折叠导航；内容区单栏；按钮竖排                         |
+| `≥ 768px`（`md:`） | 左侧固定 224px 侧栏；主内容 `md:pl-56`；操作区横排                         |
 | `≥ 640px`（`sm:`） | 卡片内部允许 2 列网格（如反向推荐 3 列 `sm:grid-cols-3`、操作区 `sm:flex-row`） |
 
 - 内容区始终 `max-w-3xl mx-auto` **单栏**，不采用多栏栅格（诊断流程线性）。
@@ -194,18 +194,18 @@
 
 ## 7. 组件规范与状态矩阵
 
-> 所有组件必须覆盖状态：`default / hover / focus-visible / active / disabled / loading / error / empty`。
+> 所有组件必须覆盖状态：`default / hover / focus-visible / active / disabled / loading / error / empty`。  
 > 焦点环统一：`focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-{semantic}-500 focus-visible:ring-offset-2`。
 
 ### 7.1 按钮 Button（`components/ui/Button.tsx`）
 
-| 变体 | 样式 | 用途 |
-|---|---|---|
-| `primary` | `bg-primary-600` hover 700 active 800，白字 | 每屏唯一主按钮 |
-| `secondary` | `bg-neutral-100` 灰 | 次级操作 |
-| `outline` | 白底 + 边框 | 并行操作（复制/再测） |
-| `ghost` | 透明 | 弱操作（重新生成） |
-| `danger` | `bg-danger-600` | 破坏性操作 |
+| 变体          | 样式                                       | 用途          |
+| ----------- | ---------------------------------------- | ----------- |
+| `primary`   | `bg-primary-600` hover 700 active 800，白字 | 每屏唯一主按钮     |
+| `secondary` | `bg-neutral-100` 灰                       | 次级操作        |
+| `outline`   | 白底 + 边框                                  | 并行操作（复制/再测） |
+| `ghost`     | 透明                                       | 弱操作（重新生成）   |
+| `danger`    | `bg-danger-600`                          | 破坏性操作       |
 
 - 尺寸：`sm` px-3 py-1.5 / `md` px-4 py-2 / `lg` px-4 py-3.5（全宽主操作）。
 - 状态：`disabled:opacity-50 cursor-not-allowed`；loading 内联 spinner（`border-current/30 border-t-current`）；`active:scale-[0.98]`。
@@ -236,12 +236,12 @@
 
 ### 7.7 警示横幅 / 提示块（`ui/Alert.tsx`）
 
-| variant | role | 用途 |
-|---|---|---|
-| `warning` | status | 免责横幅（结果页最顶，可导出区内保留） |
-| `danger` | **alert** | 校验错误（即时，打断播报） |
-| `success` | status | 成功回执 |
-| `info` | status | 降级提示 |
+| variant   | role      | 用途                  |
+| --------- | --------- | ------------------- |
+| `warning` | status    | 免责横幅（结果页最顶，可导出区内保留） |
+| `danger`  | **alert** | 校验错误（即时，打断播报）       |
+| `success` | status    | 成功回执                |
+| `info`    | status    | 降级提示                |
 
 圆角 `rounded-xl`，浅底深字；暗色 `950/40` 半透明底。隐私承诺 `PrivacyNote`：`neutral-50` 底小字常驻表单底部。
 
@@ -278,16 +278,16 @@
 
 ## 9. 可访问性标准（WCAG 2.1 AA，强制）
 
-| 项 | 标准 | 本项目执行 |
-|---|---|---|
-| 对比度 | 正文 ≥ 4.5:1 | 正文 neutral-700/800 on white ≥ 7:1；dark 用 neutral-200。弱化文字 neutral-400 仅限辅助信息（豁免，见 §10） |
-| 键盘可达 | 全部交互可 Tab 到达、Enter/Space 触发 | 上传区 `role="button" tabIndex=0`；switch 原生按钮；tooltip 可聚焦触发 |
-| 焦点可见 | `:focus-visible` 环 ≥ 2px | 全局 ring-2 + ring-offset-2；**裸按钮必须补** |
-| 语义 | 正确的 role/aria | `role="dialog"`、`role="switch"`、`role="alert"`、`role="status"`、`aria-current="page"`、`aria-live`、`aria-label`；skip link「跳到主内容」 |
-| 动效 | 尊重 `prefers-reduced-motion` | 弹窗动画、进度条 transition、按钮 active 缩放全部降级/关闭 |
-| 目标尺寸 | 触控目标 ≥ 24px（AA），推荐 44px | 主按钮 ≥ 44px；icon 按钮 36px（24px 达标，记录为改进项） |
-| 文档结构 | 单一 H1、层级正确 | 仅首页 H1；卡片用 h2/h3 |
-| 打印 | 内容可打印 | 导航隐藏、白底、`break-inside: avoid` |
+| 项    | 标准                          | 本项目执行                                                                                                                          |
+| ---- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| 对比度  | 正文 ≥ 4.5:1                  | 正文 neutral-700/800 on white ≥ 7:1；dark 用 neutral-200。弱化文字 neutral-400 仅限辅助信息（豁免，见 §10）                                         |
+| 键盘可达 | 全部交互可 Tab 到达、Enter/Space 触发 | 上传区 `role="button" tabIndex=0`；switch 原生按钮；tooltip 可聚焦触发                                                                       |
+| 焦点可见 | `:focus-visible` 环 ≥ 2px    | 全局 ring-2 + ring-offset-2；**裸按钮必须补**                                                                                           |
+| 语义   | 正确的 role/aria               | `role="dialog"`、`role="switch"`、`role="alert"`、`role="status"`、`aria-current="page"`、`aria-live`、`aria-label`；skip link「跳到主内容」 |
+| 动效   | 尊重 `prefers-reduced-motion` | 弹窗动画、进度条 transition、按钮 active 缩放全部降级/关闭                                                                                        |
+| 目标尺寸 | 触控目标 ≥ 24px（AA），推荐 44px     | 主按钮 ≥ 44px；icon 按钮 36px（24px 达标，记录为改进项）                                                                                        |
+| 文档结构 | 单一 H1、层级正确                  | 仅首页 H1；卡片用 h2/h3                                                                                                               |
+| 打印   | 内容可打印                       | 导航隐藏、白底、`break-inside: avoid`                                                                                                  |
 
 ---
 
@@ -303,18 +303,18 @@
 
 ## 11. 令牌 ↔ 实现映射
 
-| 设计概念 | 实现文件 |
-|---|---|
-| 令牌定义 | `app/globals.css`（`--jh-*`）、`lib/theme.tsx`（JS 注册表 + `resolveThemeVars`） |
-| 全局框架 | `app/layout.tsx`、`components/NavBar.tsx`、`ThemeToggle.tsx` |
-| 基础组件 | `components/ui/`：Button / Card / Field / Input（导出 `fieldClass`）/ Alert |
-| 首页诊断 | `app/page.tsx` |
-| 结果页 | `components/ResultView.tsx`、`KeywordChip.tsx` |
-| 图表 | `components/CareerModelChart.tsx`、ResultView 内嵌雷达 |
-| STAR | `components/StarGenerator.tsx` |
-| 档案 | `lib/profile.tsx`、`app/profile/ProfileClient.tsx` |
-| 弹窗 | `PrivacyModal.tsx`、`ConfirmDialog.tsx`、`ImportDialog.tsx`、`PrivacyNote.tsx` |
-| 错误兜底 | `ErrorBoundary.tsx`、`app/error.tsx`、`global-error.tsx` |
+| 设计概念 | 实现文件                                                                        |
+| ---- | --------------------------------------------------------------------------- |
+| 令牌定义 | `app/globals.css`（`--jh-*`）、`lib/theme.tsx`（JS 注册表 + `resolveThemeVars`）    |
+| 全局框架 | `app/layout.tsx`、`components/NavBar.tsx`、`ThemeToggle.tsx`                  |
+| 基础组件 | `components/ui/`：Button / Card / Field / Input（导出 `fieldClass`）/ Alert      |
+| 首页诊断 | `app/page.tsx`                                                              |
+| 结果页  | `components/ResultView.tsx`、`KeywordChip.tsx`                               |
+| 图表   | `components/CareerModelChart.tsx`、ResultView 内嵌雷达                           |
+| STAR | `components/StarGenerator.tsx`                                              |
+| 档案   | `lib/profile.tsx`、`app/profile/ProfileClient.tsx`                           |
+| 弹窗   | `PrivacyModal.tsx`、`ConfirmDialog.tsx`、`ImportDialog.tsx`、`PrivacyNote.tsx` |
+| 错误兜底 | `ErrorBoundary.tsx`、`app/error.tsx`、`global-error.tsx`                      |
 
 ---
 
