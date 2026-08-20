@@ -38,7 +38,7 @@ const fromLines = (text: string) =>
 function TemplateThumb({ meta }: { meta: TemplateMeta }) {
   const base = "h-16 w-full overflow-hidden rounded-md border border-neutral-200 bg-white";
   const line = (w: string, i: number) => (
-    <div key={i} className="h-1 rounded" style={{ width: w, background: "#e5e7eb" }} />
+    <div key={i} className="h-1 rounded" style={{ width: w, background: "var(--jh-neutral-200)" }} />
   );
   switch (meta.layout) {
     case "timeline":

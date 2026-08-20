@@ -10,9 +10,9 @@ interface Props {
 
 const VARIANT_STYLES = {
   matched:
-    "px-2.5 py-1 rounded-full bg-success-100 text-success-700 text-xs hover:bg-success-200",
+    "px-2.5 py-1 rounded-full bg-success-100 text-success-700 text-xs hover:bg-success-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-success-500 focus-visible:ring-offset-2",
   missing:
-    "px-2.5 py-1 rounded-full bg-danger-100 text-danger-700 text-xs hover:bg-danger-200",
+    "px-2.5 py-1 rounded-full bg-danger-100 text-danger-700 text-xs hover:bg-danger-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger-500 focus-visible:ring-offset-2",
 };
 
 export default function KeywordChip({ keyword, variant }: Props) {

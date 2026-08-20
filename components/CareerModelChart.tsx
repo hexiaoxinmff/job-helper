@@ -231,7 +231,7 @@ export default function CareerModelChart({
                 <p className="text-xs text-neutral-400 dark:text-neutral-500">{error.message}</p>
                 <button
                   onClick={reset}
-                  className="rounded-lg bg-primary-600 px-3 py-1.5 text-sm text-white hover:bg-primary-700"
+                  className="rounded-lg bg-primary-600 px-3 py-1.5 text-sm text-white hover:bg-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
                 >
                   重试
                 </button>
@@ -313,7 +313,7 @@ export default function CareerModelChart({
                 <p className="text-xs text-neutral-400 dark:text-neutral-500">{error.message}</p>
                 <button
                   onClick={reset}
-                  className="rounded-lg bg-primary-600 px-3 py-1.5 text-sm text-white hover:bg-primary-700"
+                  className="rounded-lg bg-primary-600 px-3 py-1.5 text-sm text-white hover:bg-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
                 >
                   重试
                 </button>

@@ -161,7 +161,7 @@ export default function ImportDialog({
       }}
       className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-privacy-fade"
     >
-      <div className="absolute inset-0 bg-neutral-900/50 backdrop-blur-sm" aria-hidden="true" />
+      <div className="absolute inset-0 bg-overlay backdrop-blur-sm" aria-hidden="true" />
       <div className="relative w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-neutral-200 animate-privacy-pop dark:bg-neutral-900 dark:ring-neutral-700">
         <h2 id="import-dialog-title" className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
           导入简历
@@ -221,7 +221,7 @@ export default function ImportDialog({
               type="button"
               onClick={runRules}
               disabled={reading || parsing || !text.trim()}
-              className="inline-flex items-center justify-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center justify-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
             >
               {parsing ? "解析中…" : "规则解析并预览"}
             </button>
@@ -229,7 +229,7 @@ export default function ImportDialog({
               <button
                 type="button"
                 onClick={applyRule}
-                className="inline-flex items-center justify-center rounded-lg border border-primary-300 bg-primary-50 px-4 py-2 text-sm font-medium text-primary-700 transition-colors hover:bg-primary-100 dark:border-primary-800 dark:bg-primary-950/40 dark:text-primary-300"
+                className="inline-flex items-center justify-center rounded-lg border border-primary-300 bg-primary-50 px-4 py-2 text-sm font-medium text-primary-700 transition-colors hover:bg-primary-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:border-primary-800 dark:bg-primary-950/40 dark:text-primary-300"
               >
                 填入编辑器（保留已有内容）
               </button>
@@ -238,7 +238,7 @@ export default function ImportDialog({
               type="button"
               onClick={runAi}
               disabled={reading || aiLoading || !text.trim()}
-              className="inline-flex items-center justify-center rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200"
+              className="inline-flex items-center justify-center rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-2 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200"
             >
               {aiLoading ? "AI 解析中…" : "✨ AI 智能补全（完整识别）"}
             </button>
@@ -256,7 +256,7 @@ export default function ImportDialog({
               reset();
               onClose();
             }}
-            className="rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700"
+            className="rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-2 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700"
           >
             关闭
           </button>

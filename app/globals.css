@@ -207,6 +207,8 @@
 @theme {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  /* 弹窗遮罩语义 token：组件统一用 bg-overlay（对应 --jh-overlay，随主题切换） */
+  --color-overlay: var(--jh-overlay);
 
   /* 中性灰度 */
   --color-neutral-50: var(--jh-neutral-50, #f8fafc);
@@ -337,6 +339,19 @@ body {
   font-family: var(--font-sans);
 }
 
+/* ==========================================================================
+   键盘焦点全局兜底（WCAG 2.4.7）
+   - 已写 focus-visible:ring 的组件不受影响（其自带 outline-none + ring）
+   - 未写焦点样式的裸按钮/开关/链接，至少获得可见 outline，杜绝「键盘焦点不可见」
+   ========================================================================== */
+button:focus-visible,
+[role="button"]:focus-visible,
+[role="switch"]:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--jh-primary-500);
+  outline-offset: 2px;
+}
+
 /* 隐私承诺弹窗动画 */
 @keyframes privacy-fade {
   from {
@@ -364,6 +379,25 @@ body {
 
 .animate-privacy-pop {
   animation: privacy-pop 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ==========================================================================
+   动效无障碍：尊重系统「减少动态效果」偏好（WCAG 2.3.3）
+   - 弹窗入场动画、进度条过渡、脉冲骨架、按钮缩放全部关闭/瞬时化
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .animate-privacy-fade,
+  .animate-privacy-pop {
+    animation: none;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* ==========================================================================

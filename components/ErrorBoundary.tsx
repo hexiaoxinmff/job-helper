@@ -40,7 +40,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
           <p className="mt-1 text-xs text-danger-600 dark:text-danger-400">{error.message}</p>
           <button
             onClick={this.reset}
-            className="mt-3 rounded-lg bg-danger-600 px-4 py-2 text-sm text-white transition-colors hover:bg-danger-700"
+            className="mt-3 rounded-lg bg-danger-600 px-4 py-2 text-sm text-white transition-colors hover:bg-danger-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger-500 focus-visible:ring-offset-2"
           >
             重试
           </button>

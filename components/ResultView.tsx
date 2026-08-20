@@ -321,7 +321,7 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
                     <p className="text-xs text-neutral-400 dark:text-neutral-500">{error.message}</p>
                     <button
                       onClick={reset}
-                      className="rounded-lg bg-primary-600 px-3 py-1.5 text-sm text-white hover:bg-primary-700"
+                      className="rounded-lg bg-primary-600 px-3 py-1.5 text-sm text-white hover:bg-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
                     >
                       重试
                     </button>
@@ -435,7 +435,7 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
                     track("recommend_click", { id: rec.id, score: rec.score });
                     onReDiagnose(tpl.jd["zh-CN"], tpl.id);
                   }}
-                  className="group rounded-xl border border-neutral-200 p-4 text-left transition-colors hover:border-primary-400 hover:bg-primary-50 dark:border-neutral-700 dark:hover:border-primary-700 dark:hover:bg-primary-950/40"
+                  className="group rounded-xl border border-neutral-200 p-4 text-left transition-colors hover:border-primary-400 hover:bg-primary-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:border-neutral-700 dark:hover:border-primary-700 dark:hover:bg-primary-950/40"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div>
@@ -511,10 +511,10 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
                         track("remediation_add", { keyword: g.keyword, kind: g.kind });
                       }}
                       disabled={added}
-                      className={`ml-auto rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
+                      className={`ml-auto rounded-lg px-3 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
                         added
                           ? "bg-success-100 text-success-700 dark:bg-success-950 dark:text-success-300"
-                          : "bg-primary-600 text-white hover:bg-primary-700"
+                          : "bg-primary-600 text-white hover:bg-primary-700 focus-visible:ring-primary-500"
                       }`}
                     >
                       {added ? "✓ 已加入补位计划" : "加入补位计划"}
@@ -550,7 +550,7 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
           <button
             onClick={runRewrite}
             disabled={rewriteLoading}
-            className="w-full rounded-xl bg-accent-600 py-3 font-medium text-white transition-colors hover:bg-accent-700 disabled:opacity-50"
+            className="w-full rounded-xl bg-accent-600 py-3 font-medium text-white transition-colors hover:bg-accent-700 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             {rewriteLoading ? "AI 改写中…" : "一键生成改写建议"}
           </button>
@@ -572,7 +572,7 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
                   </span>
                   <button
                     onClick={() => copyRewrite(item)}
-                    className="text-xs text-primary-600 hover:underline dark:text-primary-400"
+                    className="text-xs text-primary-600 hover:underline focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:text-primary-400"
                   >
                     {copiedKw === item.keyword ? "已复制 ✓" : "复制改写句"}
                   </button>
@@ -593,7 +593,7 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
                 setRewrites(null);
                 setRewriteMsg("");
               }}
-              className="text-sm text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
+              className="text-sm text-neutral-500 hover:text-neutral-700 focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-2 dark:text-neutral-400 dark:hover:text-neutral-200"
             >
               ← 重新生成
             </button>
@@ -621,7 +621,7 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
             <button
               onClick={runOptimize}
               disabled={optLoading}
-              className="w-full rounded-xl bg-accent-600 py-3 font-medium text-white transition-colors hover:bg-accent-700 disabled:opacity-50"
+              className="w-full rounded-xl bg-accent-600 py-3 font-medium text-white transition-colors hover:bg-accent-700 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               {optLoading ? "AI 优化中…" : "一键优化简历"}
             </button>
@@ -637,7 +637,7 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
             <button
               onClick={runOptimize}
               disabled={optLoading}
-              className="w-full rounded-xl bg-accent-600 py-3 font-medium text-white transition-colors hover:bg-accent-700 disabled:opacity-50"
+              className="w-full rounded-xl bg-accent-600 py-3 font-medium text-white transition-colors hover:bg-accent-700 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               {optLoading ? "AI 优化中…" : "重试"}
             </button>
@@ -683,7 +683,7 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
 
       {/* 优化结果预览弹窗：展示修改点，确认后灌入编辑器（新建版本） */}
       {optOpen && optResult && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4" role="dialog" aria-modal="true">
           <div className="max-h-[85vh] w-full max-w-2xl overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-xl dark:border-neutral-700 dark:bg-neutral-900">
             <div className="flex items-start justify-between gap-3 border-b border-neutral-100 p-6 dark:border-neutral-800">
               <div>
@@ -697,7 +697,7 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
                   setOptOpen(false);
                   setOptResult(null);
                 }}
-                className="shrink-0 rounded-lg p-2 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 dark:hover:bg-neutral-800"
+                className="shrink-0 rounded-lg p-2 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-2 dark:hover:bg-neutral-800"
                 aria-label="关闭"
               >
                 ✕
@@ -740,13 +740,13 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
                   setOptOpen(false);
                   setOptResult(null);
                 }}
-                className="flex-1 rounded-xl border border-neutral-300 py-3 font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-600 dark:text-neutral-200 dark:hover:bg-neutral-800"
+                className="flex-1 rounded-xl border border-neutral-300 py-3 font-medium text-neutral-700 transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-2 dark:border-neutral-600 dark:text-neutral-200 dark:hover:bg-neutral-800"
               >
                 取消
               </button>
               <button
                 onClick={applyOptimize}
-                className="flex-1 rounded-xl bg-accent-600 py-3 font-medium text-white transition-colors hover:bg-accent-700"
+                className="flex-1 rounded-xl bg-accent-600 py-3 font-medium text-white transition-colors hover:bg-accent-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2"
               >
                 应用到编辑器
               </button>

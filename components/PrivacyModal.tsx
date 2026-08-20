@@ -53,7 +53,7 @@ export default function PrivacyModal() {
       className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-privacy-fade"
     >
       {/* 遮罩 */}
-      <div className="absolute inset-0 bg-neutral-900/50 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-overlay backdrop-blur-sm" />
 
       {/* 弹窗卡片 */}
       <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-neutral-200 animate-privacy-pop dark:bg-neutral-900 dark:ring-neutral-700">

@@ -27,7 +27,7 @@ export function Field({ label, hint, children, value, onChange, placeholder, tex
         ) : (
           <Input value={value} placeholder={placeholder} onChange={(e) => onChange?.(e.target.value)} />
         ))}
-      {hint && <span className="mt-1 block text-xs text-neutral-400 dark:text-neutral-500">{hint}</span>}
+      {hint && <span className="mt-1 block text-xs text-neutral-500 dark:text-neutral-500">{hint}</span>}
     </label>
   );
 }

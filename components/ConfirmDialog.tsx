@@ -86,7 +86,7 @@ export default function ConfirmDialog({
       className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-privacy-fade"
     >
       {/* 遮罩 */}
-      <div className="absolute inset-0 bg-neutral-900/50 backdrop-blur-sm" aria-hidden="true" />
+      <div className="absolute inset-0 bg-overlay backdrop-blur-sm" aria-hidden="true" />
 
       {/* 弹窗卡片 */}
       <div
