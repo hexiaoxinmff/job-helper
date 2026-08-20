@@ -393,18 +393,22 @@ export function ResumeProvider({ children }: { children: ReactNode }) {
     }
     const merged = Array.from(map.values());
     if (merged.length === 0) return;
-    // activeId：本地当前版本「有内容且不旧于云端最新」→ 保持；否则切到最新版本
-    // （恢复场景：本地仅剩空默认版本时，直接落到云端最新真实简历）
-    const latest = merged.reduce((a, b) => ((b.updatedAt ?? 0) > (a.updatedAt ?? 0) ? b : a));
+    // activeId：本地当前版本「有内容且不旧于云端最新有内容版本」→ 保持；
+    // 否则切到「最新且有内容」的版本（恢复场景：直接落到云端真实简历，而非空默认版本）
     const hasContent = (v: ResumeVersion) =>
       !!(v.resume.basics?.name?.trim() || v.resume.basics?.title?.trim());
+    const latestWithContent = merged
+      .filter(hasContent)
+      .reduce<ResumeVersion | undefined>((a, b) =>
+        !a || (b.updatedAt ?? 0) > (a.updatedAt ?? 0) ? b : a
+      , undefined);
     const curActive = merged.find((v) => v.id === cur.activeId);
     const activeId =
       curActive &&
       hasContent(curActive) &&
-      (curActive.updatedAt ?? 0) >= (latest.updatedAt ?? 0)
+      (curActive.updatedAt ?? 0) >= (latestWithContent?.updatedAt ?? 0)
         ? curActive.id
-        : latest.id;
+        : (latestWithContent?.id ?? merged[0]?.id ?? DEFAULT_VERSION_ID);
     commitStore({ versions: merged, activeId });
   };
 
