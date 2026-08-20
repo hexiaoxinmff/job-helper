@@ -54,6 +54,13 @@ next-env.d.ts
 # 云函数本地依赖（部署时随目录上传，不入库）
 cloudfunctions/*/node_modules
 
+# 云函数调试/下载残留（不入库）
+/_diag*.js
+/_scan.js
+/_invoke.json
+/_fn_dl/
+/scripts/invoke-test.json
+
 # build staging dirs
 /_jb_build*/
 /_jb_build*/*
