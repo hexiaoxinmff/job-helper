@@ -37,8 +37,32 @@ export function isCloudSyncConfigured(): boolean {
   return !!PROXY_URL;
 }
 
-/** 本地持久化匿名身份标识（跨设备同步按此 uid 分桶；密钥鉴权兜底） */
+/**
+ * 同步身份标识：
+ * - 配置了简历加密密钥时，用「密钥的确定性哈希」作为 uid —— 同一密钥在任何设备生成相同 uid，
+ *   换设备导入密钥即可自动定位同一数据桶（脱敏数据 + 加密简历一起恢复）；
+ * - 未配置密钥时，用本地随机 uid（仅本设备可访问）。
+ */
 export function getSyncUid(): string {
+  const key = getResumeEncKey();
+  if (key) {
+    try {
+      let h1 = 0xdeadbeef;
+      let h2 = 0x41c6ce57;
+      for (let i = 0; i < key.length; i++) {
+        const ch = key.charCodeAt(i);
+        h1 = Math.imul(h1 ^ ch, 2654435761);
+        h2 = Math.imul(h2 ^ ch, 1597334677);
+      }
+      h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+      h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+      const hex =
+        (h2 >>> 0).toString(16).padStart(8, "0") + (h1 >>> 0).toString(16).padStart(8, "0");
+      return `k-${hex}`;
+    } catch {
+      /* 哈希失败则走随机 uid */
+    }
+  }
   try {
     let u = window.localStorage.getItem(UID_KEY);
     if (!u) {

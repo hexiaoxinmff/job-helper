@@ -73,6 +73,10 @@ export default function ProfileClient() {
         const key = getResumeEncKey();
         if (key) {
           for (const v of resumeVersions) {
+            // 跳过空版本（未填写的默认骨架不上传，避免污染云端）
+            const isBlank =
+              !v.resume.basics?.name?.trim() && !v.resume.basics?.title?.trim();
+            if (isBlank) continue;
             const enc = await encryptJson(key, JSON.stringify(v.resume));
             resumes.push({ id: v.id, name: v.name, updatedAt: v.updatedAt, enc });
           }
