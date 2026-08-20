@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useMemo, useState } from "react";
 import type { AnalysisResult } from "@/lib/types";
 import {
   Radar,
@@ -18,6 +18,9 @@ import { track } from "@/lib/track";
 import { useCopy } from "@/lib/use-copy";
 import { generateResumeRewrites } from "@/lib/ai-client";
 import { useProfile } from "@/lib/profile";
+import { useDiagnosisHistory } from "@/lib/diagnosis-history";
+import { recommendRoles } from "@/lib/recommend";
+import { getJdById } from "@/lib/jd-library";
 import { resolveThemeVars } from "@/lib/theme";
 
 function confidenceLabel(c?: "low" | "medium" | "high"): { text: string; cls: string } {
@@ -32,6 +35,8 @@ interface Props {
   resumeText: string;
   jdText: string;
   onReset: () => void;
+  /** 反向岗位推荐回调：点击推荐方向后，用该 JD 重新诊断 */
+  onReDiagnose?: (jdText: string, jdId?: string) => void;
 }
 
 interface RewriteItem {
@@ -54,8 +59,9 @@ function scoreLabel(score: number): string {
   return "待改进";
 }
 
-export default function ResultView({ result, resumeText, jdText, onReset }: Props) {
+export default function ResultView({ result, resumeText, jdText, onReset, onReDiagnose }: Props) {
   const { profile, appendSnapshot } = useProfile();
+  const { append: appendDiagnosis } = useDiagnosisHistory();
   const chartData = result.dimensions.map((d) => ({
     dimension: d.name,
     score: d.score,
@@ -75,6 +81,30 @@ export default function ResultView({ result, resumeText, jdText, onReset }: Prop
       });
     }
   }, [result, profile.enabled, appendSnapshot, jdText]);
+
+  // 诊断历史本地化：无条件记录（脱敏，仅本地，上限 20 条），不依赖档案开关
+  const lastHistoryRef = useRef<string | null>(null);
+  useEffect(() => {
+    const key = `${result.overallScore}:${(jdText || "").slice(0, 40)}:${result.dimensions.map((d) => d.score).join(",")}`;
+    if (lastHistoryRef.current === key) return;
+    lastHistoryRef.current = key;
+    appendDiagnosis({
+      ts: Date.now(),
+      targetRole: (jdText || "").slice(0, 80),
+      overallScore: result.overallScore,
+      dimensions: result.dimensions.map((d) => ({ name: d.name, score: d.score })),
+      confidence: result.confidence,
+    });
+  }, [result, jdText, appendDiagnosis]);
+
+  // 反向岗位推荐：基于简历文本从 JD 库匹配高契合方向（复用规则评分，零成本）
+  const recommendations = useMemo(() => {
+    try {
+      return recommendRoles(resumeText, jdText, 3);
+    } catch {
+      return [];
+    }
+  }, [resumeText, jdText]);
 
   // —— 分享卡片 ——
   const reportRef = useRef<HTMLDivElement>(null);
@@ -304,6 +334,60 @@ export default function ResultView({ result, resumeText, jdText, onReset }: Prop
           </ol>
         </div>
       </div>
+
+      {/* 反向岗位推荐：基于这份简历，你可能适合（复用 JD 库 + 规则评分，点击即换 JD 重新诊断） */}
+      {recommendations.length > 0 && onReDiagnose && (
+        <div className="rounded-2xl border border-primary-200 bg-white p-6 dark:border-primary-900 dark:bg-neutral-900">
+          <div className="mb-1 flex items-center gap-2">
+            <h2 className="font-semibold text-neutral-800 dark:text-neutral-100">基于这份简历，你可能适合</h2>
+            <span className="rounded-full bg-primary-100 px-2 py-0.5 text-xs font-medium text-primary-700 dark:bg-primary-950 dark:text-primary-300">
+              反向推荐
+            </span>
+          </div>
+          <p className="mb-4 text-sm text-neutral-500 dark:text-neutral-400">
+            从行业 JD 库匹配的高契合方向（规则评分，纯本地）。点击即可换用该方向重新诊断。
+          </p>
+          <div className="grid gap-3 sm:grid-cols-3">
+            {recommendations.map((rec) => {
+              const tpl = getJdById(rec.id);
+              return (
+                <button
+                  key={rec.id}
+                  onClick={() => {
+                    if (!tpl) return;
+                    track("recommend_click", { id: rec.id, score: rec.score });
+                    onReDiagnose(tpl.jd["zh-CN"], tpl.id);
+                  }}
+                  className="group rounded-xl border border-neutral-200 p-4 text-left transition-colors hover:border-primary-400 hover:bg-primary-50 dark:border-neutral-700 dark:hover:border-primary-700 dark:hover:bg-primary-950/40"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="text-sm font-semibold text-neutral-800 group-hover:text-primary-700 dark:text-neutral-100 dark:group-hover:text-primary-300">
+                        {rec.role}
+                      </p>
+                      <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
+                        {rec.industry}
+                      </p>
+                    </div>
+                    <span
+                      className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${
+                        rec.tier === "high"
+                          ? "bg-success-100 text-success-700 dark:bg-success-950 dark:text-success-300"
+                          : "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300"
+                      }`}
+                    >
+                      {rec.score} 分
+                    </span>
+                  </div>
+                  <p className="mt-2 text-xs text-primary-600 opacity-0 transition-opacity group-hover:opacity-100 dark:text-primary-400">
+                    换 JD 重新诊断 →
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* 差距补救路线（诚实诊断：硬缺口 → 学习/补齐；表达缺口 → 在既有经历补位） */}
       {result.gapRemediation && result.gapRemediation.length > 0 && (

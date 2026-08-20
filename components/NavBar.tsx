@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { href: "/", label: "简历诊断" },
   { href: "/editor", label: "简历编辑器" },
   { href: "/star", label: "STAR 生成器" },
+  { href: "/tracker", label: "投递追踪" },
   { href: "/profile", label: "私人档案" },
   { href: "/vertical", label: "垂直模板" },
   { href: "/campus", label: "高校入口" },

@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useProfile } from "@/lib/profile";
+import { useDiagnosisHistory } from "@/lib/diagnosis-history";
 import { track } from "@/lib/track";
 import PrivacyNote from "@/components/PrivacyNote";
 import { Button } from "@/components/ui/Button";
@@ -10,6 +11,7 @@ import CareerModelChart from "@/components/CareerModelChart";
 export default function ProfileClient() {
   const { profile, setEnabled, setTargetRole, setTargetScore, clear, exportProfile, importProfile } =
     useProfile();
+  const { items: diagHistory, clear: clearDiagHistory } = useDiagnosisHistory();
   const fileRef = useRef<HTMLInputElement>(null);
   const [importMsg, setImportMsg] = useState("");
 
@@ -105,6 +107,69 @@ export default function ProfileClient() {
       {importMsg && (
         <p className="mt-3 text-sm text-neutral-600 dark:text-neutral-300">{importMsg}</p>
       )}
+
+      {/* 近期诊断（无条件自动记录）：脱敏、仅本地、可一键清除，作为求职工作台数据底座 */}
+      <section className="mt-8">
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <h2 className="font-semibold text-neutral-800 dark:text-neutral-100">
+              近期诊断（{diagHistory.length}）
+            </h2>
+            <span className="rounded-full bg-primary-100 px-2 py-0.5 text-xs font-medium text-primary-700 dark:bg-primary-950 dark:text-primary-300">
+              自动记录
+            </span>
+          </div>
+          {diagHistory.length > 0 && (
+            <button
+              onClick={() => {
+                if (confirm("确定清除全部近期诊断记录？此操作不可恢复。")) {
+                  clearDiagHistory();
+                  track("diag_history_clear");
+                }
+              }}
+              className="text-sm text-danger-600 hover:underline dark:text-danger-400"
+            >
+              一键清除
+            </button>
+          )}
+        </div>
+        <p className="mb-4 text-sm text-neutral-500 dark:text-neutral-400">
+          每次诊断自动记录最近 20 条（仅岗位摘要/总分/维度/时间，不含简历正文）。与下方「档案快照」不同，这里无需开启档案即可沉淀。
+        </p>
+        {diagHistory.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-neutral-300 p-6 text-center text-sm text-neutral-400 dark:border-neutral-700">
+            暂无记录。在「简历诊断」页完成一次诊断即可自动沉淀。
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {diagHistory.map((h) => (
+              <div
+                key={h.id}
+                className="rounded-xl border border-neutral-200 p-4 dark:border-neutral-700"
+              >
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="font-medium text-neutral-800 dark:text-neutral-100">
+                    {h.targetRole || "（未填写方向）"}
+                  </span>
+                  <span className="text-sm text-neutral-500 dark:text-neutral-400">
+                    {new Date(h.ts).toLocaleDateString()} · 匹配度 {h.overallScore}
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {h.dimensions.map((d) => (
+                    <span
+                      key={d.name}
+                      className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300"
+                    >
+                      {d.name} {d.score}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
 
       {/* 长期职业建模对比图 */}
       {profile.histories.length >= 2 && (

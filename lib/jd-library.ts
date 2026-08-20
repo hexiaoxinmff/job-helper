@@ -344,6 +344,87 @@ Requirements:
 - An accounting certificate is a plus.`,
     },
   },
+  {
+    id: "guoqi",
+    industry: { "zh-CN": "国企/央企", en: "State-owned Enterprise" },
+    role: { "zh-CN": "综合管理岗", en: "General Management" },
+    jd: {
+      "zh-CN": `岗位职责：
+- 负责部门日常行政与综合事务协调，组织会议、督办重点工作落实；
+- 协助撰写工作总结、汇报材料与公文，参与制度建设与流程优化；
+- 对接上级单位与兄弟部门，做好信息报送与内外沟通。
+
+任职要求：
+- 本科及以上学历，专业不限，中共党员优先；
+- 文字功底扎实，熟练使用 Word / Excel / PPT 等办公软件；
+- 责任心强，沟通协调与组织能力强，服从组织安排；
+- 有学生干部、党务或行政实习经历者优先。`,
+      en: `Responsibilities:
+- Coordinate daily administrative and general affairs, organize meetings, and follow up on key tasks;
+- Assist in drafting work summaries, reports, and official documents; participate in process optimization;
+- Liaise with superiors and peer departments, ensuring timely information reporting.
+
+Requirements:
+- Bachelor's degree or above; Party membership is a plus;
+- Solid writing skills; proficient in Word / Excel / PPT;
+- Strong sense of responsibility, communication, and coordination skills;
+- Campus leadership or administrative internship experience is a plus.`,
+    },
+  },
+  {
+    id: "sydw",
+    industry: { "zh-CN": "事业单位", en: "Public Institution" },
+    role: { "zh-CN": "综合岗", en: "General Staff" },
+    jd: {
+      "zh-CN": `岗位职责：
+- 负责窗口业务受理与政策咨询解答，落实一次性告知与限时办结；
+- 参与业务数据的登记、整理与统计分析，维护业务台账；
+- 配合开展政策宣传、活动组织与档案整理等日常工作。
+
+任职要求：
+- 本科及以上学历，具备良好的服务意识与沟通表达能力；
+- 熟悉办公软件操作，学习能力强，能较快掌握新政策新系统；
+- 工作细致耐心，遵纪守法，无不良记录；
+- 有政务服务、社区或志愿服务经历者优先。`,
+      en: `Responsibilities:
+- Handle counter services and policy consultation, ensuring one-stop service;
+- Register, organize, and analyze business data; maintain work ledgers;
+- Support policy publicity, event organization, and archive management.
+
+Requirements:
+- Bachelor's degree or above with strong service awareness and communication skills;
+- Proficient in office software; quick learner for new policies and systems;
+- Meticulous and patient; law-abiding with no adverse records;
+- Government service, community, or volunteer experience is a plus.`,
+    },
+  },
+  {
+    id: "bank",
+    industry: { "zh-CN": "银行金融", en: "Banking" },
+    role: { "zh-CN": "客户经理", en: "Relationship Manager" },
+    jd: {
+      "zh-CN": `岗位职责：
+- 负责个人/对公客户的拓展与维护，完成存款、理财、信贷等指标；
+- 深入了解客户需求，提供综合金融服务方案并促成落地；
+- 落实合规与风控要求，做好贷前调查与贷后管理。
+
+任职要求：
+- 本科及以上学历，金融、经济、市场营销等相关专业优先；
+- 具备良好的沟通营销能力与抗压能力，客户导向意识强；
+- 熟悉基础金融产品与业务流程，持有银行从业资格证者优先；
+- 有银行实习、社团外联或销售类经历者优先。`,
+      en: `Responsibilities:
+- Develop and maintain retail/corporate clients, meeting deposit, wealth, and credit targets;
+- Understand client needs and provide integrated financial service solutions;
+- Comply with regulatory and risk requirements in pre-loan and post-loan management.
+
+Requirements:
+- Bachelor's degree or above; finance, economics, or marketing majors preferred;
+- Strong communication, sales, and stress-resistance skills; customer-oriented;
+- Familiar with basic financial products and processes; banking certificate a plus;
+- Banking internship or sales-related experience is a plus.`,
+    },
+  },
 ];
 
 /** 按 id 取模板 */

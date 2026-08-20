@@ -4,6 +4,8 @@ import NavBar from "@/components/NavBar";
 import PrivacyModal from "@/components/PrivacyModal";
 import { ResumeProvider } from "@/lib/resume-store";
 import { ProfileProvider } from "@/lib/profile";
+import { DiagnosisHistoryProvider } from "@/lib/diagnosis-history";
+import { TrackerProvider } from "@/lib/tracker-store";
 import { ThemeProvider, THEME_INIT_SCRIPT } from "@/lib/theme";
 
 export const metadata: Metadata = {
@@ -43,9 +45,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <ThemeProvider>
           <ResumeProvider>
             <ProfileProvider>
-              <NavBar />
-              {children}
-              <PrivacyModal />
+              <DiagnosisHistoryProvider>
+                <TrackerProvider>
+                  <NavBar />
+                  {children}
+                  <PrivacyModal />
+                </TrackerProvider>
+              </DiagnosisHistoryProvider>
             </ProfileProvider>
           </ResumeProvider>
         </ThemeProvider>

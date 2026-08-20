@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>job-helper · 功能新增与优化建议（2026-08-20）</title>
+<style>
+  :root {
+    --bg: #f7f8fa;
+    --panel: #ffffff;
+    --ink: #1f2329;
+    --muted: #61656b;
+    --line: #e5e7eb;
+    --red: #e64340;
+    --green: #18a058;
+    --blue: #2f6fed;
+    --amber: #e6a23c;
+    --purple: #7c5ce0;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; line-height: 1.65; padding: 28px; }
+  .wrap { max-width: 1000px; margin: 0 auto; }
+  h1 { font-size: 26px; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin-bottom: 24px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 20px 22px; margin-bottom: 18px; }
+  h2 { font-size: 19px; margin: 0 0 12px; border-left: 4px solid var(--blue); padding-left: 10px; }
+  h3 { font-size: 15px; margin: 16px 0 8px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; margin: 8px 0 4px; }
+  th, td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: #f2f4f7; font-weight: 600; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; color: #fff; white-space: nowrap; }
+  .p0 { background: var(--red); }
+  .p1 { background: var(--amber); }
+  .p2 { background: var(--purple); }
+  .p3 { background: #8a8f99; }
+  .ok { color: var(--green); font-weight: 600; }
+  .warn { color: var(--amber); font-weight: 600; }
+  .bad { color: var(--red); font-weight: 600; }
+  code { background: #f2f4f7; padding: 1px 6px; border-radius: 4px; font-size: 12.5px; }
+  ul { margin: 6px 0 6px; padding-left: 20px; }
+  li { margin: 4px 0; }
+  .note { background: #fff7e6; border: 1px solid #ffe2a8; border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #8a5a00; margin: 10px 0; }
+  .good { background: #eef9f0; border: 1px solid #bce8c4; border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #1e7a34; margin: 10px 0; }
+  .step { display: flex; align-items: flex-start; gap: 10px; margin: 6px 0; }
+  .step-num { flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; background: var(--blue); color: #fff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; margin-top: 3px; }
+  .why { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>job-helper · 功能新增与优化建议</h1>
+  <div class="sub">基于 PRD、需求验证报告、今日代码审查结论，对照现有 13 项已实现功能与小程序版，给出可落地清单 · 2026-08-20</div>
+
+  <div class="card">
+    <h2>一、一句话结论</h2>
+    <p><strong>功能完成度已经超过多数同类独立产品</strong>（13 项 FR 全落地 + 小程序 6 页面 + 行业库扩到 36 个）。今日已把安全/性能欠账修完并上线，接下来真正的增量在三件事：</p>
+    <ol>
+      <li><span class="warn">把一次性诊断升级为"跨平台求职工作台"</span>——补投递追踪、历史沉淀、反向推荐，兑现"私人职业档案"定位；</li>
+      <li><span class="warn">降低冷启动门槛</span>——没有 PDF 简历的新用户也能 30 秒体验完整流程；</li>
+      <li><span class="bad">小程序端同步</span>——api.ts 已改但未构建发布，注入 key 后要尽快跟上，否则小程序端 AI 功能全挂。</li>
+    </ol>
+    <div class="good">✅ 已确认的好底子：隐私红线（简历不落盘）、规则引擎降级、36 行业双语 JD 库、暗色模式、错误边界、版本号机制——这些保持即可，不要动。</div>
+  </div>
+
+  <div class="card">
+    <h2>二、安全与性能欠账：今日已修复 ✅（保持验证，勿回退）</h2>
+    <table>
+      <thead><tr><th>优先级</th><th>问题</th><th>状态</th><th>落地要点 / 遗留</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="tag p0">P0</span></td>
+          <td>AI 代理云函数无鉴权 + 网关反射 Origin（开放 CORS）</td>
+          <td class="ok">已修复并部署</td>
+          <td>X-Api-Key 校验 + Origin 白名单已收紧（<code>AI_PROXY_ALLOWED_ORIGINS</code>）+ 限流并发；端到端验证通过（无 key→401 / 伪装域→403）</td>
+        </tr>
+        <tr>
+          <td><span class="tag p1">P1</span></td>
+          <td>编辑器每次按键同步写整份 resume（含 ~MB 头像）到 localStorage</td>
+          <td class="ok">已修复</td>
+          <td>持久化防抖 300ms + 头像独立 key + 上限收至 300KB；commit <code>494d5fb</code></td>
+        </tr>
+        <tr>
+          <td><span class="tag p1">P1</span></td>
+          <td>JSON 提取正则 <code>/\{[\s\S]*\}/</code> 贪婪脆弱</td>
+          <td class="ok">已修复</td>
+          <td>括号配对提取 + 围栏剥离；commit <code>494d5fb</code></td>
+        </tr>
+        <tr>
+          <td><span class="tag p2">P2</span></td>
+          <td>客户端/云函数超时不对齐 + AI 结果无缓存</td>
+          <td class="ok">已修复</td>
+          <td>上游超时 12s / 客户端 13s；前端 10min TTL 内容哈希缓存</td>
+        </tr>
+        <tr>
+          <td><span class="tag p2">P2</span></td>
+          <td><strong>小程序端尚未跟上</strong></td>
+          <td class="warn">待办</td>
+          <td><code>job-helper-mini/src/utils/api.ts</code> 已改 x-api-key + 超时 13s，但<strong>未重新构建发布</strong>；发布前需注入 <code>AI_PROXY_KEY</code>，否则小程序端会 401 全挂</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="good">✅ 线上已部署（版本 <code>20260820-1001-494d5fb</code>），密钥已启用，Origin 白名单已收紧。剩余动作只有一个：<strong>小程序重新构建 + 注入 key + 提审发布</strong>。</div>
+  </div>
+
+  <div class="card">
+    <h2>三、功能新增建议（按战略价值分档）</h2>
+
+    <h3>P1 · 高价值，直接补核心闭环（建议本迭代做）</h3>
+    <table>
+      <thead><tr><th>#</th><th>功能</th><th>做什么</th><th>为什么值得做</th><th>工作量</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td><strong>投递追踪工作台（Job Tracker）</strong></td>
+          <td>新增 /tracker 页：记录投递的公司/岗位/所用简历版本/状态（已投→笔试→面试→Offer→拒），Kanban 或列表视图，与档案联动</td>
+          <td>这是"跨平台私人档案"最自然的延伸——BOSS 只记站内投递，用户跨平台投递的台账正是平台不愿做的差异化。直接兑现验证报告"跨平台数据沉淀"护城河</td>
+          <td>中（纯前端 localStorage，无后端）</td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td><strong>样例简历一键体验</strong></td>
+          <td>首页上传区加"没有简历？用示例体验→"，一键载入示例简历 + 示例 JD 跑通全流程</td>
+          <td>冷启动最大阻碍：新用户手边没有 PDF。PRD 北极星是"上传即出诊断"，但没有简历的人进不了漏斗。示例体验可显著拉高首屏转化</td>
+          <td>小（1 个按钮 + 内置示例文本）</td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td><strong>诊断历史本地化</strong></td>
+          <td>每次诊断无条件在 localStorage 存最近 N 次（脱敏：岗位/总分/五维/时间），档案开启时才存快照的现状改为"历史默认记录、可一键清除"</td>
+          <td>现在成长轨迹依赖档案开关，门槛过高。本地历史是"长期职业建模"的数据底座，且不违反隐私红线（仍纯本地）</td>
+          <td>小（复用 profile 快照结构）</td>
+        </tr>
+        <tr>
+          <td>4</td>
+          <td><strong>反向岗位推荐</strong></td>
+          <td>诊断结果页加"基于这份简历，你可能适合："——从 36 行业 JD 库中匹配 2–3 个高匹配方向，点击即换 JD 重新诊断</td>
+          <td>直击痛点 4"缺乏个性化推荐"，且零成本复用现有 jd-library + scoring，形成"简历→方向→诊断"闭环</td>
+          <td>中（复用评分引擎做反向匹配）</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>P2 · 差异化护城河（下一迭代）</h3>
+    <table>
+      <thead><tr><th>#</th><th>功能</th><th>做什么</th><th>为什么值得做</th><th>工作量</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>5</td>
+          <td><strong>多简历版本管理</strong></td>
+          <td>resume-store 扩展为多份简历（不同岗位方向），诊断/投递时选择用哪份，和 Job Tracker 绑定</td>
+          <td>"一份简历投所有岗"正是报告点名的痛点 2；多版本 + 投递绑定 = 可追溯的跨平台档案</td>
+          <td>中</td>
+        </tr>
+        <tr>
+          <td>6</td>
+          <td><strong>AI 模拟面试</strong></td>
+          <td>基于简历+JD 生成 5–10 个追问（专攻诊断出的缺口），用户文字/语音作答，AI 给点评+参考回答</td>
+          <td>变现方向（报告建议付费深度诊断/模拟面试）；BOSS 在做但绑定平台，这里是简历+JD 定制追问，差异化在"基于诊断缺口"</td>
+          <td>中大（新增 ai-proxy 的 interview action）</td>
+        </tr>
+        <tr>
+          <td>7</td>
+          <td><strong>差距补救路线图</strong></td>
+          <td>把缺失关键词升级为"90 天补位计划"：硬缺口→学习资源建议（课程/项目/考证），表达缺口→改写示例，沉淀进档案追踪</td>
+          <td>从"诊断"升级为"长期教练"，兑现产品定位。也是付费深报告的内容底座</td>
+          <td>中</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>P3 · 远期（PRD Roadmap 项，用户量起来后再做）</h3>
+    <ul>
+      <li><strong>账号体系 + 云端同步</strong>：直接用现有 CloudBase 云开发（匿名登录 + 云数据库），不必上 Supabase——复用已有环境，成本最低。</li>
+      <li><strong>面经/薪资 UGC 轻社区</strong>：用户贡献面经+薪资爆料，AI 聚合脱敏。注意内容审核与合规，建议只做"用户自填 + 免责声明"。</li>
+      <li><strong>付费深度报告 / 简历代写引流</strong>：变现路径，等真实用户量验证后再开放。</li>
+    </ul>
+
+    <h3>考公/垂直人群专项（贴合你的背景）</h3>
+    <table>
+      <thead><tr><th>#</th><th>功能</th><th>做什么</th><th>为什么值得做</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>8</td>
+          <td><strong>JD 库扩展：国企/事业单位/银行</strong></td>
+          <td>36 行业库补充"国企央企/事业单位/银行金融"等方向的中英 JD</td>
+          <td>考公考编失利人群（PRD 明确的高价值垂直人群）大多转向国企/事业单位，目前 JD 库未覆盖，是明显空缺</td>
+        </tr>
+        <tr>
+          <td>9</td>
+          <td><strong>"考公失利转就业"模板强化</strong></td>
+          <td>/vertical 现有模板补充：备考经历如何写成简历亮点（禁编造）、衔接秋招时间线建议</td>
+          <td>12 月省考笔试前后是转就业洪峰，垂直模板是获客差异化入口</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>四、现有功能体验优化清单（低成本高感知）</h2>
+    <table>
+      <thead><tr><th>优先级</th><th>优化点</th><th>现状 → 建议</th></tr></thead>
+      <tbody>
+        <tr><td><span class="tag p1">P1</span></td><td>首页流程引导</td><td>上传→JD→结果的步骤感弱 → 加顶部步骤条 + 每步校验提示，减少"不知道该干嘛"</td></tr>
+        <tr><td><span class="tag p1">P1</span></td><td>诊断加载反馈</td><td>现在是文字进度 → 换骨架屏/雷达图预览动画，8s 内等待体验更直观</td></tr>
+        <tr><td><span class="tag p2">P2</span></td><td>分享卡片品牌化</td><td>导出图加产品名 + slogan + 二维码（指向首页），让每次分享变成获客</td></tr>
+        <tr><td><span class="tag p2">P2</span></td><td>移动端适配检查</td><td>诊断结果页雷达图/表格在手机宽度下的可读性做一轮真机验证（秋招用户大量在手机端）</td></tr>
+        <tr><td><span class="tag p2">P2</span></td><td>track 埋点可视化</td><td>track.ts 已有埋点但无看板 → 接 CloudBase 数据统计或简单导出，秋招期看转化漏斗</td></tr>
+        <tr><td><span class="tag p3">P3</span></td><td>小程序补齐功能</td><td>mini 目前 6 页面缺 profile/vertical/tracker → 优先补"投递追踪"和"档案查看"，与 Web 同步</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>五、建议落地路线图</h2>
+    <div class="step"><div class="step-num">✓</div><div><strong>已完成 · P0/P1 安全与性能</strong><div class="why">鉴权 + CORS 白名单 + 限流 + JSON 加固 + 编辑器防抖/头像分离（今日已上线，版本 20260820-1001-494d5fb）</div></div></div>
+    <div class="step"><div class="step-num">1</div><div><strong>本周 · 小程序同步 + 破冰</strong><div class="why">小程序注入 AI_PROXY_KEY 重新构建发布；样例简历一键体验；首页步骤条</div></div></div>
+    <div class="step"><div class="step-num">2</div><div><strong>第 2–3 周 · 核心闭环</strong><div class="why">投递追踪工作台 + 诊断历史本地化 + 反向岗位推荐（#1/3/4）——兑现"跨平台求职工作台"定位</div></div></div>
+    <div class="step"><div class="step-num">3</div><div><strong>第 4–6 周 · 差异化</strong><div class="why">多简历版本 + 差距补救路线图 + 国企/事业单位 JD 库（#5/7/8）</div></div></div>
+    <div class="step"><div class="step-num">4</div><div><strong>秋招期 · 观察调整</strong><div class="why">埋点看转化漏斗，决定是否上模拟面试/账号体系（#6/P3 项）</div></div></div>
+    <div class="note">⚠️ 红线提醒：无论加什么，坚持"简历不落盘 + 档案默认关闭 + 可导出可清除"。投递追踪存的是投递动作（公司/岗位/状态），不含简历正文，天然合规，可以放心做。</div>
+  </div>
+
+</div>
+</body>
+</html>
