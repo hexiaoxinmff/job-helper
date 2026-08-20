@@ -1,0 +1,423 @@
+@import "tailwindcss";
+
+/* 启用基于 class 的暗色模式（Tailwind v4 语法）
+   截图捕获态（html.export-capture）下 dark: 变体整体失效，
+   用于 html-to-image 导出卡片时强制亮色主题（仅捕获阶段生效） */
+@custom-variant dark (&:where(.dark:not(.export-capture), .dark:not(.export-capture) *));
+
+/* ==========================================================================
+   Job-Helper 主题变量（唯一颜色/圆角/阴影/间距来源，禁止组件硬编码 hex）
+   ==========================================================================
+   命名空间 --jh-*，配套注册表见 lib/theme.tsx（THEME_CSS_VARS / resolveThemeVars）。
+   - 色板档位（neutral/primary/success/warning/danger/info/accent 的 50~950）
+     为设计令牌，light 与 dark 共用同一档位值；组件用 dark: 前缀切换档位。
+   - 基础语义（bg/fg/border/overlay）、图表色、阴影在 :root/.dark 分别取值。
+   ========================================================================== */
+
+:root {
+  /* ---- 中性灰度（slate 系） ---- */
+  --jh-neutral-50: #f8fafc;
+  --jh-neutral-100: #f1f5f9;
+  --jh-neutral-200: #e2e8f0;
+  --jh-neutral-300: #cbd5e1;
+  --jh-neutral-400: #94a3b8;
+  --jh-neutral-500: #64748b;
+  --jh-neutral-600: #475569;
+  --jh-neutral-700: #334155;
+  --jh-neutral-800: #1e293b;
+  --jh-neutral-900: #0f172a;
+  --jh-neutral-950: #020617;
+
+  /* ---- 主色（blue 系） ---- */
+  --jh-primary-50: #eff6ff;
+  --jh-primary-100: #dbeafe;
+  --jh-primary-200: #bfdbfe;
+  --jh-primary-300: #93c5fd;
+  --jh-primary-400: #60a5fa;
+  --jh-primary-500: #3b82f6;
+  --jh-primary-600: #2563eb;
+  --jh-primary-700: #1d4ed8;
+  --jh-primary-800: #1e40af;
+  --jh-primary-900: #1e3a8a;
+  --jh-primary-950: #172554;
+
+  /* ---- 成功（emerald 系） ---- */
+  --jh-success-50: #ecfdf5;
+  --jh-success-100: #d1fae5;
+  --jh-success-200: #a7f3d0;
+  --jh-success-300: #6ee7b7;
+  --jh-success-400: #34d399;
+  --jh-success-500: #10b981;
+  --jh-success-600: #059669;
+  --jh-success-700: #047857;
+  --jh-success-800: #065f46;
+  --jh-success-900: #064e3b;
+  --jh-success-950: #022c22;
+
+  /* ---- 警告（amber 系） ---- */
+  --jh-warning-50: #fffbeb;
+  --jh-warning-100: #fef3c7;
+  --jh-warning-200: #fde68a;
+  --jh-warning-300: #fcd34d;
+  --jh-warning-400: #fbbf24;
+  --jh-warning-500: #f59e0b;
+  --jh-warning-600: #d97706;
+  --jh-warning-700: #b45309;
+  --jh-warning-800: #92400e;
+  --jh-warning-900: #78350f;
+  --jh-warning-950: #451a03;
+
+  /* ---- 危险（red 系） ---- */
+  --jh-danger-50: #fef2f2;
+  --jh-danger-100: #fee2e2;
+  --jh-danger-200: #fecaca;
+  --jh-danger-300: #fca5a5;
+  --jh-danger-400: #f87171;
+  --jh-danger-500: #ef4444;
+  --jh-danger-600: #dc2626;
+  --jh-danger-700: #b91c1c;
+  --jh-danger-800: #991b1b;
+  --jh-danger-900: #7f1d1d;
+  --jh-danger-950: #450a0a;
+
+  /* ---- 信息（sky 系，缺口类型等） ---- */
+  --jh-info-50: #f0f9ff;
+  --jh-info-100: #e0f2fe;
+  --jh-info-200: #bae6fd;
+  --jh-info-300: #7dd3fc;
+  --jh-info-400: #38bdf8;
+  --jh-info-500: #0ea5e9;
+  --jh-info-600: #0284c7;
+  --jh-info-700: #0369a1;
+  --jh-info-800: #075985;
+  --jh-info-900: #0c4a6e;
+  --jh-info-950: #082f49;
+
+  /* ---- 强调（purple 系，AI 增强 / STAR） ---- */
+  --jh-accent-50: #faf5ff;
+  --jh-accent-100: #f3e8ff;
+  --jh-accent-200: #e9d5ff;
+  --jh-accent-300: #d8b4fe;
+  --jh-accent-400: #c084fc;
+  --jh-accent-500: #a855f7;
+  --jh-accent-600: #9333ea;
+  --jh-accent-700: #7e22ce;
+  --jh-accent-800: #6b21a8;
+  --jh-accent-900: #581c87;
+  --jh-accent-950: #3b0764;
+
+  /* ---- 基础语义（随主题切换） ---- */
+  --jh-bg: #f8fafc; /* 页面背景 */
+  --jh-bg-elevated: #ffffff; /* 卡片/弹层背景 */
+  --jh-bg-muted: #f1f5f9; /* 次级背景（hover / 内嵌块） */
+  --jh-fg: #0f172a; /* 正文 */
+  --jh-fg-muted: #475569; /* 次要文字 */
+  --jh-fg-faint: #94a3b8; /* 弱化文字 */
+  --jh-border: #e2e8f0; /* 默认边框 */
+  --jh-border-strong: #cbd5e1; /* 强调边框 / 输入框 */
+  --jh-overlay: rgb(15 23 42 / 0.5); /* 弹窗遮罩 */
+
+  /* ---- 圆角 ---- */
+  --jh-radius-sm: 0.25rem;
+  --jh-radius-md: 0.375rem;
+  --jh-radius-lg: 0.5rem;
+  --jh-radius-xl: 0.75rem;
+  --jh-radius-2xl: 1rem;
+  --jh-radius-3xl: 1.5rem;
+  --jh-radius-full: 9999px;
+
+  /* ---- 阴影 ---- */
+  --jh-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --jh-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --jh-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --jh-shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --jh-shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+
+  /* ---- 间距（命名语义；数字间距基于 Tailwind --spacing 计算） ---- */
+  --jh-space-xs: 0.5rem; /* = 2 */
+  --jh-space-sm: 0.75rem; /* = 3 */
+  --jh-space-md: 1rem; /* = 4 */
+  --jh-space-lg: 1.5rem; /* = 6 */
+  --jh-space-xl: 2rem; /* = 8 */
+  --jh-space-2xl: 2.5rem; /* = 10 */
+  --jh-space-3xl: 3rem; /* = 12 */
+  --jh-space-4xl: 4rem; /* = 16 */
+
+  /* ---- 兼容别名（body / 图表 JS 侧引用） ---- */
+  --background: var(--jh-bg);
+  --foreground: var(--jh-fg);
+
+  /* ---- 图表配色（随主题切换；系列色引用语义色板，单一来源） ---- */
+  --chart-axis: var(--jh-fg-muted);
+  --chart-grid: var(--jh-neutral-200);
+  --chart-stroke: var(--jh-primary-600);
+  /* 多系列：总分 / 技能匹配 / 关键词覆盖 / 经历与成果 / 教育背景 / 表达规范 */
+  --chart-series-1: var(--jh-primary-600);
+  --chart-series-2: var(--jh-success-600);
+  --chart-series-3: var(--jh-warning-600);
+  --chart-series-4: var(--jh-accent-600);
+  --chart-series-5: #db2777; /* 教育背景（pink，非语义色板，作为图表专用色保留） */
+  --chart-series-6: #0891b2; /* 表达规范（cyan，同上） */
+}
+
+/* 暗色变量块：截图捕获态（html.export-capture）下整体失效，回退到 :root 亮色值，
+   保证导出卡片背景、文字、图表（--chart-*）统一为亮色系 */
+.dark:not(.export-capture) {
+  /* ---- 基础语义（暗色） ---- */
+  --jh-bg: #020617;
+  --jh-bg-elevated: #0f172a;
+  --jh-bg-muted: #1e293b;
+  --jh-fg: #e2e8f0;
+  --jh-fg-muted: #94a3b8;
+  --jh-fg-faint: #64748b;
+  --jh-border: #1e293b;
+  --jh-border-strong: #334155;
+  --jh-overlay: rgb(2 6 23 / 0.6);
+
+  /* ---- 阴影（暗色加深） ---- */
+  --jh-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.4);
+  --jh-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.45), 0 2px 4px -2px rgb(0 0 0 / 0.4);
+  --jh-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.4);
+  --jh-shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.45);
+  --jh-shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.6);
+
+  --background: var(--jh-bg);
+  --foreground: var(--jh-fg);
+
+  /* ---- 图表配色（暗色提亮） ---- */
+  --chart-axis: #94a3b8;
+  --chart-grid: #1e293b;
+  --chart-stroke: #60a5fa;
+  --chart-series-1: #60a5fa;
+  --chart-series-2: #4ade80;
+  --chart-series-3: #fbbf24;
+  --chart-series-4: #c084fc;
+  --chart-series-5: #f472b6;
+  --chart-series-6: #22d3ee;
+}
+
+/* ==========================================================================
+   Tailwind v4 主题映射：工具类（bg- / text- / border- / ring- / rounded- /
+   shadow- / p- 等）全部读取上方 --jh-* 变量，随 .dark 自动切换；
+   页面组件禁止再写十六进制。
+   说明：用普通 @theme（非 inline）。@theme inline 下新增色板命名空间
+   （primary/success 等）不会注册工具类，且声明 --spacing-* 会解析报错；
+   普通 @theme 把变量输出到 :root，工具类经 var() 引用链仍随主题切换。
+   ========================================================================== */
+@theme {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  /* 中性灰度 */
+  --color-neutral-50: var(--jh-neutral-50, #f8fafc);
+  --color-neutral-100: var(--jh-neutral-100, #f1f5f9);
+  --color-neutral-200: var(--jh-neutral-200, #e2e8f0);
+  --color-neutral-300: var(--jh-neutral-300, #cbd5e1);
+  --color-neutral-400: var(--jh-neutral-400, #94a3b8);
+  --color-neutral-500: var(--jh-neutral-500, #64748b);
+  --color-neutral-600: var(--jh-neutral-600, #475569);
+  --color-neutral-700: var(--jh-neutral-700, #334155);
+  --color-neutral-800: var(--jh-neutral-800, #1e293b);
+  --color-neutral-900: var(--jh-neutral-900, #0f172a);
+  --color-neutral-950: var(--jh-neutral-950, #020617);
+
+  /* 主色 */
+  --color-primary-50: var(--jh-primary-50, #eff6ff);
+  --color-primary-100: var(--jh-primary-100, #dbeafe);
+  --color-primary-200: var(--jh-primary-200, #bfdbfe);
+  --color-primary-300: var(--jh-primary-300, #93c5fd);
+  --color-primary-400: var(--jh-primary-400, #60a5fa);
+  --color-primary-500: var(--jh-primary-500, #3b82f6);
+  --color-primary-600: var(--jh-primary-600, #2563eb);
+  --color-primary-700: var(--jh-primary-700, #1d4ed8);
+  --color-primary-800: var(--jh-primary-800, #1e40af);
+  --color-primary-900: var(--jh-primary-900, #1e3a8a);
+  --color-primary-950: var(--jh-primary-950, #172554);
+
+  /* 成功 */
+  --color-success-50: var(--jh-success-50, #ecfdf5);
+  --color-success-100: var(--jh-success-100, #d1fae5);
+  --color-success-200: var(--jh-success-200, #a7f3d0);
+  --color-success-300: var(--jh-success-300, #6ee7b7);
+  --color-success-400: var(--jh-success-400, #34d399);
+  --color-success-500: var(--jh-success-500, #10b981);
+  --color-success-600: var(--jh-success-600, #059669);
+  --color-success-700: var(--jh-success-700, #047857);
+  --color-success-800: var(--jh-success-800, #065f46);
+  --color-success-900: var(--jh-success-900, #064e3b);
+  --color-success-950: var(--jh-success-950, #022c22);
+
+  /* 警告 */
+  --color-warning-50: var(--jh-warning-50, #fffbeb);
+  --color-warning-100: var(--jh-warning-100, #fef3c7);
+  --color-warning-200: var(--jh-warning-200, #fde68a);
+  --color-warning-300: var(--jh-warning-300, #fcd34d);
+  --color-warning-400: var(--jh-warning-400, #fbbf24);
+  --color-warning-500: var(--jh-warning-500, #f59e0b);
+  --color-warning-600: var(--jh-warning-600, #d97706);
+  --color-warning-700: var(--jh-warning-700, #b45309);
+  --color-warning-800: var(--jh-warning-800, #92400e);
+  --color-warning-900: var(--jh-warning-900, #78350f);
+  --color-warning-950: var(--jh-warning-950, #451a03);
+
+  /* 危险 */
+  --color-danger-50: var(--jh-danger-50, #fef2f2);
+  --color-danger-100: var(--jh-danger-100, #fee2e2);
+  --color-danger-200: var(--jh-danger-200, #fecaca);
+  --color-danger-300: var(--jh-danger-300, #fca5a5);
+  --color-danger-400: var(--jh-danger-400, #f87171);
+  --color-danger-500: var(--jh-danger-500, #ef4444);
+  --color-danger-600: var(--jh-danger-600, #dc2626);
+  --color-danger-700: var(--jh-danger-700, #b91c1c);
+  --color-danger-800: var(--jh-danger-800, #991b1b);
+  --color-danger-900: var(--jh-danger-900, #7f1d1d);
+  --color-danger-950: var(--jh-danger-950, #450a0a);
+
+  /* 信息 */
+  --color-info-50: var(--jh-info-50, #f0f9ff);
+  --color-info-100: var(--jh-info-100, #e0f2fe);
+  --color-info-200: var(--jh-info-200, #bae6fd);
+  --color-info-300: var(--jh-info-300, #7dd3fc);
+  --color-info-400: var(--jh-info-400, #38bdf8);
+  --color-info-500: var(--jh-info-500, #0ea5e9);
+  --color-info-600: var(--jh-info-600, #0284c7);
+  --color-info-700: var(--jh-info-700, #0369a1);
+  --color-info-800: var(--jh-info-800, #075985);
+  --color-info-900: var(--jh-info-900, #0c4a6e);
+  --color-info-950: var(--jh-info-950, #082f49);
+
+  /* 强调（AI 增强 / STAR） */
+  --color-accent-50: var(--jh-accent-50, #faf5ff);
+  --color-accent-100: var(--jh-accent-100, #f3e8ff);
+  --color-accent-200: var(--jh-accent-200, #e9d5ff);
+  --color-accent-300: var(--jh-accent-300, #d8b4fe);
+  --color-accent-400: var(--jh-accent-400, #c084fc);
+  --color-accent-500: var(--jh-accent-500, #a855f7);
+  --color-accent-600: var(--jh-accent-600, #9333ea);
+  --color-accent-700: var(--jh-accent-700, #7e22ce);
+  --color-accent-800: var(--jh-accent-800, #6b21a8);
+  --color-accent-900: var(--jh-accent-900, #581c87);
+  --color-accent-950: var(--jh-accent-950, #3b0764);
+
+  /* 圆角 */
+  --radius-sm: var(--jh-radius-sm);
+  --radius-md: var(--jh-radius-md);
+  --radius-lg: var(--jh-radius-lg);
+  --radius-xl: var(--jh-radius-xl);
+  --radius-2xl: var(--jh-radius-2xl);
+  --radius-3xl: var(--jh-radius-3xl);
+  --radius-full: var(--jh-radius-full);
+
+  /* 阴影 */
+  --shadow-sm: var(--jh-shadow-sm);
+  --shadow-md: var(--jh-shadow-md);
+  --shadow-lg: var(--jh-shadow-lg);
+  --shadow-xl: var(--jh-shadow-xl);
+  --shadow-2xl: var(--jh-shadow-2xl);
+
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  /* 间距：只暴露 CSS 变量（--jh-space-*）供需要处直接引用，不注册命名 --spacing-* token。
+     原因：Tailwind v4 中 max-w-* 档位与 --spacing-* 共享 namespace（max-w-3xl = var(--spacing-3xl)），
+     命名 spacing 会被 max-w 误消费并污染容器最大宽度（见 revert-spacing-tokens.cjs）。
+     间距值仍由 Tailwind 默认 --spacing 基础变量 + 数字类（p-4 = calc(var(--spacing)*4)）满足变量化要求。 */
+}
+
+html {
+  color-scheme: light;
+}
+html.dark:not(.export-capture) {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+/* 隐私承诺弹窗动画 */
+@keyframes privacy-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes privacy-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-privacy-fade {
+  animation: privacy-fade 0.2s ease-out both;
+}
+
+.animate-privacy-pop {
+  animation: privacy-pop 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ==========================================================================
+   打印 / 导出 PDF 样式（@media print）
+   - 强制白底：body 背景用 var(--background)，暗色下为深色，勾选「背景图形」打印会污染纸面
+   - 清掉桌面端左侧导航占位（md:pl-56）与 main 内边距，简历内容铺满纸面
+   - 模板容器 max-w-3xl（768px）在 A4 内容区（约 674px）会被截断 → 打印时解除上限
+   - 方案 A：深色设计块（sidebar 侧栏 / creative 头图）print-color-adjust: exact，
+     不勾「背景图形」也完整输出深色块；页面底色仍强制白
+   - 分页控制：区块整体不拆分、标题不与正文分页
+   ========================================================================== */
+@media print {
+  html {
+    color-scheme: light;
+  }
+  html,
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  /* 桌面端左侧导航打印时已隐藏，清除其占位留白；页面内边距清掉 */
+  body {
+    padding-left: 0 !important;
+  }
+  main {
+    padding: 0 !important;
+  }
+  /* 简历模板容器：解除 768px 上限，避免 A4 内容区两侧截断 */
+  main .max-w-3xl {
+    max-width: none;
+  }
+  /* 弹层（隐私承诺 / 确认框）打印时一律不显示 */
+  div[role="dialog"] {
+    display: none !important;
+  }
+  /* 深色设计块保留（方案 A）：不勾「背景图形」也完整输出 */
+  .max-w-3xl > aside,
+  .max-w-3xl > header {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  /* 分页控制：区块整体不拆分、标题不与正文分页 */
+  section {
+    break-inside: avoid;
+  }
+  h1,
+  h2,
+  h3 {
+    break-after: avoid;
+  }
+}
+
+/* 打印纸面统一版式（Chromium 支持 @page size/margin） */
+@page {
+  size: A4;
+  margin: 14mm 12mm;
+}

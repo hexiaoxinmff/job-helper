@@ -1,0 +1,31 @@
+{
+  "name": "job-helper",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "predev": "node scripts/make-version.mjs",
+    "dev": "next dev",
+    "build": "node scripts/make-version.mjs && next build",
+    "start": "npx serve out",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint && tsc --noEmit"
+  },
+  "dependencies": {
+    "html-to-image": "^1.11.13",
+    "next": "16.3.1",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "recharts": "^3.10.1",
+    "unpdf": "^1.8.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.1",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

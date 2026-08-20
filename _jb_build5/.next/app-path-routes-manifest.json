@@ -1,0 +1,14 @@
+{
+  "/_not-found/page": "/_not-found",
+  "/_global-error/page": "/_global-error",
+  "/favicon.ico/route": "/favicon.ico",
+  "/page": "/",
+  "/campus/page": "/campus",
+  "/editor/page": "/editor",
+  "/interview/page": "/interview",
+  "/preview/page": "/preview",
+  "/profile/page": "/profile",
+  "/star/page": "/star",
+  "/tracker/page": "/tracker",
+  "/vertical/page": "/vertical"
+}
