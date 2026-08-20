@@ -106,6 +106,15 @@ export function generateResumeRewrites(
   return callAiProxy<RewriteItem[]>("rewrite", { resumeText, jdText, missingKeywords });
 }
 
+/** AI 按 JD 优化整份简历：返回结构化优化简历 + 修改点清单（用于预览后灌入编辑器） */
+export function optimizeResumeForJd(
+  resumeText: string,
+  jdText: string,
+  missingKeywords: string[]
+): Promise<AiOptimizedResume | null> {
+  return callAiProxy<AiOptimizedResume>("optimizeResume", { resumeText, jdText, missingKeywords });
+}
+
 export function generateStarDescription(experience: string): Promise<StarResult | null> {
   return callAiProxy<StarResult>("star", { experience });
 }
@@ -165,6 +174,26 @@ export interface RewriteItem {
   original: string;
   rewritten: string;
   reason: string;
+}
+
+/** 单次简历优化修改点（预览用） */
+export interface OptimizedChange {
+  /** 板块名，如 工作经历 / 技能 / 个人优势 */
+  section: string;
+  /** 修改简述 */
+  title: string;
+  /** 修改前（空=新增内容） */
+  before?: string;
+  /** 修改后 */
+  after: string;
+  /** 为什么这样改 */
+  reason: string;
+}
+
+/** AI 按 JD 优化整份简历的返回结构（resume 为 ParsedResumeInput 形态，数组元素不含 id） */
+export interface AiOptimizedResume {
+  resume: import("./resume-import").ParsedResumeInput;
+  changes: OptimizedChange[];
 }
 
 export interface StarResult {

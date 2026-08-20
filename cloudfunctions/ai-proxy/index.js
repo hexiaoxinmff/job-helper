@@ -6,6 +6,7 @@
 //   action = "rewrite"      { resumeText, jdText, missingKeywords } -> AI 改写文案
 //   action = "star"         { experience }                     -> STAR 句式生成
 //   action = "parseResume"  { resumeText }                     -> AI 简历结构化抽取
+//   action = "optimizeResume"{ resumeText, jdText, missingKeywords } -> AI 按 JD 优化整份简历
 // 仅服务端调用 DeepSeek，前端永远拿不到 key。
 //
 // 安全加固（P0，详见 code-review）：
@@ -429,6 +430,115 @@ ${dataBlock("简历文本", text)}
   return result;
 }
 
+async function actionOptimizeResume(resumeText, jdText, missingKeywords) {
+  const trimmedResume = (resumeText || "").slice(0, 8000);
+  const trimmedJd = (jdText || "").slice(0, 3000);
+  const gaps = Array.isArray(missingKeywords) ? missingKeywords.slice(0, 12) : [];
+  const prompt = `你是一位资深简历优化专家。请完成两件事：
+
+【任务一】把下面简历文本抽取为结构化简历 JSON（与下方 schema 完全一致，数组元素不含 id），严格从原文提取，不得编造任何事实（简历没有的信息留空或空数组）。
+
+【任务二】在「不虚构、不夸大」的前提下，针对目标岗位 JD 与缺失关键词，对简历做定向优化：
+1. 在既有经历 / 项目 bullet 中，把缺失关键词自然嵌入（必须是简历已体现的能力，不能编造新经历或假数据、假指标）；
+2. 技能区补充 JD 要求且简历实际具备的技能项（按类别分组）；
+3. 个人优势 / 简介改为贴合该岗位的 2-4 条，突出与 JD 的匹配；
+4. basics.title 设为该 JD 的目标岗位名；
+5. 保留所有真实的教育、时间、公司、量化成果，原样保留（除非明显笔误）。
+
+${dataBlock("目标岗位JD", trimmedJd)}
+
+${gaps.length > 0 ? `【诊断出的缺失关键词（优化的重点嵌入对象）】\n${gaps.join("、")}` : "【诊断出的缺失关键词】无"}
+
+${dataBlock("简历文本", trimmedResume)}
+
+严格按以下 JSON 输出（不输出其他内容）：
+{
+  "resume": {
+    "basics": {"name":"","title":"","email":"","phone":"","location":"","website":"","summary":"","birth":"","sex":""},
+    "advantages": ["标签：说明"],
+    "education": [{"school":"","degree":"","major":"","startDate":"","endDate":"","description":""}],
+    "languages": [{"language":"","level":""}],
+    "internships": [{"company":"","role":"","startDate":"","endDate":"","bullets":[""]}],
+    "work": [{"company":"","role":"","startDate":"","endDate":"","bullets":[""]}],
+    "projects": [{"name":"","role":"","link":"","startDate":"","endDate":"","bullets":[""]}],
+    "activities": [{"org":"","role":"","startDate":"","endDate":"","description":""}],
+    "skills": [{"category":"","items":[""]}],
+    "awards": [{"name":"","date":"","description":""}],
+    "portfolio": [{"name":"","link":"","description":""}]
+  },
+  "changes": [
+    {"section":"工作经历","title":"在 XX 经历中嵌入关键词","before":"原句","after":"优化后句子","reason":"为什么这样改"}
+  ]
+}`;
+
+  const content = await callDeepSeek("你只输出合法的 JSON，不做任何解释。", prompt, 3000);
+  const parsed = parseJsonObject(content);
+  const r = parsed.resume && typeof parsed.resume === "object" ? parsed.resume : {};
+
+  const str = (v, max) => String(v ?? "").trim().slice(0, max ?? 200);
+  const arrStr = (v) =>
+    Array.isArray(v) ? v.filter((s) => typeof s === "string").map((s) => s.trim()).filter(Boolean).slice(0, 8) : [];
+  const arrObj = (v, mapper, max) =>
+    Array.isArray(v)
+      ? v
+          .filter((o) => o && typeof o === "object")
+          .map(mapper)
+          .filter((o) => o && Object.values(o).some(Boolean))
+          .slice(0, max ?? 10)
+      : [];
+
+  const basics = r.basics && typeof r.basics === "object" ? r.basics : {};
+  const education = arrObj(r.education, (e) => ({
+    school: str(e.school), degree: str(e.degree), major: str(e.major),
+    startDate: str(e.startDate, 20), endDate: str(e.endDate, 20), description: str(e.description, 500),
+  }));
+  const languages = arrObj(r.languages, (l) => ({ language: str(l.language), level: str(l.level, 50) }));
+  const internships = arrObj(r.internships, (w) => ({
+    company: str(w.company), role: str(w.role), startDate: str(w.startDate, 20), endDate: str(w.endDate, 20), bullets: arrStr(w.bullets),
+  }));
+  const work = arrObj(r.work, (w) => ({
+    company: str(w.company), role: str(w.role), startDate: str(w.startDate, 20), endDate: str(w.endDate, 20), bullets: arrStr(w.bullets),
+  }));
+  const projects = arrObj(r.projects, (p) => ({
+    name: str(p.name), role: str(p.role), link: str(p.link), startDate: str(p.startDate, 20), endDate: str(p.endDate, 20), bullets: arrStr(p.bullets),
+  }));
+  const activities = arrObj(r.activities, (a) => ({
+    org: str(a.org), role: str(a.role), startDate: str(a.startDate, 20), endDate: str(a.endDate, 20), description: str(a.description, 500),
+  }));
+  const skills = arrObj(r.skills, (s) => ({ category: str(s.category), items: arrStr(s.items) }));
+  const awards = arrObj(r.awards, (a) => ({ name: str(a.name), date: str(a.date, 30), description: str(a.description, 300) }));
+  const portfolio = arrObj(r.portfolio, (p) => ({ name: str(p.name), link: str(p.link), description: str(p.description, 300) }));
+
+  const resume = {
+    basics: {
+      name: str(basics.name), title: str(basics.title), email: str(basics.email), phone: str(basics.phone),
+      location: str(basics.location), website: str(basics.website), summary: str(basics.summary, 500),
+      birth: str(basics.birth, 30), sex: str(basics.sex, 10),
+    },
+    advantages: arrStr(r.advantages).slice(0, 6),
+    education, languages, internships, work, projects, activities, skills, awards, portfolio,
+  };
+  if (!resume.basics.name && resume.education.length === 0 && resume.work.length === 0 && resume.internships.length === 0) {
+    throw new Error("AI 未能从该文本中抽取到有效简历信息");
+  }
+
+  const changes = Array.isArray(parsed.changes)
+    ? parsed.changes
+        .filter((c) => c && typeof c === "object")
+        .slice(0, 12)
+        .map((c) => ({
+          section: String(c.section ?? ""),
+          title: String(c.title ?? ""),
+          before: c.before != null ? String(c.before) : undefined,
+          after: String(c.after ?? ""),
+          reason: String(c.reason ?? ""),
+        }))
+        .filter((c) => c.after)
+    : [];
+
+  return { resume, changes };
+}
+
 async function actionInterview(resumeText, jdText, missingKeywords) {
   const trimmedResume = (resumeText || "").slice(0, 6000);
   const trimmedJd = (jdText || "").slice(0, 3000);
@@ -633,6 +743,8 @@ async function dispatch(payload) {
       return await actionStar(payload.experience);
     case "parseResume":
       return await actionParseResume(payload.resumeText);
+    case "optimizeResume":
+      return await actionOptimizeResume(payload.resumeText, payload.jdText, payload.missingKeywords);
     case "interview":
       return await actionInterview(payload.resumeText, payload.jdText, payload.missingKeywords);
     case "reviewAnswer":

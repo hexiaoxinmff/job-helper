@@ -16,7 +16,11 @@ import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { track } from "@/lib/track";
 import { useCopy } from "@/lib/use-copy";
-import { generateResumeRewrites } from "@/lib/ai-client";
+import {
+  generateResumeRewrites,
+  optimizeResumeForJd,
+  type AiOptimizedResume,
+} from "@/lib/ai-client";
 import { useProfile } from "@/lib/profile";
 import { useDiagnosisHistory } from "@/lib/diagnosis-history";
 import { useRemediation } from "@/lib/remediation-store";
@@ -24,6 +28,9 @@ import { getRemediationResource } from "@/lib/remediation";
 import { recommendRoles } from "@/lib/recommend";
 import { getJdById } from "@/lib/jd-library";
 import { resolveThemeVars } from "@/lib/theme";
+import { useResume } from "@/lib/resume-store";
+import { normalizeParsedResume, isResumeEmpty } from "@/lib/normalize-resume";
+import { useRouter } from "next/navigation";
 
 function confidenceLabel(c?: "low" | "medium" | "high"): { text: string; cls: string } {
   if (c === "high") return { text: "高", cls: "bg-success-100 text-success-700 dark:bg-success-950 dark:text-success-300" };
@@ -65,6 +72,8 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
   const { profile, appendSnapshot } = useProfile();
   const { append: appendDiagnosis } = useDiagnosisHistory();
   const { items: remediationItems, add: addRemediation } = useRemediation();
+  const { addVersion, setResume } = useResume();
+  const router = useRouter();
   const chartData = result.dimensions.map((d) => ({
     dimension: d.name,
     score: d.score,
@@ -149,6 +158,12 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
     }
   };
 
+  // —— 按 JD 智能优化简历 ——
+  const [optLoading, setOptLoading] = useState(false);
+  const [optResult, setOptResult] = useState<AiOptimizedResume | null>(null);
+  const [optMsg, setOptMsg] = useState("");
+  const [optOpen, setOptOpen] = useState(false);
+
   // —— AI 改写 ——
   const [rewriteLoading, setRewriteLoading] = useState(false);
   const [rewrites, setRewrites] = useState<RewriteItem[] | null>(null);
@@ -220,6 +235,47 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
     }
     track("interview_enter");
     window.location.href = "/interview";
+  };
+
+  // 按 JD 智能优化简历：调 AI 生成定向优化后的结构化简历 + 修改点，预览后灌入编辑器（新建版本）
+  const runOptimize = async () => {
+    setOptLoading(true);
+    setOptMsg("");
+    setOptResult(null);
+    track("optimize_click");
+    try {
+      const r = await optimizeResumeForJd(resumeText, jdText, result.missingKeywords);
+      if (!r || !r.resume) {
+        setOptMsg("AI 优化暂不可用，请稍后重试");
+        track("optimize_error", { reason: "null" });
+        return;
+      }
+      setOptResult(r);
+      setOptOpen(true);
+      track("optimize_success", { changes: r.changes.length });
+    } catch {
+      setOptMsg("网络错误，请稍后重试");
+      track("optimize_error", { reason: "network" });
+    } finally {
+      setOptLoading(false);
+    }
+  };
+
+  const applyOptimize = () => {
+    if (!optResult) return;
+    const optimized = normalizeParsedResume(optResult.resume);
+    if (isResumeEmpty(optimized)) {
+      setOptMsg("优化结果内容过少，请重试");
+      setOptOpen(false);
+      track("optimize_error", { reason: "empty" });
+      return;
+    }
+    const name = `JD优化-${optimized.basics.title || "简历"}`.slice(0, 30);
+    addVersion(name); // 新建版本并切为当前编辑版本，原简历不受影响
+    setResume(optimized);
+    track("optimize_apply", { name });
+    setOptOpen(false);
+    router.push("/editor");
   };
 
   return (
@@ -550,6 +606,45 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
       </div>
       )}
 
+      {/* 按 JD 智能优化简历（仅 AI 增强时展示）：一键生成整份定向优化简历，预览后灌入编辑器（新建版本） */}
+      {result.aiEnhanced && (
+        <div className="rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900">
+          <div className="mb-1 flex items-center justify-between">
+            <h2 className="font-semibold text-neutral-800 dark:text-neutral-100">按 JD 智能优化简历</h2>
+            <span className="rounded-full bg-accent-100 px-2 py-0.5 text-xs text-accent-700 dark:bg-accent-950 dark:text-accent-300">P0</span>
+          </div>
+          <p className="mb-4 text-sm text-neutral-500 dark:text-neutral-400">
+            根据这份 JD 与诊断出的缺失项，AI 直接在你的简历基础上做定向优化（嵌入关键词、对齐岗位优势、调整技能），生成一份可编辑的新简历版本。不虚构、不夸大。
+          </p>
+
+          {!optResult && !optMsg && (
+            <button
+              onClick={runOptimize}
+              disabled={optLoading}
+              className="w-full rounded-xl bg-accent-600 py-3 font-medium text-white transition-colors hover:bg-accent-700 disabled:opacity-50"
+            >
+              {optLoading ? "AI 优化中…" : "一键优化简历"}
+            </button>
+          )}
+
+          {optMsg && (
+            <p className="mb-3 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-neutral-600 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
+              {optMsg}
+            </p>
+          )}
+
+          {optMsg && !optResult && (
+            <button
+              onClick={runOptimize}
+              disabled={optLoading}
+              className="w-full rounded-xl bg-accent-600 py-3 font-medium text-white transition-colors hover:bg-accent-700 disabled:opacity-50"
+            >
+              {optLoading ? "AI 优化中…" : "重试"}
+            </button>
+          )}
+        </div>
+      )}
+
       {/* STAR 已拆为独立页面（顶部导航可进入），此处不再展示 */}
 
       {/* 操作 */}
@@ -585,6 +680,80 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
       </div>
 
       {shareMsg && <p className="text-center text-sm text-success-600 dark:text-success-400">{shareMsg}</p>}
+
+      {/* 优化结果预览弹窗：展示修改点，确认后灌入编辑器（新建版本） */}
+      {optOpen && optResult && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true">
+          <div className="max-h-[85vh] w-full max-w-2xl overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-xl dark:border-neutral-700 dark:bg-neutral-900">
+            <div className="flex items-start justify-between gap-3 border-b border-neutral-100 p-6 dark:border-neutral-800">
+              <div>
+                <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">AI 已按 JD 优化你的简历</h3>
+                <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+                  将新建一份「JD优化-{optResult.resume.basics?.title || "简历"}」版本，原简历不受影响，可在编辑器中继续微调。
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setOptOpen(false);
+                  setOptResult(null);
+                }}
+                className="shrink-0 rounded-lg p-2 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 dark:hover:bg-neutral-800"
+                aria-label="关闭"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="max-h-[55vh] overflow-y-auto p-6">
+              {optResult.changes.length > 0 ? (
+                <ul className="space-y-3">
+                  {optResult.changes.map((c, i) => (
+                    <li key={i} className="rounded-xl border border-neutral-200 p-4 dark:border-neutral-700">
+                      <div className="mb-1.5 flex items-center gap-2">
+                        <span className="inline-block rounded-full bg-primary-100 px-2 py-0.5 text-xs font-medium text-primary-700 dark:bg-primary-950 dark:text-primary-300">
+                          {c.section}
+                        </span>
+                        <span className="text-sm font-medium text-neutral-800 dark:text-neutral-100">{c.title}</span>
+                      </div>
+                      {c.before ? (
+                        <p className="mb-1 text-xs text-neutral-400 dark:text-neutral-500">原：{c.before}</p>
+                      ) : (
+                        <p className="mb-1 text-xs text-neutral-400 dark:text-neutral-500">新增内容</p>
+                      )}
+                      <p className="rounded-lg border border-success-200 bg-success-50 px-3 py-2 text-sm leading-relaxed text-neutral-800 dark:border-success-900 dark:bg-success-950 dark:text-neutral-100">
+                        {c.after}
+                      </p>
+                      {c.reason && (
+                        <p className="mt-1.5 text-xs text-neutral-500 dark:text-neutral-400">💡 {c.reason}</p>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-neutral-600 dark:text-neutral-300">
+                  AI 已为你重新组织简历内容以更贴合该岗位，可直接查看与继续编辑。
+                </p>
+              )}
+            </div>
+            <div className="flex gap-3 border-t border-neutral-100 p-6 dark:border-neutral-800">
+              <button
+                onClick={() => {
+                  setOptOpen(false);
+                  setOptResult(null);
+                }}
+                className="flex-1 rounded-xl border border-neutral-300 py-3 font-medium text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-600 dark:text-neutral-200 dark:hover:bg-neutral-800"
+              >
+                取消
+              </button>
+              <button
+                onClick={applyOptimize}
+                className="flex-1 rounded-xl bg-accent-600 py-3 font-medium text-white transition-colors hover:bg-accent-700"
+              >
+                应用到编辑器
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
