@@ -11,7 +11,6 @@
     "lint": "eslint && tsc --noEmit"
   },
   "dependencies": {
-    "@cloudbase/js-sdk": "^3.8.0",
     "html-to-image": "^1.11.13",
     "next": "16.3.1",
     "react": "19.2.8",

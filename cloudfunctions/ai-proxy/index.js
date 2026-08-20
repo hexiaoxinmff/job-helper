@@ -17,6 +17,9 @@
 //   - 每 IP 滑动窗口限流 + 全局并发上限，挡住单点刷量、保护函数实例。
 
 const http = require("http");
+// CloudBase node-sdk（service 身份）：云同步读写 PostgreSQL（jh_sync 表）
+const cloudbase = require("@cloudbase/node-sdk");
+let capp = null; // 懒初始化（冷启动时避免 env 未就绪）
 
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || "";
 const BASE_URL = process.env.DEEPSEEK_BASE_URL || "https://api.deepseek.com";
@@ -504,6 +507,112 @@ ${dataBlock("候选人回答", answer)}
   };
 }
 
+async function actionSync(payload) {
+  const uid = String((payload && payload.uid) || "").trim().slice(0, 64);
+  const local = payload && typeof payload.local === "object" ? payload.local : null;
+  if (!uid) {
+    const e = new Error("uid 缺失"); e.status = 400; throw e;
+  }
+  if (!local) {
+    const e = new Error("local 数据缺失"); e.status = 400; throw e;
+  }
+  if (!capp) capp = cloudbase.init({ env: cloudbase.SYMBOL_CURRENT_ENV });
+  const db = capp.rdb();
+
+  // 1) 读云端（不存在则视为首次）
+  let remote = null;
+  try {
+    const { data, error } = await db.from("jh_sync").select("*").eq("owner_id", uid).limit(1);
+    if (error) throw error;
+    const row = Array.isArray(data) && data.length ? data[0] : null;
+    if (row) {
+      remote = {
+        tracker: Array.isArray(row.tracker) ? row.tracker : [],
+        history: Array.isArray(row.history) ? row.history : [],
+        profile: row.profile && typeof row.profile === "object" ? row.profile : null,
+        updatedAt: Number(row.updated_at) || 0,
+      };
+    }
+  } catch (e) {
+    console.warn("[ai-proxy] sync read fail:", e && e.message);
+  }
+
+  // 2) 合并（条目级 last-write-wins，与前端同策略）
+  const merged = mergeSyncBundles(sanitizeSyncLocal(local), remote);
+
+  // 3) 写回云端（upsert 按主键 owner_id）
+  try {
+    const { error } = await db.from("jh_sync").upsert({
+      owner_id: uid,
+      tracker: merged.tracker,
+      history: merged.history,
+      profile: merged.profile,
+      updated_at: Date.now(),
+    });
+    if (error) throw error;
+  } catch (e) {
+    console.error("[ai-proxy] sync upsert fail:", e && e.message);
+    const err = new Error("云端写入失败：" + (e && e.message ? String(e.message).slice(0, 200) : "未知错误"));
+    err.status = 502;
+    throw err;
+  }
+  return { remote: merged };
+}
+
+async function actionSyncClear(payload) {
+  const uid = String((payload && payload.uid) || "").trim().slice(0, 64);
+  if (!uid) {
+    const e = new Error("uid 缺失"); e.status = 400; throw e;
+  }
+  if (!capp) capp = cloudbase.init({ env: cloudbase.SYMBOL_CURRENT_ENV });
+  try {
+    const { error } = await capp.rdb().from("jh_sync").delete().eq("owner_id", uid);
+    if (error) throw error;
+  } catch (e) {
+    console.error("[ai-proxy] sync clear fail:", e && e.message);
+    const err = new Error("云端清除失败：" + (e && e.message ? String(e.message).slice(0, 200) : "未知错误"));
+    err.status = 502;
+    throw err;
+  }
+  return { ok: true };
+}
+
+// ===== 云同步合并（与 lib/cloud-sync.ts 前端逻辑保持一致） =====
+function sanitizeSyncLocal(local) {
+  return {
+    tracker: Array.isArray(local.tracker) ? local.tracker.filter((x) => x && x.id) : [],
+    history: Array.isArray(local.history) ? local.history.filter((x) => x && x.id) : [],
+    profile: local.profile && typeof local.profile === "object" ? local.profile : null,
+    updatedAt: Date.now(),
+  };
+}
+function mergeSyncById(local, remote, getTime) {
+  const map = new Map();
+  for (const it of [...local, ...(remote || [])]) {
+    const prev = map.get(it.id);
+    if (!prev || getTime(it) >= getTime(prev)) map.set(it.id, it);
+  }
+  return Array.from(map.values());
+}
+function mergeSyncProfile(local, remote) {
+  if (!local) return remote || null;
+  if (!remote) return local;
+  const histories = mergeSyncById(local.histories || [], remote.histories || [], (h) => h.ts || 0)
+    .sort((a, b) => (b.ts || 0) - (a.ts || 0))
+    .slice(0, 50);
+  return { ...local, histories };
+}
+function mergeSyncBundles(local, remote) {
+  return {
+    tracker: mergeSyncById(local.tracker, remote ? remote.tracker : [], (it) => it.updatedAt || 0),
+    history: mergeSyncById(local.history, remote ? remote.history : [], (it) => it.ts || 0).sort(
+      (a, b) => (b.ts || 0) - (a.ts || 0)
+    ),
+    profile: mergeSyncProfile(local.profile, remote ? remote.profile : null),
+    updatedAt: Date.now(),
+  };
+}
+
 async function dispatch(payload) {
   const { action } = payload || {};
   switch (action) {
@@ -521,6 +630,10 @@ async function dispatch(payload) {
       return await actionInterview(payload.resumeText, payload.jdText, payload.missingKeywords);
     case "reviewAnswer":
       return await actionReviewAnswer(payload.resumeText, payload.jdText, payload.question, payload.answer);
+    case "sync":
+      return await actionSync(payload);
+    case "syncClear":
+      return await actionSyncClear(payload);
     default:
       const err = new Error(`未知 action: ${action}`);
       err.status = 400;
