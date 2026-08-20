@@ -25,9 +25,7 @@ export interface SyncBundle {
   updatedAt: number;
 }
 
-const PROXY_URL =
-  process.env.NEXT_PUBLIC_AI_PROXY_URL ||
-  "https://xiaoxin2026-personal-d1acf1a1fb0-1469931868.ap-shanghai.app.tcloudbase.com/ai-proxy";
+const PROXY_URL = process.env.NEXT_PUBLIC_AI_PROXY_URL || "/api/ai-proxy";
 const PROXY_KEY = process.env.NEXT_PUBLIC_AI_PROXY_KEY || "";
 const UID_KEY = "job-helper:sync-uid";
 const SYNC_TIMEOUT_MS = 15000;

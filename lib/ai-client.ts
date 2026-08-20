@@ -3,9 +3,9 @@
 
 import type { ParsedResumeInput } from "./resume-import";
 
-const AI_PROXY_URL =
-  process.env.NEXT_PUBLIC_AI_PROXY_URL ||
-  "https://xiaoxin2026-personal-d1acf1a1fb0-1469931868.ap-shanghai.app.tcloudbase.com/ai-proxy";
+// 同源 AI 代理（Vercel 上为 app/api/ai-proxy 路由，本地 dev 亦同源）。
+// 仍可用 NEXT_PUBLIC_AI_PROXY_URL 覆盖（如指向其它独立部署）。
+const AI_PROXY_URL = process.env.NEXT_PUBLIC_AI_PROXY_URL || "/api/ai-proxy";
 
 // 共享密钥（P0 配套）：与云函数环境变量 AI_PROXY_SECRET 同名，经 x-api-key 头携带。
 // 未配置时不带该头；此时若云端已启用密钥校验，请求会被 401 拒绝。

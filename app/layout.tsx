@@ -10,7 +10,11 @@ import { RemediationProvider } from "@/lib/remediation-store";
 import { ThemeProvider, THEME_INIT_SCRIPT } from "@/lib/theme";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://xiaoxin2026-personal-d1acf1a1fb0-1469931868.tcloudbaseapp.com"),
+  metadataBase: new URL(
+    process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : "https://job-helper.vercel.app"
+  ),
   title: {
     default: "求职在线助手 - AI 简历诊断工具",
     template: "%s",

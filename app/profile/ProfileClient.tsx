@@ -244,7 +244,7 @@ export default function ProfileClient() {
         </p>
         {!cloudConfigured ? (
           <p className="mt-3 rounded-lg border border-dashed border-neutral-300 px-4 py-3 text-sm text-neutral-400 dark:border-neutral-700">
-            云端同步尚未配置（需在构建环境设置 <code>NEXT_PUBLIC_CLOUDBASE_ENV_ID</code>），本机数据不受影响。
+            云端同步当前版本已降级为本地（未托管云同步数据库），请直接在本机保存数据；本机数据不受影响。
           </p>
         ) : (
           <div className="mt-4">
