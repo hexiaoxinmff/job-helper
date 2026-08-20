@@ -27,6 +27,8 @@ export interface VerticalTemplate {
   targetRoles: VerticalTargetRole[];
   /** 推荐简历版式 */
   recommendedTemplate: TemplateId;
+  /** 衔接时间线建议（可选，如考公失利后转就业的关键节点） */
+  timeline?: { phase: string; action: string }[];
   /** 一键载入编辑器的起步简历骨架（含占位引导，绝不编造用户经历） */
   starterResume: Resume;
 }
@@ -340,6 +342,90 @@ export const VERTICAL_TEMPLATES: VerticalTemplate[] = [
       ],
       skills: [
         { id: "sk-1", category: "主线技能", items: ["（按目标 JD 聚焦 2-3 条）"] },
+      ],
+    }),
+  },
+  {
+    id: "exam-fail-to-job",
+    name: "考公失利转就业",
+    emoji: "🎯",
+    tagline: "省考失利 → 国企 / 事业单位 / 银行 + 职能岗",
+    painPoint:
+      "备考空档 + 无企业经历，简历「经历与成果」维度分低；但备考沉淀的信息检索、政策研究、逻辑写作、自律执行，恰好是国企 / 事业单位 / 银行岗的高价值软素质——缺的是把备考经历翻译成岗位语言。",
+    guidance: [
+      "备考经历不是工作经验，但可以写成「备考期间的能力项目」：信息检索（梳理某领域政策 / 资料）、逻辑写作（申论 / 行测训练 → 公文写作、结构化表达），每条用「动词 + 对象 + 结果」。",
+      "诚实区分硬缺口与可平移能力：Office / Excel / 公文写作是国企事业单位 JD 高频词，备考期间练过就大胆写出；没做过的项目管理和数据统计不要编。",
+      "空档期如实处理：写「备考公务员期间持续学习与复盘」，突出自律、抗压、目标管理，不要伪造企业实习（面试深挖必翻车）。",
+      "用诊断的「差距补救路线」定位缺口：把申论写作能力翻译成「材料 / 公文写作」，把行测逻辑翻译成「数据分析基础 / 结构化思考」。",
+      "党员 / 学生干部 / 志愿服务经历是国企事业单位的加分项，如实填写并量化（如「统筹 XX 活动，覆盖 X 人」）。",
+    ],
+    targetRoles: [
+      { jdId: "guoqi", note: "国企综合管理：公文写作 + 协调能力最契合" },
+      { jdId: "sydw", note: "事业单位综合岗：政策理解 + 服务意识适配" },
+      { jdId: "bank", note: "银行客户经理：沟通营销 + 抗压，备考训练可平移" },
+    ],
+    recommendedTemplate: "biz-split",
+    timeline: [
+      { phase: "省考笔试后 1 周内", action: "完成一次简历诊断，锁定 2-3 个方向（国企 / 事业单位 / 银行 / 职能岗），用本模板搭好骨架" },
+      { phase: "次年 1-2 月", action: "国企春招 + 事业单位联考报名高峰：投递并每天用诊断迭代简历，同时把投递记入「投递追踪工作台」" },
+      { phase: "次年 3-4 月", action: "银行春招 + 事业单位笔试期：同步推进，用投递台账管理各流程节点（笔试 / 面试 / 等结果）" },
+      { phase: "次年 5-6 月", action: "秋招提前批 / 暑期实习开启：若考编未上岸，用诊断历史看成长曲线，转向市场化岗位无缝衔接" },
+    ],
+    starterResume: starter({
+      template: "biz-split",
+      basics: {
+        name: "（你的姓名）",
+        title: "综合管理岗（转就业）",
+        email: "you@example.com",
+        phone: "138-0000-0000",
+        location: "（城市）",
+        website: "",
+        summary:
+          "公务员备考 X 个月，沉淀扎实的信息检索、政策研究与公文写作能力，具备强执行与抗压素质。现转向国企 / 事业单位 / 银行方向，目标岗位：综合管理。",
+      },
+      education: [
+        {
+          id: "edu-1",
+          school: "（本科学校）",
+          degree: "本科",
+          major: "（专业）",
+          startDate: "20XX.09",
+          endDate: "20XX.06",
+          description: "主修课程与成果；党员 / 学生干部 / 获奖情况如实填写。",
+        },
+      ],
+      work: [
+        {
+          id: "work-1",
+          company: "（备考经历，不是工作——如实标注）",
+          role: "全职备考 · 自我管理",
+          startDate: "20XX.XX",
+          endDate: "至今",
+          bullets: [
+            "制定并执行 X 个月备考计划，日均学习 X 小时，持续复盘迭代复习策略；",
+            "系统梳理 XX 领域政策 / 资料 X 份，形成结构化笔记（对应信息检索能力）；",
+            "（备考能力翻译示例，未发生的事不要写）",
+          ],
+        },
+      ],
+      projects: [
+        {
+          id: "proj-1",
+          name: "（备考期间的可写经历：志愿服务 / 学生工作 / 实习，任选）",
+          role: "（角色）",
+          link: "",
+          startDate: "20XX.XX",
+          endDate: "20XX.XX",
+          bullets: [
+            "（用 STAR 写：动词 + 对象 + 量化结果，如「统筹 XX 活动，协调 X 人，覆盖 X 人次」）；",
+            "（突出公文 / 材料写作、组织协调、服务意识等岗位相关能力）",
+          ],
+        },
+      ],
+      skills: [
+        { id: "sk-1", category: "办公技能", items: ["Word（公文排版）", "Excel（数据整理 / 透视表）", "PPT"] },
+        { id: "sk-2", category: "可迁移能力", items: ["公文 / 材料写作", "信息检索", "结构化表达", "计划执行"] },
+        { id: "sk-3", category: "加分项", items: ["（党员 / 证书 / 志愿经历，如实填写）"] },
       ],
     }),
   },

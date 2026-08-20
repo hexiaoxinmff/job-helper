@@ -99,6 +99,8 @@ export interface DiagnosisHistoryContextValue {
   items: DiagnosisHistoryItem[];
   /** 无条件追加一次诊断记录（脱敏，调用方只传必要字段） */
   append: (s: Omit<DiagnosisHistoryItem, "id" | "ts"> & { ts?: number }) => void;
+  /** 云端同步合并：按 ts 去重，取最新 20 条 */
+  mergeRemote: (items: DiagnosisHistoryItem[]) => void;
   /** 一键清除全部诊断历史 */
   clear: () => void;
 }
@@ -126,8 +128,19 @@ export function DiagnosisHistoryProvider({ children }: { children: ReactNode }) 
 
   const clear = () => commit([]);
 
+  const mergeRemote = (items: DiagnosisHistoryItem[]) => {
+    const map = new Map<string, DiagnosisHistoryItem>();
+    for (const it of [...getSnapshot(), ...items]) {
+      const clean = sanitizeItem(it);
+      if (!clean) continue;
+      const prev = map.get(clean.id);
+      if (!prev || (clean.ts ?? 0) >= (prev.ts ?? 0)) map.set(clean.id, clean);
+    }
+    commit(Array.from(map.values()).sort((a, b) => b.ts - a.ts));
+  };
+
   return (
-    <DiagnosisHistoryContext.Provider value={{ items, append, clear }}>
+    <DiagnosisHistoryContext.Provider value={{ items, append, mergeRemote, clear }}>
       {children}
     </DiagnosisHistoryContext.Provider>
   );

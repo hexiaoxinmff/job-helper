@@ -17,27 +17,62 @@ import {
   createEmptyResume,
 } from "./types";
 
+// ========== 多简历版本（v4，2026-08-20） ==========
+// v4 把「单份简历」升级为「多份简历版本」：不同岗位方向各存一份，诊断/投递/档案按版本管理。
+// 存储结构：{ version: 4, data: { versions: [{ id, name, updatedAt, resume }], activeId } }
+// 头像（v3 起独立 key）在 v4 并入各版本 resume.avatar（多版本可能各自不同），
+// 配合 300ms 持久化防抖，写盘频率低，体积可控。
+
+export interface ResumeVersion {
+  id: string;
+  /** 版本名（如「主简历」「前端-2026秋招」） */
+  name: string;
+  /** 最近修改时间（Unix 毫秒） */
+  updatedAt: number;
+  resume: Resume;
+}
+
+interface ResumeStoreData {
+  versions: ResumeVersion[];
+  activeId: string;
+}
+
+const DEFAULT_VERSION_ID = "v-default";
+const DEFAULT_VERSION_NAME = "主简历";
+
 interface ResumeContextValue {
   resume: Resume;
   /** 是否已完成 localStorage 回填（回填前调用方应渲染骨架，避免空表单闪屏） */
   hydrated: boolean;
   setResume: (updater: Resume | ((prev: Resume) => Resume)) => void;
   reset: () => void;
+  // ===== 多版本能力 =====
+  versions: ResumeVersion[];
+  activeId: string;
+  /** 切换当前编辑的版本 */
+  setActiveVersion: (id: string) => void;
+  /** 新建版本（从当前版本复制；返回新版本 id） */
+  duplicateVersion: (name?: string) => string;
+  /** 新建空白版本（返回新版本 id） */
+  addVersion: (name?: string) => string;
+  renameVersion: (id: string, name: string) => void;
+  /** 删除版本（至少保留 1 个） */
+  deleteVersion: (id: string) => void;
 }
 
 const ResumeContext = createContext<ResumeContextValue | null>(null);
 const STORAGE_KEY = "job-helper:resume";
-// 头像单列存储：避免整份简历 JSON 因 2MB base64 头像而体积爆炸，
-// 否则每次按键做 JSON.stringify + localStorage.setItem 会阻塞主线程导致输入卡顿（P1 修复）。
-const STORAGE_KEY_AVATAR = "job-helper:avatar";
+// v3 时代的头像独立 key：v4 迁移后并入 resume.avatar，此 key 仅用于读旧数据
+const STORAGE_KEY_AVATAR_LEGACY = "job-helper:avatar";
 const AVATAR_MAX_LEN = 300000; // ~300KB，远超头像显示所需，同时把单次写盘开销压到可接受范围
 /**
  * 存储结构版本：1 = { version, data } 包装 + 5 板块（basics/education/work/projects/skills）；
  * 2 = 扩展 12 板块（新增 advantages/languages/internships/activities/awards/portfolio + visibility）；
- * 3 = 20 套新版模板 + avatar 头像（2026-08 模板重构，旧 6 个模板 id 自动映射到新模板）。
+ * 3 = 20 套新版模板 + avatar 头像（旧 6 个模板 id 自动映射到新模板）；
+ * 4 = 多简历版本（versions[] + activeId）。
  * 旧裸 Resume 对象自动迁移。迁移红线：已有字段原样保留，不丢。
  */
-const STORAGE_VERSION = 3;
+const STORAGE_VERSION = 4;
 
 const TEMPLATE_IDS: TemplateId[] = [
   "timeline",
@@ -97,7 +132,7 @@ function sanitizeResume(data: unknown): Resume {
       template = LEGACY_TEMPLATE_MAP[raw];
     }
   }
-  // 头像上限从 2MB 降到 ~300KB（P1 修复：降低单次写盘体积）
+  // 头像上限 ~300KB（P1 修复：降低单次写盘体积）
   const avatar = typeof d.avatar === "string" && d.avatar.length > 0 ? d.avatar.slice(0, AVATAR_MAX_LEN) : "";
 
   return {
@@ -131,26 +166,68 @@ function migrateAdvantages(prev: Resume): Resume {
   return { ...prev, advantages: lines };
 }
 
-/** 兼容旧格式（裸 Resume）与 v1/v2（{ version, data }），损坏返回空简历 */
-function loadResume(raw: string | null): Resume {
-  if (!raw) return createEmptyResume();
+function sanitizeVersion(s: unknown): ResumeVersion | null {
+  if (!s || typeof s !== "object") return null;
+  const d = s as Partial<ResumeVersion>;
+  const resume = sanitizeResume(d.resume);
+  return {
+    id: String(d.id ?? `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
+    name: String(d.name ?? "").trim().slice(0, 30) || DEFAULT_VERSION_NAME,
+    updatedAt: typeof d.updatedAt === "number" && Number.isFinite(d.updatedAt) ? d.updatedAt : Date.now(),
+    resume,
+  };
+}
+
+/** 兼容旧格式（裸 Resume / v1-v3 {version,data}）→ 多版本结构；损坏返回默认单版本 */
+function loadStore(raw: string | null): ResumeStoreData {
+  const emptyVersion = (): ResumeVersion => ({
+    id: DEFAULT_VERSION_ID,
+    name: DEFAULT_VERSION_NAME,
+    updatedAt: Date.now(),
+    resume: createEmptyResume(),
+  });
+  if (!raw) return { versions: [emptyVersion()], activeId: DEFAULT_VERSION_ID };
   try {
     const parsed = JSON.parse(raw) as unknown;
-    // 版本号低于当前版本（v1）→ sanitize 时缺省字段自动补空；再温和迁移 advantages
+    // v4：多版本结构
+    if (parsed && isObj(parsed) && (parsed as { version?: unknown }).version === 4) {
+      const data = (parsed as { data?: unknown }).data;
+      if (data && isObj(data)) {
+        const d = data as Partial<ResumeStoreData>;
+        const versions = Array.isArray(d.versions)
+          ? d.versions.map(sanitizeVersion).filter((v): v is ResumeVersion => v !== null)
+          : [];
+        if (versions.length === 0) return { versions: [emptyVersion()], activeId: DEFAULT_VERSION_ID };
+        const first = versions[0];
+        if (!first) return { versions: [emptyVersion()], activeId: DEFAULT_VERSION_ID };
+        const activeId = versions.some((v) => v.id === d.activeId)
+          ? (d.activeId as string)
+          : first.id;
+        return { versions, activeId };
+      }
+    }
+    // v1-v3 或裸 Resume：包成单版本「主简历」
     const base =
       parsed && isObj(parsed) && "version" in parsed
         ? migrateAdvantages(sanitizeResume((parsed as { data: unknown }).data))
         : migrateAdvantages(sanitizeResume(parsed));
-    // 头像独立存储：从专用 key 合并回来（主 JSON 不含头像，保持轻量）
+    // v3 头像独立 key：并入主版本（多版本后不再用独立 key）
+    let withAvatar = base;
     try {
-      const av = window.localStorage.getItem(STORAGE_KEY_AVATAR);
-      if (av && av.length <= AVATAR_MAX_LEN) return { ...base, avatar: av };
+      const av = window.localStorage.getItem(STORAGE_KEY_AVATAR_LEGACY);
+      if (av && av.length <= AVATAR_MAX_LEN && !withAvatar.avatar) {
+        withAvatar = { ...base, avatar: av };
+      }
+      window.localStorage.removeItem(STORAGE_KEY_AVATAR_LEGACY);
     } catch {
       /* 读头像失败不影响主数据 */
     }
-    return base;
+    return {
+      versions: [{ id: DEFAULT_VERSION_ID, name: DEFAULT_VERSION_NAME, updatedAt: Date.now(), resume: withAvatar }],
+      activeId: DEFAULT_VERSION_ID,
+    };
   } catch {
-    return createEmptyResume();
+    return { versions: [emptyVersion()], activeId: DEFAULT_VERSION_ID };
   }
 }
 
@@ -159,27 +236,27 @@ function loadResume(raw: string | null): Resume {
 // （hydration 用 server snapshot 兜底，避免 SSR/CSR mismatch）。
 type Listener = () => void;
 const resumeListeners = new Set<Listener>();
-let resumeCache: Resume | null = null;
+let storeCache: ResumeStoreData | null = null;
 let resumeHydrated = false;
 
 // 持久化防抖（P1 修复核心）：UI 同步更新，但落盘延迟 300ms 并合并连续按键，避免每次按键阻塞主线程。
 const PERSIST_DEBOUNCE_MS = 300;
 let persistTimer: ReturnType<typeof setTimeout> | null = null;
 
-function getResumeSnapshot(): Resume {
+function getStoreSnapshot(): ResumeStoreData {
   if (!resumeHydrated) {
     resumeHydrated = true;
     try {
-      resumeCache = loadResume(window.localStorage.getItem(STORAGE_KEY));
+      storeCache = loadStore(window.localStorage.getItem(STORAGE_KEY));
     } catch {
-      resumeCache = createEmptyResume();
+      storeCache = { versions: [], activeId: DEFAULT_VERSION_ID };
     }
   }
-  return resumeCache ?? createEmptyResume();
+  return storeCache ?? { versions: [], activeId: DEFAULT_VERSION_ID };
 }
 
-function getResumeServerSnapshot(): Resume {
-  return createEmptyResume();
+function getStoreServerSnapshot(): ResumeStoreData {
+  return { versions: [], activeId: DEFAULT_VERSION_ID };
 }
 
 function subscribeResume(listener: Listener) {
@@ -188,21 +265,10 @@ function subscribeResume(listener: Listener) {
 }
 
 function persistNow() {
-  const next = resumeCache;
+  const next = storeCache;
   if (!next) return;
   try {
-    // 头像剥离到独立 key，主 JSON 只存文本数据 → 体积小、stringify 快
-    const { avatar, ...rest } = next;
-    window.localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({ version: STORAGE_VERSION, data: rest })
-    );
-    if (avatar && avatar.length > 0) {
-      window.localStorage.setItem(STORAGE_KEY_AVATAR, avatar.slice(0, AVATAR_MAX_LEN));
-    } else {
-      // 无头像时清掉旧头像 key，避免残留
-      window.localStorage.removeItem(STORAGE_KEY_AVATAR);
-    }
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: STORAGE_VERSION, data: next }));
   } catch {
     /* 存储不可用时静默降级 */
   }
@@ -216,18 +282,18 @@ function schedulePersist() {
   }, PERSIST_DEBOUNCE_MS);
 }
 
-function commitResume(next: Resume) {
-  resumeCache = next; // 同步更新缓存 → 订阅组件立即重渲染，输入不卡
+function commitStore(next: ResumeStoreData) {
+  storeCache = next; // 同步更新缓存 → 订阅组件立即重渲染，输入不卡
   resumeHydrated = true;
   resumeListeners.forEach((l) => l()); // 同步通知订阅
   schedulePersist(); // 异步(防抖)落盘，仅此步延后
 }
 
 export function ResumeProvider({ children }: { children: ReactNode }) {
-  const resume = useSyncExternalStore(
+  const store = useSyncExternalStore(
     useCallback((l: Listener) => subscribeResume(l), []),
-    getResumeSnapshot,
-    getResumeServerSnapshot
+    getStoreSnapshot,
+    getStoreServerSnapshot
   );
   const hydrated = useSyncExternalStore(
     useCallback((l: Listener) => subscribeResume(l), []),
@@ -235,16 +301,101 @@ export function ResumeProvider({ children }: { children: ReactNode }) {
     () => false
   );
 
+  const activeVersion = store.versions.find((v) => v.id === store.activeId) ?? store.versions[0];
+  const resume: Resume = activeVersion?.resume ?? createEmptyResume();
+
   const setResume: ResumeContextValue["setResume"] = (updater) => {
-    const prev = getResumeSnapshot();
-    const next = typeof updater === "function" ? updater(prev) : updater;
-    commitResume(next);
+    const cur = getStoreSnapshot();
+    const target = cur.versions.find((v) => v.id === cur.activeId) ?? cur.versions[0];
+    if (!target) return;
+    const nextResume = typeof updater === "function" ? updater(target.resume) : updater;
+    commitStore({
+      ...cur,
+      versions: cur.versions.map((v) =>
+        v.id === target.id ? { ...v, resume: nextResume, updatedAt: Date.now() } : v
+      ),
+    });
   };
 
-  const reset = () => commitResume(createEmptyResume());
+  const reset = () => {
+    const cur = getStoreSnapshot();
+    commitStore({
+      ...cur,
+      versions: cur.versions.map((v) =>
+        v.id === cur.activeId ? { ...v, resume: createEmptyResume(), updatedAt: Date.now() } : v
+      ),
+    });
+  };
+
+  const setActiveVersion = (id: string) => {
+    const cur = getStoreSnapshot();
+    if (cur.versions.some((v) => v.id === id)) commitStore({ ...cur, activeId: id });
+  };
+
+  const duplicateVersion = (name?: string): string => {
+    const cur = getStoreSnapshot();
+    const src = cur.versions.find((v) => v.id === cur.activeId) ?? cur.versions[0];
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const v: ResumeVersion = {
+      id,
+      name: (name ?? "").trim().slice(0, 30) || `${src?.name ?? DEFAULT_VERSION_NAME}（副本）`,
+      updatedAt: Date.now(),
+      resume: src ? { ...src.resume, avatar: src.resume.avatar ?? "" } : createEmptyResume(),
+    };
+    commitStore({ versions: [v, ...cur.versions], activeId: id });
+    return id;
+  };
+
+  const addVersion = (name?: string): string => {
+    const cur = getStoreSnapshot();
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const v: ResumeVersion = {
+      id,
+      name: (name ?? "").trim().slice(0, 30) || `简历 ${cur.versions.length + 1}`,
+      updatedAt: Date.now(),
+      resume: createEmptyResume(),
+    };
+    commitStore({ versions: [v, ...cur.versions], activeId: id });
+    return id;
+  };
+
+  const renameVersion = (id: string, name: string) => {
+    const cur = getStoreSnapshot();
+    const clean = name.trim().slice(0, 30);
+    if (!clean) return;
+    commitStore({
+      ...cur,
+      versions: cur.versions.map((v) => (v.id === id ? { ...v, name: clean } : v)),
+    });
+  };
+
+  const deleteVersion = (id: string) => {
+    const cur = getStoreSnapshot();
+    if (cur.versions.length <= 1) return; // 至少保留 1 份
+    const rest = cur.versions.filter((v) => v.id !== id);
+    if (rest.length === 0) return;
+    const first = rest[0];
+    if (!first) return;
+    const activeId = cur.activeId === id ? first.id : cur.activeId;
+    commitStore({ versions: rest, activeId });
+  };
 
   return (
-    <ResumeContext.Provider value={{ resume, hydrated, setResume, reset }}>
+    <ResumeContext.Provider
+      value={{
+        resume,
+        hydrated,
+        setResume,
+        reset,
+        versions: store.versions,
+        activeId: store.activeId,
+        setActiveVersion,
+        duplicateVersion,
+        addVersion,
+        renameVersion,
+        deleteVersion,
+      }}
+    >
       {children}
     </ResumeContext.Provider>
   );

@@ -150,6 +150,8 @@ export interface TrackerContextValue {
   move: (id: string, status: ApplicationStatus) => void;
   remove: (id: string) => void;
   clear: () => void;
+  /** 云端同步合并：按条目 updatedAt 取新（同 id 保留更新时间更大的） */
+  mergeRemote: (items: ApplicationItem[]) => void;
   /** 导出投递台账为 JSON（用户数据所有权） */
   exportTracker: () => void;
 }
@@ -192,6 +194,17 @@ export function TrackerProvider({ children }: { children: ReactNode }) {
 
   const clear = () => commit([]);
 
+  const mergeRemote = (items: ApplicationItem[]) => {
+    const map = new Map<string, ApplicationItem>();
+    for (const it of [...getSnapshot(), ...items]) {
+      const clean = sanitizeItem(it);
+      if (!clean) continue;
+      const prev = map.get(clean.id);
+      if (!prev || (clean.updatedAt ?? 0) >= (prev.updatedAt ?? 0)) map.set(clean.id, clean);
+    }
+    commit(Array.from(map.values()));
+  };
+
   const exportTracker = () => {
     try {
       const blob = new Blob([JSON.stringify(getSnapshot(), null, 2)], {
@@ -209,7 +222,9 @@ export function TrackerProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <TrackerContext.Provider value={{ items, add, update, move, remove, clear, exportTracker }}>
+    <TrackerContext.Provider
+      value={{ items, add, update, move, remove, clear, mergeRemote, exportTracker }}
+    >
       {children}
     </TrackerContext.Provider>
   );

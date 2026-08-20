@@ -426,6 +426,84 @@ ${dataBlock("简历文本", text)}
   return result;
 }
 
+async function actionInterview(resumeText, jdText, missingKeywords) {
+  const trimmedResume = (resumeText || "").slice(0, 6000);
+  const trimmedJd = (jdText || "").slice(0, 3000);
+  const gaps = Array.isArray(missingKeywords) ? missingKeywords.slice(0, 8) : [];
+  const prompt = `你是一位资深面试官（同时具备 HR 与岗位技术视角）。请基于候选人的简历、目标岗位 JD，以及诊断出的缺失关键词，生成模拟面试追问，专攻候选人的薄弱环节。
+
+${dataBlock("目标岗位JD", trimmedJd)}
+
+${dataBlock("简历内容", trimmedResume)}
+
+${gaps.length > 0 ? `【诊断出的缺失关键词（面试重点深挖对象）】\n${gaps.join("、")}` : "【诊断出的缺失关键词】无"}
+
+要求：
+1. questions 5-8 条，按「先易后难」排列：前 1-2 条暖场并验证简历真实性；中间 3-5 条针对缺失关键词 / 简历薄弱点深挖；最后 1-2 条考察求职动机与成长性。
+2. 每条 question 是面试官可以直接朗读的提问原话；focus 用一句话说明这题在考察什么 / 对应哪个缺口；hint 给候选人一条思考提示。
+3. 问题必须具体、贴合简历与 JD 事实，禁止通用模板题（如"自我介绍"最多 1 条，禁止"你怎么看加班"这类与岗位无关的套路题）。
+
+严格按以下 JSON 输出（不输出其他内容）：
+{
+  "questions": [
+    {"question": "面试官提问原话", "focus": "考察点 / 对应缺口", "hint": "候选人思考提示"}
+  ]
+}`;
+
+  const content = await callDeepSeek("你只输出合法的 JSON，不做任何解释。", prompt, 2000);
+  const parsed = parseJsonObject(content);
+  const questions = Array.isArray(parsed.questions)
+    ? parsed.questions
+        .filter((q) => q && typeof q === "object")
+        .slice(0, 8)
+        .map((q) => ({
+          question: String(q.question ?? ""),
+          focus: String(q.focus ?? ""),
+          hint: String(q.hint ?? ""),
+        }))
+        .filter((q) => q.question)
+    : [];
+  if (questions.length === 0) throw new Error("AI 未生成有效面试题");
+  return { questions };
+}
+
+async function actionReviewAnswer(resumeText, jdText, question, answer) {
+  const trimmedResume = (resumeText || "").slice(0, 6000);
+  const trimmedJd = (jdText || "").slice(0, 3000);
+  const prompt = `你是一位资深面试官。以下是面试追问、候选人的作答、其简历与目标岗位 JD。请点评答案并给出参考回答。
+
+${dataBlock("目标岗位JD", trimmedJd)}
+
+${dataBlock("简历内容", trimmedResume)}
+
+${dataBlock("面试问题", question)}
+
+${dataBlock("候选人回答", answer)}
+
+要求：
+1. score：0-100 整数，衡量回答质量（是否具体、有结构、贴合岗位）。
+2. comment：2-3 句点评——先指出亮点，再点问题（空泛 / 缺量化 / 与岗位不匹配等），给出改进方向，实事求是、不吹不黑。
+3. reference：一份 2-4 句的参考回答。必须基于候选人简历中的真实信息组织，不编造新经历；可以把简历缺失但在本岗位重要的事项用「如果补充……会更有说服力」的方式点出。
+4. tips：1-2 条可执行建议。
+
+严格按以下 JSON 输出（不输出其他内容）：
+{
+  "score": 0-100,
+  "comment": "点评",
+  "reference": "参考回答",
+  "tips": ["建议1", "建议2"]
+}`;
+
+  const content = await callDeepSeek("你只输出合法的 JSON，不做任何解释。", prompt, 1500);
+  const parsed = parseJsonObject(content);
+  return {
+    score: Math.max(0, Math.min(100, Number(parsed.score) || 0)),
+    comment: String(parsed.comment ?? ""),
+    reference: String(parsed.reference ?? ""),
+    tips: Array.isArray(parsed.tips) ? parsed.tips.filter((t) => typeof t === "string").slice(0, 3) : [],
+  };
+}
+
 async function dispatch(payload) {
   const { action } = payload || {};
   switch (action) {
@@ -439,6 +517,10 @@ async function dispatch(payload) {
       return await actionStar(payload.experience);
     case "parseResume":
       return await actionParseResume(payload.resumeText);
+    case "interview":
+      return await actionInterview(payload.resumeText, payload.jdText, payload.missingKeywords);
+    case "reviewAnswer":
+      return await actionReviewAnswer(payload.resumeText, payload.jdText, payload.question, payload.answer);
     default:
       const err = new Error(`未知 action: ${action}`);
       err.status = 400;

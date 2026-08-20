@@ -6,6 +6,7 @@ import { ResumeProvider } from "@/lib/resume-store";
 import { ProfileProvider } from "@/lib/profile";
 import { DiagnosisHistoryProvider } from "@/lib/diagnosis-history";
 import { TrackerProvider } from "@/lib/tracker-store";
+import { RemediationProvider } from "@/lib/remediation-store";
 import { ThemeProvider, THEME_INIT_SCRIPT } from "@/lib/theme";
 
 export const metadata: Metadata = {
@@ -47,9 +48,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             <ProfileProvider>
               <DiagnosisHistoryProvider>
                 <TrackerProvider>
-                  <NavBar />
-                  {children}
-                  <PrivacyModal />
+                  <RemediationProvider>
+                    <NavBar />
+                    {children}
+                    <PrivacyModal />
+                  </RemediationProvider>
                 </TrackerProvider>
               </DiagnosisHistoryProvider>
             </ProfileProvider>

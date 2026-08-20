@@ -128,6 +128,85 @@ function Tip({ children }: { children: React.ReactNode }) {
   );
 }
 
+/** 多简历版本管理条：切换 / 新建 / 复制 / 重命名 / 删除（不同岗位方向各一份） */
+function VersionBar() {
+  const {
+    versions,
+    activeId,
+    setActiveVersion,
+    duplicateVersion,
+    addVersion,
+    renameVersion,
+    deleteVersion,
+  } = useResume();
+  return (
+    <Card className="print:hidden">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <span className="text-sm font-medium text-neutral-700 dark:text-neutral-200">
+          简历版本（{versions.length}）
+        </span>
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => {
+              const n = window.prompt("新版本名称（留空自动命名）");
+              if (n !== null) addVersion(n || undefined);
+            }}
+          >
+            ＋ 新建空白
+          </Button>
+          <Button size="sm" variant="secondary" onClick={() => duplicateVersion()}>
+            复制当前
+          </Button>
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {versions.map((v) => (
+          <div
+            key={v.id}
+            className={`group flex items-center gap-1 rounded-lg border px-3 py-1.5 text-sm transition-colors ${
+              v.id === activeId
+                ? "border-primary-400 bg-primary-50 text-primary-700 dark:border-primary-700 dark:bg-primary-950 dark:text-primary-300"
+                : "border-neutral-200 text-neutral-600 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
+            }`}
+          >
+            <button type="button" onClick={() => setActiveVersion(v.id)} className="font-medium">
+              {v.name}
+            </button>
+            <button
+              type="button"
+              title="重命名"
+              onClick={() => {
+                const n = window.prompt("重命名版本", v.name);
+                if (n && n.trim()) renameVersion(v.id, n);
+              }}
+              className="text-neutral-400 transition-colors hover:text-neutral-700 dark:hover:text-neutral-200"
+            >
+              ✎
+            </button>
+            {versions.length > 1 && (
+              <button
+                type="button"
+                title="删除版本"
+                onClick={() => {
+                  if (window.confirm(`删除版本「${v.name}」？此操作不可恢复。`)) deleteVersion(v.id);
+                }}
+                className="text-neutral-400 opacity-0 transition-opacity hover:text-danger-500 group-hover:opacity-100"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+      <p className="mt-2 text-xs text-neutral-400 dark:text-neutral-500">
+        不同岗位方向各建一份版本（如「前端-秋招」「国企-综合岗」），投递追踪里可记录这次投递用了哪份简历。
+      </p>
+    </Card>
+  );
+}
+
 /** 空区块引导 */
 function EmptyHint({ text }: { text: string }) {
   return <p className="text-sm text-neutral-400 dark:text-neutral-500">{text}</p>;
@@ -449,6 +528,9 @@ export default function EditorClient() {
           </Button>
         </div>
       </header>
+
+      {/* 多简历版本管理 */}
+      <VersionBar />
 
       {/* 完成度进度 */}
       <Card className="print:hidden">

@@ -19,6 +19,8 @@ import { useCopy } from "@/lib/use-copy";
 import { generateResumeRewrites } from "@/lib/ai-client";
 import { useProfile } from "@/lib/profile";
 import { useDiagnosisHistory } from "@/lib/diagnosis-history";
+import { useRemediation } from "@/lib/remediation-store";
+import { getRemediationResource } from "@/lib/remediation";
 import { recommendRoles } from "@/lib/recommend";
 import { getJdById } from "@/lib/jd-library";
 import { resolveThemeVars } from "@/lib/theme";
@@ -62,6 +64,7 @@ function scoreLabel(score: number): string {
 export default function ResultView({ result, resumeText, jdText, onReset, onReDiagnose }: Props) {
   const { profile, appendSnapshot } = useProfile();
   const { append: appendDiagnosis } = useDiagnosisHistory();
+  const { items: remediationItems, add: addRemediation } = useRemediation();
   const chartData = result.dimensions.map((d) => ({
     dimension: d.name,
     score: d.score,
@@ -199,6 +202,24 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
     ];
     await copyText(lines.join("\n"), "report");
     track("report_copy");
+  };
+
+  // AI 模拟面试入口：把当前简历 + JD + 缺失关键词带入面试页（会话级，不落盘）
+  const goInterview = () => {
+    try {
+      sessionStorage.setItem(
+        "job-helper:interview-ctx",
+        JSON.stringify({
+          resumeText,
+          jdText,
+          missingKeywords: result.missingKeywords,
+        })
+      );
+    } catch {
+      /* 忽略写入失败 */
+    }
+    track("interview_enter");
+    window.location.href = "/interview";
   };
 
   return (
@@ -389,33 +410,71 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
         </div>
       )}
 
-      {/* 差距补救路线（诚实诊断：硬缺口 → 学习/补齐；表达缺口 → 在既有经历补位） */}
+      {/* 差距补救路线（诚实诊断：硬缺口 → 学习/补齐；表达缺口 → 在既有经历补位；可加入 90 天补位计划） */}
       {result.gapRemediation && result.gapRemediation.length > 0 && (
         <div className="rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900">
-          <h2 className="mb-1 font-semibold text-neutral-800 dark:text-neutral-100">差距补救路线</h2>
+          <div className="mb-1 flex items-center gap-2">
+            <h2 className="font-semibold text-neutral-800 dark:text-neutral-100">差距补救路线 · 90 天补位计划</h2>
+            <span className="rounded-full bg-primary-100 px-2 py-0.5 text-xs font-medium text-primary-700 dark:bg-primary-950 dark:text-primary-300">
+              可追踪
+            </span>
+          </div>
           <p className="mb-4 text-sm text-neutral-500 dark:text-neutral-400">
-            针对缺失项给出可行动路线——避免「过度美化」导致面试翻车，也避免笼统说「要学会它」。
+            针对缺失项给出可行动路线——避免「过度美化」导致面试翻车，也避免笼统说「要学会它」。点击「加入补位计划」沉淀到私人档案追踪。
           </p>
           <div className="space-y-3">
-            {result.gapRemediation.map((g) => (
-              <div key={g.keyword} className="rounded-xl border border-neutral-200 p-4 dark:border-neutral-700">
-                <div className="mb-1.5 flex items-center gap-2">
-                  <span className="rounded-full bg-danger-100 px-2 py-0.5 text-xs font-medium text-danger-700 dark:bg-danger-950 dark:text-danger-300">
-                    {g.keyword}
-                  </span>
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs ${
-                      g.kind === "expression"
-                        ? "bg-info-100 text-info-700 dark:bg-info-950 dark:text-info-300"
-                        : "bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300"
-                    }`}
-                  >
-                    {g.kind === "expression" ? "表达缺口 · 可在现有经历补位" : "硬技能缺口 · 需学习/补齐"}
-                  </span>
+            {result.gapRemediation.map((g) => {
+              const resource = g.kind === "hard" ? getRemediationResource(g.keyword) : undefined;
+              const added = remediationItems.some((x) => x.keyword === g.keyword);
+              return (
+                <div key={g.keyword} className="rounded-xl border border-neutral-200 p-4 dark:border-neutral-700">
+                  <div className="mb-1.5 flex flex-wrap items-center gap-2">
+                    <span className="rounded-full bg-danger-100 px-2 py-0.5 text-xs font-medium text-danger-700 dark:bg-danger-950 dark:text-danger-300">
+                      {g.keyword}
+                    </span>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs ${
+                        g.kind === "expression"
+                          ? "bg-info-100 text-info-700 dark:bg-info-950 dark:text-info-300"
+                          : "bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300"
+                      }`}
+                    >
+                      {g.kind === "expression" ? "表达缺口 · 可在现有经历补位" : "硬技能缺口 · 需学习/补齐"}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (added) return;
+                        addRemediation({
+                          keyword: g.keyword,
+                          kind: g.kind,
+                          resource: resource
+                            ? `${resource.course}；项目：${resource.project}`
+                            : undefined,
+                        });
+                        track("remediation_add", { keyword: g.keyword, kind: g.kind });
+                      }}
+                      disabled={added}
+                      className={`ml-auto rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
+                        added
+                          ? "bg-success-100 text-success-700 dark:bg-success-950 dark:text-success-300"
+                          : "bg-primary-600 text-white hover:bg-primary-700"
+                      }`}
+                    >
+                      {added ? "✓ 已加入补位计划" : "加入补位计划"}
+                    </button>
+                  </div>
+                  <p className="text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">{g.action}</p>
+                  {resource && (
+                    <div className="mt-3 space-y-1.5 rounded-lg bg-neutral-50 p-3 text-xs leading-relaxed text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300">
+                      <p>📚 学习路径：{resource.course}</p>
+                      <p>🛠️ 实操项目：{resource.project}</p>
+                      {resource.cert && <p>📜 可选考证：{resource.cert}</p>}
+                    </div>
+                  )}
                 </div>
-                <p className="text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">{g.action}</p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -508,6 +567,13 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
           className="flex-1"
         >
           复制文字报告
+        </Button>
+        <Button
+          variant="outline"
+          onClick={goInterview}
+          className="flex-1"
+        >
+          AI 模拟面试
         </Button>
         <Button
           variant="outline"

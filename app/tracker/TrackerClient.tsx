@@ -53,14 +53,12 @@ function statusIndex(s: ApplicationStatus): number {
 
 export default function TrackerClient() {
   const { items, add, update, move, remove, clear, exportTracker } = useTracker();
-  const { resume } = useResume();
+  const { versions, activeId } = useResume();
   const [view, setView] = useState<ViewMode>("kanban");
   const [showForm, setShowForm] = useState(false);
   const [draft, setDraft] = useState<Draft>(emptyDraft());
   const [formError, setFormError] = useState("");
   const [msg, setMsg] = useState("");
-
-  const resumeLabel = resume.basics.title?.trim() || "未命名简历";
 
   // 看板列：按状态分组
   const byStatus = useMemo(() => {
@@ -311,8 +309,16 @@ export default function TrackerClient() {
                 className="w-full rounded-xl border border-neutral-300 bg-white px-3 py-2.5 text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
               >
                 <option value="">未指定</option>
-                <option value={resumeLabel}>当前简历（{resumeLabel}）</option>
+                {versions.map((v) => (
+                  <option key={v.id} value={v.name}>
+                    {v.name}
+                    {v.id === activeId ? "（当前）" : ""} · {v.resume.basics.title?.trim() || "未设意向"}
+                  </option>
+                ))}
               </select>
+              <p className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">
+                来自简历编辑器的多版本；没有则先到编辑器新建。
+              </p>
             </div>
             <div className="sm:col-span-2">
               <label className="mb-1.5 block text-sm font-medium text-neutral-700 dark:text-neutral-200">

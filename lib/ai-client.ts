@@ -110,6 +110,34 @@ export function generateStarDescription(experience: string): Promise<StarResult 
   return callAiProxy<StarResult>("star", { experience });
 }
 
+/** AI 模拟面试：基于简历 + JD + 诊断缺口生成追问列表（#6） */
+export function generateInterviewQuestions(
+  resumeText: string,
+  jdText: string,
+  missingKeywords: string[]
+): Promise<InterviewQuestion[] | null> {
+  return callAiProxy<InterviewQuestion[]>("interview", {
+    resumeText,
+    jdText,
+    missingKeywords,
+  });
+}
+
+/** AI 点评面试回答：评分 + 点评 + 参考回答 */
+export function reviewInterviewAnswer(
+  resumeText: string,
+  jdText: string,
+  question: string,
+  answer: string
+): Promise<InterviewReview | null> {
+  return callAiProxy<InterviewReview>("reviewAnswer", {
+    resumeText,
+    jdText,
+    question,
+    answer,
+  });
+}
+
 /** AI 简历解析：文本 → 结构化简历（不含 id，由调用方补齐） */
 export type AiParsedResume = ParsedResumeInput;
 
@@ -139,5 +167,20 @@ export interface RewriteItem {
 export interface StarResult {
   star: string;
   parts: { label: string; content: string }[];
+  tips: string[];
+}
+
+export interface InterviewQuestion {
+  question: string;
+  /** 考察点 / 对应缺口 */
+  focus: string;
+  /** 候选人思考提示 */
+  hint: string;
+}
+
+export interface InterviewReview {
+  score: number;
+  comment: string;
+  reference: string;
   tips: string[];
 }

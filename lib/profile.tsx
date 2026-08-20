@@ -101,6 +101,8 @@ interface ProfileContextValue {
   setTargetScore: (v?: number) => void;
   /** 追加一次诊断快照（仅在 enabled 时生效由调用方控制） */
   appendSnapshot: (s: Omit<ProfileSnapshot, "id">) => void;
+  /** 云端同步合并：按 ts 去重合并历史快照（保留本地 enabled/targetRole/targetScore 设置） */
+  mergeRemoteHistories: (histories: ProfileSnapshot[]) => void;
   clear: () => void;
   exportProfile: () => void;
   importProfile: (json: string) => { ok: boolean; error?: string };
@@ -170,6 +172,20 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
   const clear = () => commitProfile(EMPTY);
 
+  const mergeRemoteHistories = (histories: ProfileSnapshot[]) => {
+    const map = new Map<string, ProfileSnapshot>();
+    for (const h of [...profile.histories, ...(Array.isArray(histories) ? histories : [])]) {
+      const clean = sanitizeSnapshot(h);
+      if (!clean) continue;
+      const prev = map.get(clean.id);
+      if (!prev || clean.ts >= prev.ts) map.set(clean.id, clean);
+    }
+    commitProfile({
+      ...profile,
+      histories: Array.from(map.values()).sort((a, b) => b.ts - a.ts).slice(0, 50),
+    });
+  };
+
   const exportProfile = () => {
     try {
       const blob = new Blob([JSON.stringify(profile, null, 2)], {
@@ -201,7 +217,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
   return (
     <ProfileContext.Provider
-      value={{ profile, setEnabled, setTargetRole, setTargetScore, appendSnapshot, clear, exportProfile, importProfile }}
+      value={{ profile, setEnabled, setTargetRole, setTargetScore, appendSnapshot, mergeRemoteHistories, clear, exportProfile, importProfile }}
     >
       {children}
     </ProfileContext.Provider>

@@ -167,6 +167,31 @@ export default function VerticalClient() {
         </div>
       </section>
 
+      {/* 衔接时间线建议（如考公失利转就业的关键节点） */}
+      {selected.timeline && selected.timeline.length > 0 && (
+        <section className="mt-6 rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900">
+          <h2 className="mb-4 font-semibold text-neutral-800 dark:text-neutral-100">衔接时间线建议</h2>
+          <div className="space-y-3">
+            {selected.timeline.map((t, i) => (
+              <div key={i} className="flex gap-3">
+                <div className="flex flex-col items-center">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-100 text-xs font-semibold text-primary-700 dark:bg-primary-950 dark:text-primary-300">
+                    {i + 1}
+                  </span>
+                  {i < selected.timeline!.length - 1 && (
+                    <span className="mt-1 w-px flex-1 bg-neutral-200 dark:bg-neutral-700" />
+                  )}
+                </div>
+                <div className="pb-4">
+                  <p className="text-sm font-medium text-neutral-800 dark:text-neutral-100">{t.phase}</p>
+                  <p className="mt-0.5 text-sm leading-relaxed text-neutral-600 dark:text-neutral-300">{t.action}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* 起步简历骨架 */}
       <section className="mt-6 rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900">
         <h2 className="mb-1 font-semibold text-neutral-800 dark:text-neutral-100">起步简历骨架</h2>
