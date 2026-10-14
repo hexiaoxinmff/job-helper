@@ -201,7 +201,7 @@ ${dataBlock("简历内容", trimmedResume)}
   "suggestions": ["建议1（含改写前→改写后）", "建议2", "建议3"]
 }`;
 
-  const content = await callDeepSeek("你只输出合法的 JSON，不做任何解释。", prompt, 2000);
+  const content = await callDeepSeek("你只输出合法的 JSON，不做任何解释。", prompt, 2000, UPSTREAM_TIMEOUT_HEAVY_MS);
   const parsed = parseJsonObject(content);
 
   const suggestions = Array.isArray(parsed.suggestions)
