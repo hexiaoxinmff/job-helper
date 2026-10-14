@@ -1,111 +1,136 @@
-# 求职在线助手 📡
+# 求职在线助手 Recall 📡
 
-AI 简历诊断工具：上传简历 PDF + 粘贴目标岗位 JD，自动解析并给出**匹配度评分（雷达图）**与**可执行的改进建议**。
+AI 简历诊断工具：上传简历 PDF + 粘贴目标岗位 JD，浏览器端五维评分（雷达图）→ 改进建议、AI 改写、模拟面试、投递追踪一条龙。
 
 - 🎯 面向应届生、校招求职者
-- 🔒 隐私安全：简历只在内存中处理，**分析完成立即丢弃**，不存储、不落盘
-- 🤖 支持 AI 增强建议（DeepSeek），未配置时自动降级为规则评分，功能不中断
+- 🔒 隐私红线：简历默认只在浏览器内存里处理，**永不落盘、服务端零存储**
+- 🤖 AI 增强（DeepSeek）可选：未配置时自动降级为规则评分，功能不中断
+- 🌐 线上地址：https://job-helper-live.vercel.app/
+
+> 架构说明（2026-10-14 起）：AI 代理已从 CloudBase 云函数迁入站内 **`app/api/ai-proxy/route.ts`**（Vercel serverless，`maxDuration: 30`）；`next.config.ts` 已移除 `output: "export"`。`cloudfunctions/` 等 CloudBase 遗留已于 2026-10-14 从仓库移除（git 历史可查），不再部署。
 
 ## ✨ 核心功能
 
-**首页 · 简历诊断**
-1. 📄 **简历 PDF 上传与解析**（拖拽 / 点击选择，10MB 以内，文字版 PDF）
-2. 📋 **目标岗位 JD 粘贴**
-3. 📊 **匹配度评分**：技能匹配、关键词覆盖、经历与成果、教育背景、表达规范 5 维度，雷达图可视化
-4. ✅ **改进建议清单**：命中/缺失关键词对比（**点击带 ⓘ 的关键词可查看含义**，内置 125+ 条解释字典）+ 可执行建议
-5. ✍️ **AI 简历改写**：针对缺失关键词，基于简历既有经历生成可直接粘贴的改写句（不虚构、不编造）
-6. 🖼 **报告分享卡片**：一键生成诊断报告图片（含雷达图），方便分享到朋友圈/小红书
+**`/` · 简历诊断（首页）**
+1. 📄 简历 PDF 上传与解析（拖拽 / 点击选择，10MB 以内，文字版 PDF；unpdf 浏览器端提取）
+2. 📋 目标岗位 JD 粘贴（≥20 字校验；12 行业中/英双语示例 JD 库一键加载）
+3. 📊 五维匹配度评分：技能匹配 0.30 / 关键词覆盖 0.20 / 经历与成果 0.25 / 教育背景 0.10 / 表达规范 0.15，雷达图可视化（Recharts）
+4. ✅ 改进建议清单：命中/缺失关键词对比（点击带 ⓘ 的关键词可查看含义，125+ 条解释字典）+ 可执行建议
+5. ✍️ AI 简历改写：针对缺失关键词，基于简历既有经历生成可直接粘贴的改写句（**不虚构、不编造**）
+6. 🖼 报告分享卡片：一键生成诊断报告图片（含雷达图），方便分享
 
-**`/star` · STAR 描述生成器（独立页面）**
-7. ⭐ **STAR 扩写**：输入一句经历，AI 扩写为「情境-任务-行动-结果」的简历亮点句式，附四步拆解 + 使用建议
+**`/editor` · 简历编辑器** — 20 套简历模板，所见即所得编辑
+**`/preview` · A4 打印预览** — 导出 PDF
+**`/interview` · AI 模拟面试** — 按目标岗位出题、逐题作答、AI 点评
+**`/star` · STAR 描述生成器** — 输入一句经历，AI 扩写为「情境-任务-行动-结果」亮点句式，附四步拆解
+**`/tracker` · 投递追踪** — 记录投递进度，7 天未推进自动标跟进提醒
+**`/profile` · 私人职业档案** — 默认关闭、用户主动开启；每次诊断自动沉淀「能力画像 + 成长轨迹」（仅存本地浏览器，可导出 `.json`、可一键清除）；≥2 次诊断快照后显示成长趋势折线 + 任选两次快照的五维雷达对比 + 90 天补位计划
+**`/vertical` · 垂直人群模板** — 跨专业转码 / 考公转产品 / 二战转就业 / 应届零实习 / 在职跳槽 / 海归 6 类人群的起步简历骨架与定位建议
+**`/campus` · 高校 B2B2C 落地页** — 面向高校就业中心的合作入口与封闭试点留资表单（纯前端，数据仅存本地）
 
-**`/profile` · 私人职业档案（新增）**
-8. 🗂 **跨平台私人档案**：默认关闭、用户主动开启；开启后每次诊断自动沉淀「能力画像 + 成长轨迹」，仅存本地浏览器，可导出 `.json` 携带、可一键清除。破解「简历用完即弃」，把差异化护城河做出来。
-9. 🧭 **差距补救路线**：缺失项区分「硬技能缺口 / 表达缺口」并给出可行动路线，避免笼统「学会它」或过度美化。
-10. 🛡 **置信度 + 醒目免责**：诊断结果标注置信度（低/中/高），顶部固定「AI 建议仅供参考」横幅，对齐防幻觉合规要求。
-11. 📈 **长期职业建模对比图（新增）**：沉淀 ≥ 2 次诊断快照后自动显示——能力成长趋势折线图（总分 + 五维随时间变化，标注对比点与目标线）+ **任选两次快照的五维雷达对比**（不再局限于首末）+ 对比摘要与「理想岗位目标总分」对照（可持久化保存），把单次诊断升级为「长期职业教练」。
-
-**`/vertical` · 垂直人群模板（新增）**
-12. 🎯 **垂直人群起步模板**：针对跨专业转码 / 考公转产品 / 二战失利转就业 / 应届零实习 / 在职跳槽 / 海归 6 类高价值垂直人群，提供痛点诊断、定位包装建议、推荐目标岗位（联动 JD 库）与「诚实不编造」的起步简历骨架，一键载入编辑器。
-
-**`/campus` · 高校 B2B2C 入口（新增）**
-13. 🏫 **高校就业中心合作入口**：面向高校 / 院系的 B2B2C 落地页，阐述价值主张、合作三步与隐私合规，并提供「申请封闭试点」留资表单（纯前端，数据仅存本地）。对应 PRD Roadmap 的 B2B2C 试点目标。
-
-> AI 改写与 STAR 生成依赖 DeepSeek API（需配置 `DEEPSEEK_API_KEY`）；评分与建议在无 key 时自动降级为规则引擎，功能不中断。
-
-## ✨ 本期新增能力
-
-- 🌗 **暗色模式（Dark Mode）**：导航栏一键切换亮 / 暗主题，偏好持久化到本地，首屏前同步应用 **无闪烁（FOUC）**；全站卡片、表单、图表配色随主题自适应。
-- 🌐 **多语言行业 JD 扩库**：示例 JD 库从 6 个扩到 **12 个行业**（互联网 / 数据·AI / 设计 / 市场 / 运营 / 职能等），每个岗位提供 **中文 + English** 双语 JD，顶部「语言」切换后一键加载对应语言。
-- 🛡 **错误边界（Error Boundary）**：路由级 `error.tsx`（首页 / STAR / 编辑器 / 预览 + 根级 `global-error`）与组件级 `ErrorBoundary`（包裹雷达图等易崩模块）双重兜底，单页 / 单图崩溃不影响整站，并提供「重试」恢复。
+**全站能力**：🌗 暗色模式（无闪烁 FOUC）/ 🌐 中英双语 JD 库 / 🛡 路由级 + 组件级错误边界 / 📈 长期职业建模对比
 
 ## 🛠 技术栈
 
 | 层 | 技术 | 说明 |
 |---|---|---|
-| 前端 | Next.js 16（App Router）+ Tailwind CSS | 前后端一体，少学一套框架 |
-| 后端 | CloudBase HTTP 云函数 `ai-proxy` | 隐藏 DeepSeek Key，纯前端无服务端路由 |
-| PDF 解析 | unpdf | 内置 pdf.js，无 worker 兼容问题 |
-| 可视化 | Recharts | 雷达图 |
-| AI 增强 | DeepSeek API（可选） | 未配置 key 时自动降级为规则评分 |
-| 部署 | CloudBase 静态网站托管（已上线）/ Vercel | 静态导出 `out/`，可托管到任意静态服务 |
+| 前端 | Next.js 16.3.1（App Router）+ React 19 + Tailwind v4 | 前后端一体 |
+| AI 代理 | `app/api/ai-proxy/route.ts`（Vercel serverless） | 隐藏 DeepSeek Key；temperature 0.4，强制 JSON 输出 |
+| PDF 解析 | unpdf | 浏览器端，内置 pdf.js，无 worker 兼容问题 |
+| 可视化 | Recharts | 雷达图 / 折线图 |
+| 分享卡片 | html-to-image | 诊断报告图片导出 |
+| 本地状态 | 6 个 localStorage Provider + React Context | 主题 / 简历 / 档案 / 诊断历史 / 投递 / 补位计划 |
+| 云同步 | 浏览器端 AES-256-GCM 加密 | 密钥只存本地；服务端已降级为本地（503） |
+| 部署 | Vercel | `vercel.json` 配 `maxDuration: 30` |
+
+## 🔄 诊断链路（核心）
+
+```
+上传简历 PDF ──► 粘贴/选择目标 JD
+        │
+        ▼
+浏览器 unpdf 提取文本（仅内存，不落盘不上传）
+        │
+        ▼
+规则评分引擎 lib/scoring.ts 先跑（始终执行，永远兜底）
+        │
+        ▼
+AI 开关开？ ──是──► 同源 /api/ai-proxy 并行 analyze + jdSemantics（客户端 30s 超时）
+        │否/超时/失败                                              │
+        ▼                                                          ▼
+规则结果降级输出 ◄──────────────────────────────────────────────────┘
+        │
+        ▼
+ResultView：雷达图 + 命中/缺失关键词 + 建议 + 置信度（低/中/高）+ 「AI 建议仅供参考」横幅
+        │
+        ▼
+可选：AI 改写 / STAR 扩写 / 模拟面试 / 档案沉淀 / 分享卡片
+```
+
+**关键原则**：双轨评分（规则永远先跑、AI 只覆盖/修正）；隐私红线（简历文本禁止上传服务端/写后端存储）；防幻觉三件套（置信度 + 免责横幅 + 硬技能/表达缺口区分）；AI 开关可完全关闭（关闭后不发任何外部请求）。
 
 ## 🚀 快速开始
 
 ### 1. 环境要求
 
 - Node.js 18.18+（推荐 20+）
-- npm / pnpm / yarn
+- npm
 
 ### 2. 安装与运行
 
 ```bash
-# 安装依赖
 npm install
 
-# 启动开发服务器（http://localhost:3000）
+# 开发（http://localhost:3000）
 npm run dev
 
-# 生产构建
+# 生产构建 + 本地预览
 npm run build
 npm run start
 ```
 
+`npm run dev` / `npm run build` 前会自动跑 `scripts/make-version.mjs`，生成版本号（页面底部显示「版本 …」）。
+
 ### 3. 配置 AI 增强（可选但推荐）
 
-复制 `.env.example` 为 `.env.local`，填入 DeepSeek key：
+复制 `.env.example` 为 `.env.local`：
 
 ```bash
 cp .env.example .env.local
-# 编辑 .env.local：
-DEEPSEEK_API_KEY=sk-你的key
 ```
 
-> 不配置也能用：系统会用内置的规则评分引擎（关键词匹配 + 量化检测 + 结构检测），只是建议不如 AI 生成的具体。
+| 变量 | 位置 | 说明 |
+|---|---|---|
+| `DEEPSEEK_API_KEY` | Vercel 环境变量（服务端） | DeepSeek 密钥，前端永远拿不到；不配则降级纯规则评分 |
+| `DEEPSEEK_BASE_URL` | Vercel 环境变量 | 默认 `https://api.deepseek.com` |
+| `DEEPSEEK_MODEL` | Vercel 环境变量 | 默认 `deepseek-chat` |
+| `AI_PROXY_SECRET` | Vercel 环境变量（必填生产） | 与前端 `NEXT_PUBLIC_AI_PROXY_KEY` 同值；路由侧校验 x-api-key，缺失/不匹配返回 401。不配则任何人可刷你的 DeepSeek 额度 |
+| `AI_PROXY_ALLOWED_ORIGINS` | Vercel 环境变量（可选） | 逗号分隔的 Origin 白名单；为空不限制，正式域名确认后务必收紧 |
+| `NEXT_PUBLIC_AI_PROXY_KEY` | `.env.local`（前端，构建时内联） | 与 `AI_PROXY_SECRET` 同值 |
+| `NEXT_PUBLIC_AI_PROXY_URL` | `.env.local`（可选） | 默认同源 `/api/ai-proxy`；仅 AI 代理单独部署时才改 |
+| `NEXT_PUBLIC_TRACKING_URL` | `.env.local`（可选） | 埋点上报端点；不配置则完全静默 |
 
-### 4. 部署到 Vercel（免费）
+### 4. 部署到 Vercel
 
-1. 把项目推送到 GitHub
-2. 打开 [vercel.com](https://vercel.com) → New Project → 导入仓库
-3. 在 Environment Variables 里添加 `DEEPSEEK_API_KEY`
-4. Deploy，完成 ✅
+1. 推送到 GitHub
+2. vercel.com → New Project → 导入仓库
+3. Environment Variables 添加上表服务端变量（至少 `DEEPSEEK_API_KEY` + `AI_PROXY_SECRET`）
+4. Deploy ✅
 
-> 域名：Vercel 默认给你 `xxx.vercel.app` 免费域名；想用自有域名（约 80 元/年）在 Vercel 控制台绑定即可。
+### AI 代理 action 一览（`POST /api/ai-proxy`，JSON 封装 `{ action, ...payload }`）
 
-### 5. 部署到 CloudBase 静态网站托管（当前已上线 ✅）
+| action | 说明 |
+|---|---|
+| `analyze` | AI 评分与建议，覆盖/修正规则结果 |
+| `jdSemantics` | JD 语义解析：核心技能 + 近义表述，用于修正关键词命中并重算总分 |
+| `rewrite` | 基于简历既有经历的改写句（禁止虚构） |
+| `star` | STAR 四步拆解 + 完整句式 |
+| `parseResume` / `optimizeResume` | 简历解析 / 优化（编辑器链路） |
+| `interview` / `reviewAnswer` | 模拟面试出题 / 作答点评 |
+| `applyMessage` | 求职信/私信生成 |
+| `sync` / `syncClear` | 云同步（当前部署已降级为本地，服务端返回 503） |
 
-项目已配置 `output: "export"`，`npm run build` 产出纯静态文件到 `out/`，可托管到 CloudBase 静态网站托管（免备案、免费）。
-
-- **线上地址**：`https://xiaoxin2026-personal-d1acf1a1fb0-1469931868.tcloudbaseapp.com/`
-- **部署步骤**（使用 CloudBase MCP 或 `tcb` CLI）：
-  1. `npm run build` 生成 `out/`
-  2. 开通静态托管 `manageHosting(action="enableService")`
-  3. 上传产物 `manageHosting(action="upload", localPath="out", cloudPath="/")`
-  4. 配置文档 `manageHosting(action="setWebsiteDocument", indexDocument="index.html", errorDocument="404.html")`
-- **提示**：
-  - `next build` 会清理 `.next`/`out`；在清理受限的构建环境里，可构建到干净子目录（拷贝源码 + 复用上层 `node_modules`）后上传产物，避免清理被拦截。
-  - WorkBuddy 沙箱会给 node 注入删除保护（`NODE_OPTIONS` 指向 safe-delete shim），`next build` 清理缓存时会报 `SAFE_DELETE_BULK_CONFIRM_REQUIRED`。绕过方法：构建命令前 `unset NODE_OPTIONS`；清理 `.next`/`out` 用 `cmd /c rmdir /s /q`（不经 node，不受保护限制）。
-- **主题体系**：颜色/圆角/阴影/间距全部 token 化为根 CSS 变量（`app/globals.css` 的 `--jh-*`），Tailwind v4 `@theme` 映射工具类，`lib/theme.tsx` 导出 `THEME_CSS_VARS` / `resolveThemeVars()` 供 JS 侧读取。**新增颜色一律走 `--jh-*` 变量或语义工具类（如 `bg-primary-600`），禁止硬编码十六进制**。批量替换旧色板类可用 `scripts/replace-theme-tokens.cjs`。
+安全：共享密钥校验（x-api-key）+ Origin 白名单 + 每 IP 滑动窗口限流 + 全局并发上限 + 提示注入防御；请求体 ≤1MB。
 
 ## 📁 项目结构
 
@@ -114,100 +139,78 @@ job-helper/
 ├── app/
 │   ├── layout.tsx            # 根布局（导航 + ThemeProvider + 无闪烁主题脚本）
 │   ├── page.tsx              # 首页：简历诊断
-│   ├── star/page.tsx         # 独立页面：STAR 描述生成器
-│   ├── star/error.tsx        # STAR 路由级错误边界
-│   ├── editor/page.tsx       # 简历编辑器
-│   ├── editor/error.tsx      # 编辑器路由级错误边界
-│   ├── preview/page.tsx      # 简历预览 / 导出
-│   ├── preview/error.tsx     # 预览路由级错误边界
-│   ├── error.tsx             # 根路由级错误边界
-│   └── global-error.tsx      # 根布局级错误边界（自带 html/body）
+│   ├── api/ai-proxy/route.ts # ★ AI 代理（Vercel serverless，11 个 action）
+│   ├── editor/page.tsx       # 简历编辑器（20 套模板）
+│   ├── preview/page.tsx      # A4 打印预览 / 导出
+│   ├── interview/page.tsx    # AI 模拟面试
+│   ├── star/page.tsx         # STAR 描述生成器
+│   ├── tracker/page.tsx      # 投递追踪
+│   ├── profile/page.tsx      # 私人职业档案 + 成长对比 + 90 天补位计划
+│   ├── vertical/page.tsx     # 垂直人群模板（6 类）
+│   ├── campus/page.tsx       # 高校 B2B2C 落地页
+│   └── error.tsx / global-error.tsx  # 路由级 + 根级错误边界
 ├── components/
-│   ├── NavBar.tsx            # 导航栏（含暗色切换）
-│   ├── ThemeToggle.tsx       # 亮 / 暗主题切换按钮
-│   ├── ErrorBoundary.tsx     # 通用组件级错误边界（包裹图表等易崩模块）
-│   ├── KeywordChip.tsx       # 可点击展开含义的关键词 chip
-│   ├── StarGenerator.tsx     # STAR 生成器 UI（独立组件，可复用）
-│   ├── ResultView.tsx        # 简历诊断结果页（雷达图用 ErrorBoundary 包裹）
-│   ├── resume/ResumeDocument.tsx # 简历渲染（6 套模板：经典/现代/紧凑/侧边栏/优雅/创意）
-│   └── ui/                   # Button / Card / Field / Input 基础组件（已适配暗色）
+│   ├── NavBar.tsx / ThemeToggle.tsx
+│   ├── ErrorBoundary.tsx / KeywordChip.tsx / ResultView.tsx / StarGenerator.tsx
+│   ├── resume/               # 简历渲染（ResumeDocument + template-meta，20 套模板）
+│   └── ui/                   # Button / Card / Field / Input 基础组件
 ├── lib/
 │   ├── pdf.ts                # PDF 文本提取（unpdf）
-│   ├── diagnose.ts           # 诊断编排（浏览器端评分 + AI 增强）
-│   ├── scoring.ts            # 规则评分引擎
-│   ├── ai-client.ts          # DeepSeek AI（建议/改写/STAR 三个调用）
-│   ├── jd-library.ts         # 多语言行业 JD 库（中文 / English，12 个行业）
-│   ├── theme.tsx             # 主题 Context + 无闪烁初始化脚本
-│   ├── resume-store.tsx      # 简历状态（本地持久化）
-│   ├── track.ts              # 轻量埋点
+│   ├── diagnose.ts           # 浏览器端诊断编排（规则 → AI 增强 → 近义修正 → 输出）
+│   ├── scoring.ts            # ★ 规则评分引擎（5 维权重 0.30/0.20/0.25/0.10/0.15，有校准注释，勿凭直觉改）
+│   ├── ai-client.ts          # 调用 /api/ai-proxy 的封装（失败返回 null → 降级）
+│   ├── keywords.ts           # 技能/教育/经历关键词 + 125+ 条含义字典
+│   ├── jd-library.ts         # 12 行业 × 中/英 JD 示例库
+│   ├── cloud-sync.ts         # 云同步（浏览器端 AES-256-GCM，密钥只存本地）
+│   ├── profile.tsx / theme.tsx / resume-store.tsx  # 6 个 localStorage Provider 的一部分
+│   ├── track.ts              # 轻量埋点（可 no-op）
 │   └── types.ts              # 共享类型
-├── scripts/
-│   ├── make-test-pdf.cjs     # 生成测试 PDF（英文）
-│   └── make-test-pdf-cn.py   # 生成中文测试 PDF
-└── .env.example              # 环境变量模板
+├── scripts/                  # make-version.mjs（构建前生成版本号）/ 中英测试 PDF 生成
+├── .env.example              # 环境变量模板
+├── vercel.json               # ai-proxy maxDuration: 30
+└── AGENTS.md                 # next dev 自动生成（勿手改）
 ```
 
 ## 🔧 开发指南
 
 ### 评分引擎（lib/scoring.ts）
 
-5 个维度，各 0-100 分，加权汇总为总分（权重 0.30/0.20/0.25/0.10/0.15；8-18 校准：下调纯关键词命中的「技能匹配」、上调体现简历价值的「经历与成果」，避免 JD 未识别技能词时分数虚高/虚低）：
+5 个维度各 0-100 分，加权汇总取整。权重 0.30/0.20/0.25/0.10/0.15（2026-08-18 校准：下调纯关键词命中的「技能匹配」、上调「经历与成果」，避免 JD 未识别技能词时分数虚高/虚低）——**改权重前先读文件内校准注释**。
 
-1. **技能匹配**：JD 要求的技能关键词在简历中的命中比例
-2. **关键词覆盖**：JD 全文关键词（技能+经历类）覆盖率
-3. **经历与成果**：实习/项目关键词 + 量化数据（% 万 人 次 等）+ 强动词
-4. **教育背景**：学历关键词 + JD 专业方向匹配
-5. **表达规范**：结构分段 + 标点 + 内容长度
+自定义关键词库：编辑 `lib/scoring.ts` 的 `SKILL_KEYWORDS` / `EXPERIENCE_KEYWORDS` / `EDUCATION_KEYWORDS`，或 `lib/keywords.ts` 的含义字典。
 
-自定义关键词库：直接编辑 `lib/scoring.ts` 中的 `SKILL_KEYWORDS` / `EXPERIENCE_KEYWORDS` / `EDUCATION_KEYWORDS` 数组。
+### 设计系统
 
-### AI 增强（lib/ai-client.ts + cloudfunctions/ai-proxy）
+颜色/圆角/阴影/间距全部 token 化为根 CSS 变量（`app/globals.css` 的 `--jh-*`，以 `MASTER.md` 为准），Tailwind v4 `@theme` 映射工具类。**新增颜色一律走 `--jh-*` 变量或语义工具类（如 `bg-primary-600`），禁止硬编码十六进制**。批量替换旧色板类可用 `scripts/replace-theme-tokens.cjs`。
 
-- 前端 `lib/ai-client.ts` 统一打到 CloudBase HTTP 云函数 `ai-proxy`（隐藏 DeepSeek Key，URL 由 `NEXT_PUBLIC_AI_PROXY_URL` 配置）
-- 云函数提供 4 个 action：`analyze`（评分建议）、`jdSemantics`（近义技能修正）、`rewrite`（改写）、`star`（STAR 句式）
-- 任一调用失败 / 超时（前端 8s、云函数上游 20s）→ 返回 `null`，自动降级到规则结果，功能不中断
-- 首页「AI 增强诊断」开关可关闭 AI（关闭后不发任何外部请求，仅本地规则评分，隐私红线）
-- 云函数已限制请求体 ≤1MB（防滥用）；重部署需保持 HTTP 函数形态：`tcb fn deploy ai-proxy --httpFn`
+### 给 AI Agent 的硬守则
 
-### 云函数 API 说明
-
-`POST {NEXT_PUBLIC_AI_PROXY_URL}`（JSON，统一封装 `{ action, ...payload }`）：
-
-| action | 字段 | 说明 |
-|---|---|---|
-| `analyze` | `resumeText`, `jdText` | AI 评分与建议，覆盖/修正规则结果 |
-| `jdSemantics` | `jdText` | JD 语义解析：核心技能 + 近义表述，用于修正关键词命中 |
-| `rewrite` | `resumeText`, `jdText`, `missingKeywords` | 基于简历既有经历的改写句（不虚构） |
-| `star` | `experience` | STAR 四步拆解 + 完整句式 |
-
-返回统一为 `{ ok: true, data }` 或 `{ ok: false, error }`。
-
-> 诊断全程在浏览器端完成：unpdf 解析 PDF → 规则评分（`lib/scoring.ts` 始终执行）→ AI 增强并行覆盖/修正 → 输出结果。简历文本仅在内存处理，不落库。
+1. **Next.js 16 有破坏性变更**：写代码前先查 `node_modules/next/dist/docs/` 相关指南；`AGENTS.md` 由 `next dev` 生成，**勿手改**。
+2. **隐私红线**：禁止把简历原文上传服务端/写后端存储/localStorage（档案快照仅存脱敏字段）；禁止在代码里暴露 DeepSeek Key。
+3. **降级优先**：任何 AI 相关改动都要保证无 Key/失败时主流程 100% 可用。
+4. **防幻觉**：AI 改写禁止虚构经历/数据；诊断输出必须带置信度与免责横幅。
 
 ## 🧪 本地测试
 
 ```bash
-# 1. 启动服务
 npm run dev
-
-# 2. 生成中文测试 PDF（首次需 pip install fpdf2）
+# 生成中文测试 PDF（首次需 pip install fpdf2）
 python scripts/make-test-pdf-cn.py
-
-# 3. 本地验证：浏览器打开 http://localhost:3000 上传该 PDF 走完整诊断流程
-#    （诊断全程在浏览器端完成；无 AI Key 时自动降级为规则评分）
+# 浏览器打开 http://localhost:3000 上传该 PDF，走完整诊断流程
 ```
 
 ## ⚠️ 已知限制
 
-- **不支持扫描件（图片型 PDF）**：需要文字版 PDF（Word/WPS 导出 PDF 即为文字版）
-- 关键词库基于常见岗位 JD 预置，极端冷门的岗位术语可能识别不全（可自行扩展词库）
+- **不支持扫描件（图片型 PDF）**：需要文字版 PDF（Word/WPS 导出即文字版）
+- 关键词库基于常见岗位 JD 预置，极端冷门术语可能识别不全（可自行扩展词库）
 - AI 增强需要 DeepSeek API key（费用约 10-30 元/月，取决于用量）
+- 无用户账号体系：档案仅存本机浏览器，跨设备需手动导出/导入 `.json`；云同步当前降级为本地
 
 ## 🗺 后续规划（本期未做）
 
-- [ ] 用户账号体系（Supabase Auth）
-- [ ] 诊断历史记录（Supabase PostgreSQL）
+- [ ] 用户账号体系 + 诊断历史云端存储（档案跨设备，解锁长期职业建模价值）
 - [ ] 多简历对比
+- [ ] B2B2C 试点落地（`/campus` 已有入口，需接真实留资/机构开通）
 - [ ] 付费解锁深度报告（用户量起来后再开放）
 - [ ] 简历代写 / 求职咨询引流
 

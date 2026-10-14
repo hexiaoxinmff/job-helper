@@ -6,7 +6,7 @@
     "predev": "node scripts/make-version.mjs",
     "dev": "next dev",
     "build": "node scripts/make-version.mjs && next build",
-    "start": "npx serve out",
+    "start": "next start",
     "typecheck": "tsc --noEmit",
     "lint": "eslint && tsc --noEmit"
   },
