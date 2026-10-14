@@ -11,9 +11,9 @@ import { JD_LIBRARY, JD_LOCALES, getJdById, type JdLocale } from "@/lib/jd-libra
 import { SAMPLE_RESUME_TEXT } from "@/lib/sample-resume";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
+import { AI_ENABLED_KEY, useAiAvailable } from "@/lib/ai-client";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const AI_ENABLED_KEY = "job-helper:ai-enabled"; // 默认开启 AI 增强；关闭后仅规则评分，不发外部请求
 // 示例体验默认载入的 JD：与 JD 库 fe（前端开发工程师）一致，让示例诊断跑出有区分度的结果
 const SAMPLE_JD = getJdById("fe")?.jd["zh-CN"] ?? "";
 
@@ -71,6 +71,8 @@ export default function UploadPage() {
     getAiEnabledSnapshot,
     () => true
   );
+  // AI 服务可用性：乐观默认可用，真实调用失败后各 AI 入口转诚实禁用态
+  const aiAvailable = useAiAvailable();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const stepTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   // 并发锁：防止重复点击「开始诊断」发起多次诊断
@@ -456,6 +458,11 @@ export default function UploadPage() {
               <p className="text-xs text-neutral-500 mt-0.5 dark:text-neutral-400">
                 开启后简历文本将经云函数代理发送给 AI 服务商用于生成建议，不留存；关闭后仅本地规则评分
               </p>
+              {aiEnabled && !aiAvailable && (
+                <p className="mt-1 text-xs font-medium text-warning-600 dark:text-warning-400">
+                  AI 服务维护中，当前为规则评分模式
+                </p>
+              )}
             </div>
             <button
               type="button"

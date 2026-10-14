@@ -1,6 +1,8 @@
 // 浏览器端 AI 调用封装：统一打到 ai-proxy 云函数（隐藏 DeepSeek Key）。
 // 失败时返回 null，由调用方降级为规则结果。
 
+import { useSyncExternalStore } from "react";
+
 import type { ParsedResumeInput } from "./resume-import";
 
 // 同源 AI 代理（Vercel 上为 app/api/ai-proxy 路由，本地 dev 亦同源）。
@@ -10,6 +12,48 @@ const AI_PROXY_URL = process.env.NEXT_PUBLIC_AI_PROXY_URL || "/api/ai-proxy";
 // 共享密钥（P0 配套）：与云函数环境变量 AI_PROXY_SECRET 同名，经 x-api-key 头携带。
 // 未配置时不带该头；此时若云端已启用密钥校验，请求会被 401 拒绝。
 const AI_PROXY_KEY = process.env.NEXT_PUBLIC_AI_PROXY_KEY || "";
+
+// AI 增强开关的存储键（与 app/page.tsx 开关 store 共用，唯一出处在此）
+export const AI_ENABLED_KEY = "job-helper:ai-enabled";
+
+// ===== AI 可用性状态（诚实降级）=====
+// 乐观默认可用；仅统计「AI 增强开关开启时」的真实调用结果：
+// 任一调用失败 → 置 false（各 AI 入口转为诚实禁用态），任一成功 → 恢复 true（自愈）。
+// 用户手动关闭 AI 开关属产品选择，不计入服务不可用，其调用结果不改变此状态。
+function isAiEnabledByUser(): boolean {
+  try {
+    return window.localStorage.getItem(AI_ENABLED_KEY) !== "off";
+  } catch {
+    return true;
+  }
+}
+
+type AvailabilityListener = () => void;
+const aiAvailableListeners = new Set<AvailabilityListener>();
+let aiAvailable = true;
+
+function subscribeAiAvailable(listener: AvailabilityListener): () => void {
+  aiAvailableListeners.add(listener);
+  return () => {
+    aiAvailableListeners.delete(listener);
+  };
+}
+
+function setAiAvailable(v: boolean): void {
+  if (aiAvailable === v) return;
+  aiAvailable = v;
+  aiAvailableListeners.forEach((l) => l());
+}
+
+/** 最近一次真实 AI 调用是否成功（乐观默认 true；失败置 false，成功自愈） */
+export function getAiAvailable(): boolean {
+  return aiAvailable;
+}
+
+/** 订阅 AI 可用性状态，供各 AI 入口渲染诚实禁用态 */
+export function useAiAvailable(): boolean {
+  return useSyncExternalStore(subscribeAiAvailable, getAiAvailable, () => true);
+}
 
 // 单个 AI 请求超时：重型操作（optimizeResume / parseResume）云端上限 25s，
 // 客户端放宽到 30s 避免先于服务端超时；轻量操作实际远小于此值。
@@ -56,7 +100,7 @@ function buildHeaders(): Record<string, string> {
 async function callAiProxy<T>(action: string, payload: Record<string, unknown>): Promise<T | null> {
   const cacheKey = `${action}:${hashStr(JSON.stringify(payload))}`;
   const cached = cacheGet(cacheKey) as T | null;
-  if (cached !== null) return cached;
+  if (cached !== null) return cached; // 缓存命中非真实调用，不计入可用性
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), AI_PROXY_TIMEOUT_MS);
@@ -70,10 +114,16 @@ async function callAiProxy<T>(action: string, payload: Record<string, unknown>):
     const data = await res.json().catch(() => null);
     if (!res.ok || !data || data.ok === false) {
       console.warn(`[ai-proxy] ${action} 失败:`, data?.error || res.status);
+      if (isAiEnabledByUser()) setAiAvailable(false);
       return null;
     }
     const value = (data.data as T) ?? null;
-    if (value !== null) cacheSet(cacheKey, value); // 仅缓存成功结果
+    if (value !== null) {
+      cacheSet(cacheKey, value); // 仅缓存成功结果
+      setAiAvailable(true);
+    } else if (isAiEnabledByUser()) {
+      setAiAvailable(false); // 服务有响应但载荷缺失，按不可用处理
+    }
     return value;
   } catch (err) {
     if (err instanceof DOMException && err.name === "AbortError") {
@@ -81,6 +131,7 @@ async function callAiProxy<T>(action: string, payload: Record<string, unknown>):
     } else {
       console.warn(`[ai-proxy] ${action} 网络错误:`, err);
     }
+    if (isAiEnabledByUser()) setAiAvailable(false);
     return null;
   } finally {
     clearTimeout(timer);

@@ -8,7 +8,9 @@ import {
   type InterviewReview,
 } from "@/lib/ai-client";
 import { track } from "@/lib/track";
+import { useAiAvailable } from "@/lib/ai-client";
 import PrivacyNote from "@/components/PrivacyNote";
+import { AiUnavailableNotice } from "@/components/AiUnavailableNotice";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 
@@ -49,6 +51,8 @@ export default function InterviewClient() {
   const [reviews, setReviews] = useState<Record<number, InterviewReview>>({});
   const [reviewLoading, setReviewLoading] = useState<number | null>(null);
   const [reviewMsg, setReviewMsg] = useState("");
+  // AI 服务可用性：不可用时出题/点评入口转诚实禁用态（进入页面即可见，不扑空）
+  const aiAvailable = useAiAvailable();
 
   // 从诊断结果页带入上下文（resumeText + jdText + 缺失关键词），自动生成
   useEffect(() => {
@@ -170,8 +174,19 @@ export default function InterviewClient() {
               className="w-full rounded-xl border border-neutral-300 bg-white px-4 py-2.5 text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
             />
           </div>
-          {genError && <Alert variant="danger">{genError}</Alert>}
-          <Button size="lg" className="w-full" loading={loading} onClick={() => void generate()}>
+          {!aiAvailable ? (
+            <AiUnavailableNotice />
+          ) : (
+            genError && <Alert variant="danger">{genError}</Alert>
+          )}
+          <Button
+            size="lg"
+            className="w-full"
+            loading={loading}
+            disabled={!aiAvailable}
+            title={!aiAvailable ? "AI 服务维护中，暂不能出题" : undefined}
+            onClick={() => void generate()}
+          >
             {loading ? "AI 正在出题…" : "生成面试追问"}
           </Button>
         </div>
@@ -186,13 +201,18 @@ export default function InterviewClient() {
             </p>
             <button
               onClick={() => void generate()}
-              disabled={loading}
-              className="text-sm text-primary-600 hover:underline disabled:opacity-50 dark:text-primary-400"
+              disabled={loading || !aiAvailable}
+              title={!aiAvailable ? "AI 服务维护中，暂不能重新出题" : undefined}
+              className="text-sm text-primary-600 hover:underline disabled:cursor-not-allowed disabled:opacity-50 dark:text-primary-400"
             >
               ↻ 重新出题
             </button>
           </div>
-          {reviewMsg && <Alert variant="warning">{reviewMsg}</Alert>}
+          {!aiAvailable ? (
+            <AiUnavailableNotice />
+          ) : (
+            reviewMsg && <Alert variant="warning">{reviewMsg}</Alert>
+          )}
           {questions.map((q, i) => {
             const rev = reviews[i];
             const answered = (answers[i] ?? "").trim().length > 0;
@@ -226,7 +246,8 @@ export default function InterviewClient() {
                   <Button
                     size="sm"
                     loading={reviewLoading === i}
-                    disabled={!answered}
+                    disabled={!answered || !aiAvailable}
+                    title={!aiAvailable ? "AI 服务维护中，暂不能点评" : undefined}
                     onClick={() => void review(i)}
                   >
                     {rev ? "重新点评" : "AI 点评"}

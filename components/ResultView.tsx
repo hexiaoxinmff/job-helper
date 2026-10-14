@@ -16,6 +16,8 @@ import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { track } from "@/lib/track";
 import { useCopy } from "@/lib/use-copy";
+import { useAiAvailable } from "@/lib/ai-client";
+import { AiUnavailableNotice } from "./AiUnavailableNotice";
 import {
   generateResumeRewrites,
   optimizeResumeForJd,
@@ -77,6 +79,8 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
   const { items: remediationItems, add: addRemediation } = useRemediation();
   const { addVersion, setResume } = useResume();
   const router = useRouter();
+  // AI 服务可用性：不可用时三处 AI 区块渲染为诚实禁用态卡片（替代静默不渲染 / 扑空报错）
+  const aiAvailable = useAiAvailable();
   const chartData = result.dimensions.map((d) => ({
     dimension: d.name,
     score: d.score,
@@ -581,8 +585,8 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
         </div>
       )}
 
-      {/* AI 简历改写（仅 AI 增强时展示，对齐 AC-04：无 AI 能力时不展示依赖区） */}
-      {result.aiEnhanced && (
+      {/* AI 简历改写（AI 增强时展示；服务不可用时渲染为诚实禁用态卡片，替代静默不渲染） */}
+      {(result.aiEnhanced || !aiAvailable) && (
       <div className="rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900">
         <div className="mb-1 flex items-center justify-between">
           <h2 className="font-semibold text-neutral-800 dark:text-neutral-100">AI 简历改写</h2>
@@ -592,6 +596,8 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
           针对缺失关键词，基于你简历的既有经历生成可直接粘贴的改写句（不虚构、不编造）
         </p>
 
+        {aiAvailable ? (
+          <>
         {rewrites === null && !rewriteMsg && (
           <button
             onClick={runRewrite}
@@ -649,11 +655,15 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
         {rewrites && rewrites.length === 0 && !rewriteMsg && (
           <p className="text-sm text-neutral-500 dark:text-neutral-400">没有可改写的缺失关键词。</p>
         )}
+          </>
+        ) : (
+          <AiUnavailableNotice />
+        )}
       </div>
       )}
 
-      {/* 按 JD 智能优化简历（仅 AI 增强时展示）：一键生成整份定向优化简历，预览后灌入编辑器（新建版本） */}
-      {result.aiEnhanced && (
+      {/* 按 JD 智能优化简历（AI 增强时展示；服务不可用时渲染为诚实禁用态卡片） */}
+      {(result.aiEnhanced || !aiAvailable) && (
         <div className="rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900">
           <div className="mb-1 flex items-center justify-between">
             <h2 className="font-semibold text-neutral-800 dark:text-neutral-100">按 JD 智能优化简历</h2>
@@ -663,6 +673,8 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
             根据这份 JD 与诊断出的缺失项，AI 直接在你的简历基础上做定向优化（嵌入关键词、对齐岗位优势、调整技能），生成一份可编辑的新简历版本。不虚构、不夸大。
           </p>
 
+          {aiAvailable ? (
+            <>
           {!optResult && !optMsg && (
             <button
               onClick={runOptimize}
@@ -688,13 +700,17 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
               {optLoading ? "AI 优化中…" : "重试"}
             </button>
           )}
+            </>
+          ) : (
+            <AiUnavailableNotice />
+          )}
         </div>
       )}
 
       {/* STAR 已拆为独立页面（顶部导航可进入），此处不再展示 */}
 
-      {/* 求职自荐话术（仅 AI 增强时展示）：3 个渠道可直接粘贴的打招呼文案 */}
-      {result.aiEnhanced && (
+      {/* 求职自荐话术（AI 增强时展示；服务不可用时渲染为诚实禁用态卡片）：3 个渠道可直接粘贴的打招呼文案 */}
+      {(result.aiEnhanced || !aiAvailable) && (
         <div className="rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900">
           <div className="mb-1 flex items-center justify-between">
             <h2 className="font-semibold text-neutral-800 dark:text-neutral-100">求职自荐话术</h2>
@@ -704,6 +720,8 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
             根据这份简历与 JD，生成 BOSS 直聘 / 邮箱 / 微信 三个渠道可直接粘贴的打招呼文案。不虚构、不夸大。
           </p>
 
+          {aiAvailable ? (
+            <>
           {!applyResult && !applyMsg && (
             <button
               onClick={runApplyMessage}
@@ -763,6 +781,10 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
               </button>
             </div>
           )}
+            </>
+          ) : (
+            <AiUnavailableNotice />
+          )}
         </div>
       )}
 
@@ -809,16 +831,16 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
         <p className="mb-4 mt-1 text-sm text-neutral-500 dark:text-neutral-400">基于这份诊断，选一个能立刻推进的方向。</p>
         <div className="grid gap-3 sm:grid-cols-3">
           <button
-            onClick={result.aiEnhanced ? runOptimize : () => router.push("/editor")}
+            onClick={result.aiEnhanced && aiAvailable ? runOptimize : () => router.push("/editor")}
             disabled={optLoading}
             className="group rounded-xl border border-neutral-200 bg-white p-4 text-left transition-colors hover:border-primary-400 hover:bg-primary-50 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:border-primary-700 dark:hover:bg-primary-950/40"
           >
             <span className="text-xl">✍️</span>
             <p className="mt-1.5 text-sm font-semibold text-neutral-800 group-hover:text-primary-700 dark:text-neutral-100 dark:group-hover:text-primary-300">
-              {result.aiEnhanced ? "优化简历" : "打开编辑器"}
+              {result.aiEnhanced && aiAvailable ? "优化简历" : "打开编辑器"}
             </p>
             <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
-              {result.aiEnhanced ? "一键按 JD 生成优化版" : "手动润色这份简历"}
+              {result.aiEnhanced && aiAvailable ? "一键按 JD 生成优化版" : "手动润色这份简历"}
             </p>
           </button>
           <button

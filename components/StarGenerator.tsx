@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { track } from "@/lib/track";
-import { generateStarDescription } from "@/lib/ai-client";
+import { generateStarDescription, getAiAvailable, useAiAvailable } from "@/lib/ai-client";
 import { useResume } from "@/lib/resume-store";
+import { AiUnavailableNotice } from "./AiUnavailableNotice";
 
 interface StarResult {
   star: string;
@@ -26,6 +27,8 @@ export default function StarGenerator() {
   const [copied, setCopied] = useState(false);
   const [added, setAdded] = useState(false);
   const { setResume } = useResume();
+  // AI 服务可用性：不可用时「生成」转诚实禁用态
+  const aiAvailable = useAiAvailable();
 
   useEffect(() => {
     track("star_page_view");
@@ -49,7 +52,10 @@ export default function StarGenerator() {
     try {
       const res = await generateStarDescription(trimmed);
       if (!res) {
-        setStarMsg("STAR 生成暂不可用，请稍后重试");
+        // 可用性状态翻转后由禁用态提示接管；仅当状态未翻转（如用户已关闭 AI 开关，不计入可用性）时兜底提示
+        if (getAiAvailable()) {
+          setStarMsg("STAR 生成暂不可用，请稍后重试");
+        }
         track("star_generate_error", { reason: "null" });
         return;
       }
@@ -137,16 +143,21 @@ export default function StarGenerator() {
           ))}
         </div>
 
-        {starMsg && (
-          <p className="mt-3 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-neutral-600 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
-            {starMsg}
-          </p>
+        {!aiAvailable ? (
+          <AiUnavailableNotice className="mt-3" />
+        ) : (
+          starMsg && (
+            <p className="mt-3 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-neutral-600 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
+              {starMsg}
+            </p>
+          )
         )}
 
         <button
           onClick={runStar}
-          disabled={starLoading}
-          className="mt-4 w-full rounded-xl bg-accent-600 py-3 font-medium text-white transition-colors hover:bg-accent-700 disabled:opacity-50"
+          disabled={starLoading || !aiAvailable}
+          title={!aiAvailable ? "AI 服务维护中，暂不能生成" : undefined}
+          className="mt-4 w-full rounded-xl bg-accent-600 py-3 font-medium text-white transition-colors hover:bg-accent-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {starLoading ? "生成中…" : "生成 STAR 句式"}
         </button>
