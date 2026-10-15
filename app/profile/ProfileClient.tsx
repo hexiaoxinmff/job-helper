@@ -66,7 +66,7 @@ export default function ProfileClient() {
     setSyncMsg(null);
     track("cloud_sync_click");
     // 组装加密简历（开启「同步简历」时）
-    let resumes: SyncResume[] = [];
+    const resumes: SyncResume[] = [];
     let resumeSyncNote = "";
     if (resumeSyncOn && keyReady) {
       try {

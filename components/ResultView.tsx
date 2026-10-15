@@ -35,6 +35,8 @@ import { getJdById } from "@/lib/jd-library";
 import { resolveThemeVars } from "@/lib/theme";
 import { useResume } from "@/lib/resume-store";
 import { normalizeParsedResume, isResumeEmpty } from "@/lib/normalize-resume";
+import { parseResumeByRules } from "@/lib/resume-import";
+import { setInterviewPrefill } from "@/lib/interview-prefill";
 import { useRouter } from "next/navigation";
 
 function confidenceLabel(c?: "low" | "medium" | "high"): { text: string; cls: string } {
@@ -51,6 +53,8 @@ interface Props {
   onReset: () => void;
   /** 反向岗位推荐回调：点击推荐方向后，用该 JD 重新诊断 */
   onReDiagnose?: (jdText: string, jdId?: string) => void;
+  /** 本次诊断是否为示例简历体验（示例场景提供「导入编辑器继续优化」入口） */
+  isSample?: boolean;
 }
 
 interface RewriteItem {
@@ -73,7 +77,7 @@ function scoreLabel(score: number): string {
   return "待改进";
 }
 
-export default function ResultView({ result, resumeText, jdText, onReset, onReDiagnose }: Props) {
+export default function ResultView({ result, resumeText, jdText, onReset, onReDiagnose, isSample }: Props) {
   const { profile, appendSnapshot } = useProfile();
   const { append: appendDiagnosis } = useDiagnosisHistory();
   const { items: remediationItems, add: addRemediation } = useRemediation();
@@ -269,22 +273,33 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
     track("report_copy");
   };
 
-  // AI 模拟面试入口：把当前简历 + JD + 缺失关键词带入面试页（会话级，不落盘）
+  // AI 模拟面试入口：把当前简历 + JD + 缺失关键词经内存中转带入面试页（一次性，不落盘）
   const goInterview = () => {
-    try {
-      sessionStorage.setItem(
-        "job-helper:interview-ctx",
-        JSON.stringify({
-          resumeText,
-          jdText,
-          missingKeywords: result.missingKeywords,
-        })
-      );
-    } catch {
-      /* 忽略写入失败 */
-    }
+    setInterviewPrefill(resumeText, jdText, result.missingKeywords);
     track("interview_enter");
-    window.location.href = "/interview";
+    router.push("/interview");
+  };
+
+  // 示例简历导入编辑器：走本地规则解析（无 AI、不上传），新建版本灌入后跳编辑器
+  const [sampleImportMsg, setSampleImportMsg] = useState("");
+  const importSampleToEditor = () => {
+    setSampleImportMsg("");
+    try {
+      const parsed = parseResumeByRules(resumeText);
+      const normalized = normalizeParsedResume(parsed);
+      if (isResumeEmpty(normalized)) {
+        setSampleImportMsg("未能从示例文本解析出有效内容，请直接把文本复制到编辑器");
+        track("sample_import_editor_error", { reason: "empty" });
+        return;
+      }
+      addVersion("示例简历"); // 新建版本并切为当前编辑版本，不打扰用户已有简历
+      setResume(normalized);
+      track("sample_import_editor");
+      router.push("/editor");
+    } catch {
+      setSampleImportMsg("导入失败，请重试；也可以直接把示例文本复制到编辑器");
+      track("sample_import_editor_error", { reason: "exception" });
+    }
   };
 
   // 按 JD 智能优化简历：调 AI 生成定向优化后的结构化简历 + 修改点，预览后灌入编辑器（新建版本）
@@ -334,6 +349,27 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
       <Alert variant="warning">
         ⚠️ AI 建议仅供参考，关键求职决策请结合自身情况与人工判断；本报告不构成任何录用保证。
       </Alert>
+
+      {/* 示例场景专属：把示例简历经本地规则解析灌入编辑器，避免进编辑器是空白模板 */}
+      {isSample && (
+        <div className="rounded-2xl border border-primary-200 bg-white p-6 dark:border-primary-900 dark:bg-neutral-900">
+          <div className="mb-1 flex items-center gap-2">
+            <h2 className="font-semibold text-neutral-800 dark:text-neutral-100">这是示例简历的诊断</h2>
+            <span className="rounded-full bg-primary-100 px-2 py-0.5 text-xs font-medium text-primary-700 dark:bg-primary-950 dark:text-primary-300">
+              示例
+            </span>
+          </div>
+          <p className="mb-4 text-sm text-neutral-500 dark:text-neutral-400">
+            示例内容不会自动进入编辑器。点击导入会在编辑器中新建「示例简历」版本并按板块填入，可在其上继续修改，不影响你已有的简历。
+          </p>
+          <Button onClick={importSampleToEditor}>导入编辑器继续优化</Button>
+          {sampleImportMsg && (
+            <Alert variant="danger" className="mt-3">
+              {sampleImportMsg}
+            </Alert>
+          )}
+        </div>
+      )}
 
       {/* 可导出的报告区 */}
       <div ref={reportRef} className="space-y-6 p-1">
@@ -845,13 +881,17 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
           </button>
           <button
             onClick={goInterview}
-            className="group rounded-xl border border-neutral-200 bg-white p-4 text-left transition-colors hover:border-primary-400 hover:bg-primary-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:border-primary-700 dark:hover:bg-primary-950/40"
+            disabled={!aiAvailable}
+            title={!aiAvailable ? "AI 服务维护中，暂不能进入模拟面试" : undefined}
+            className="group rounded-xl border border-neutral-200 bg-white p-4 text-left transition-colors hover:border-primary-400 hover:bg-primary-50 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-neutral-200 disabled:hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:border-primary-700 dark:hover:bg-primary-950/40 dark:disabled:hover:bg-neutral-900"
           >
             <span className="text-xl">🎤</span>
             <p className="mt-1.5 text-sm font-semibold text-neutral-800 group-hover:text-primary-700 dark:text-neutral-100 dark:group-hover:text-primary-300">
               AI 模拟面试
             </p>
-            <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">针对缺失项专项演练</p>
+            <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
+              {!aiAvailable ? "AI 服务维护中，暂不可用" : "针对缺失项专项演练"}
+            </p>
           </button>
           <button
             onClick={scrollToRemediation}
@@ -885,6 +925,8 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
         <Button
           variant="outline"
           onClick={goInterview}
+          disabled={!aiAvailable}
+          title={!aiAvailable ? "AI 服务维护中，暂不能进入模拟面试" : undefined}
           className="flex-1"
         >
           AI 模拟面试

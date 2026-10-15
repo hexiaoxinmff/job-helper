@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { track } from "@/lib/track";
 import PrivacyNote from "@/components/PrivacyNote";
+import BackToDiagnose from "@/components/BackToDiagnose";
 import { Field } from "@/components/ui/Field";
 import { Input, Textarea } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -251,6 +252,8 @@ export default function CampusClient() {
           )}
         </div>
       </section>
+
+      <BackToDiagnose />
 
       <PrivacyNote>
         隐私承诺：本页申请表单为纯前端演示，留资仅存于你本地浏览器（localStorage），不上传任何服务器。学生端工具同样遵循「简历不落盘、档案仅本地」原则。

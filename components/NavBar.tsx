@@ -12,11 +12,14 @@ interface NavItem {
   label: string;
   /** 24×24 stroke 图标 path d（currentColor 渲染） */
   icon: string;
+  /** 可选附加 circle（如 feather eye 的瞳孔），与 path 同色同宽 */
+  circle?: { cx: number; cy: number; r: number };
 }
 
 const NAV_ITEMS: NavItem[] = [
   { href: "/", label: "简历诊断", icon: "M22 12h-4l-3 9L9 3l-3 9H2" },
   { href: "/editor", label: "简历编辑器", icon: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6" },
+  { href: "/preview", label: "简历预览", icon: "M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z", circle: { cx: 12, cy: 12, r: 3 } },
   { href: "/interview", label: "AI 模拟面试", icon: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" },
   { href: "/star", label: "STAR 生成器", icon: "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z" },
   { href: "/tracker", label: "投递追踪", icon: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM3.6 9h16.8M3.6 15h16.8M9 3.6v16.8M15 3.6v16.8" },
@@ -25,15 +28,15 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/campus", label: "高校入口", icon: "M22 10L12 5 2 10l10 5 10-5zM6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5" },
 ];
 
-/** 侧栏分组（顺序即展示顺序） */
+/** 侧栏分组（顺序即展示顺序）：核心工具 = 诊断/编辑器/预览/面试 */
 const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
-  { label: "核心工具", items: NAV_ITEMS.slice(0, 3) },
-  { label: "求职工具", items: NAV_ITEMS.slice(3, 5) },
-  { label: "数据与拓展", items: NAV_ITEMS.slice(5) },
+  { label: "核心工具", items: NAV_ITEMS.slice(0, 4) },
+  { label: "求职工具", items: NAV_ITEMS.slice(4, 6) },
+  { label: "数据与拓展", items: NAV_ITEMS.slice(6) },
 ];
 
 /** 内联图标（统一 18×18，随字号/激活态变色） */
-function NavIcon({ d }: { d: string }) {
+function NavIcon({ d, circle }: { d: string; circle?: NavItem["circle"] }) {
   return (
     <svg
       width="18"
@@ -48,6 +51,7 @@ function NavIcon({ d }: { d: string }) {
       className="shrink-0"
     >
       <path d={d} />
+      {circle && <circle cx={circle.cx} cy={circle.cy} r={circle.r} />}
     </svg>
   );
 }
@@ -171,7 +175,7 @@ export default function NavBar() {
                         : "text-neutral-600 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800"
                     }`}
                   >
-                    <NavIcon d={item.icon} />
+                    <NavIcon d={item.icon} circle={item.circle} />
                     {item.label}
                   </Link>
                 ))}
@@ -200,7 +204,7 @@ export default function NavBar() {
               <div className="space-y-1">
                 {group.items.map((item) => (
                   <Link key={item.href} href={item.href} className={itemClass(item.href)}>
-                    <NavIcon d={item.icon} />
+                    <NavIcon d={item.icon} circle={item.circle} />
                     {item.label}
                   </Link>
                 ))}

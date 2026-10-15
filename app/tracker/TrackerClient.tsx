@@ -12,6 +12,7 @@ import { JD_LIBRARY } from "@/lib/jd-library";
 import { useResume } from "@/lib/resume-store";
 import { track } from "@/lib/track";
 import PrivacyNote from "@/components/PrivacyNote";
+import BackToDiagnose from "@/components/BackToDiagnose";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 
@@ -570,6 +571,8 @@ export default function TrackerClient() {
           </table>
         </div>
       )}
+
+      <BackToDiagnose />
 
       <div className="mt-8">
         <PrivacyNote>

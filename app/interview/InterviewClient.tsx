@@ -9,36 +9,11 @@ import {
 } from "@/lib/ai-client";
 import { track } from "@/lib/track";
 import { useAiAvailable } from "@/lib/ai-client";
+import { consumeInterviewPrefill } from "@/lib/interview-prefill";
 import PrivacyNote from "@/components/PrivacyNote";
 import { AiUnavailableNotice } from "@/components/AiUnavailableNotice";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
-
-const CTX_KEY = "job-helper:interview-ctx";
-
-interface InterviewCtx {
-  resumeText: string;
-  jdText: string;
-  missingKeywords: string[];
-}
-
-function readCtx(): InterviewCtx | null {
-  try {
-    const raw = sessionStorage.getItem(CTX_KEY);
-    if (!raw) return null;
-    const c = JSON.parse(raw) as Partial<InterviewCtx>;
-    if (!c || typeof c !== "object") return null;
-    return {
-      resumeText: String(c.resumeText ?? ""),
-      jdText: String(c.jdText ?? ""),
-      missingKeywords: Array.isArray(c.missingKeywords)
-        ? c.missingKeywords.filter((k) => typeof k === "string")
-        : [],
-    };
-  } catch {
-    return null;
-  }
-}
 
 export default function InterviewClient() {
   const [resumeText, setResumeText] = useState("");
@@ -51,25 +26,23 @@ export default function InterviewClient() {
   const [reviews, setReviews] = useState<Record<number, InterviewReview>>({});
   const [reviewLoading, setReviewLoading] = useState<number | null>(null);
   const [reviewMsg, setReviewMsg] = useState("");
+  // 诊断页带入提示（内存中转，读一次即清空；仅提示用）
+  const [prefillNotice, setPrefillNotice] = useState("");
   // AI 服务可用性：不可用时出题/点评入口转诚实禁用态（进入页面即可见，不扑空）
   const aiAvailable = useAiAvailable();
 
-  // 从诊断结果页带入上下文（resumeText + jdText + 缺失关键词），自动生成
+  // 从诊断结果页带入上下文（resumeText + jdText + 缺失关键词），填入输入框供确认
   useEffect(() => {
-    const ctx = readCtx();
-    if (!ctx) return;
-    if (!ctx.resumeText || !ctx.jdText) return;
+    const ctx = consumeInterviewPrefill();
+    if (!ctx || !ctx.resumeText) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 挂载时一次性消费内存中转的外部值，只能在 effect 里初始化表单
     setResumeText(ctx.resumeText);
-    setJdText(ctx.jdText);
-    setMissingInput(ctx.missingKeywords.join("、"));
-    try {
-      sessionStorage.removeItem(CTX_KEY);
-    } catch {
-      /* 忽略 */
+    if (ctx.jdText) setJdText(ctx.jdText);
+    if (ctx.missingKeywords.length > 0) {
+      setMissingInput(ctx.missingKeywords.join("、"));
     }
-    // 自动生成（仅当未生成过）
-    void generate(ctx.resumeText, ctx.jdText, ctx.missingKeywords);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setPrefillNotice("已带入诊断简历，确认内容后点击「生成面试追问」即可开始。");
+    track("interview_prefill_applied", { missing: ctx.missingKeywords.length });
   }, []);
 
   const generate = async (r?: string, jdArg?: string, missingArg?: string[]) => {
@@ -139,6 +112,7 @@ export default function InterviewClient() {
       {/* 输入区（未生成时显示） */}
       {!questions && (
         <div className="space-y-4 rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900">
+          {prefillNotice && <Alert variant="success">{prefillNotice}</Alert>}
           <div>
             <label className="mb-1.5 block text-sm font-medium text-neutral-700 dark:text-neutral-200">
               简历文本
@@ -298,7 +272,7 @@ export default function InterviewClient() {
       )}
 
       <PrivacyNote>
-        隐私承诺：简历与作答文本仅在你生成追问 / 点评时经云函数代理转发给 AI 服务商，不留存、不记录；页面无任何数据落盘（除浏览器会话内的临时带入）。
+        隐私承诺：简历与作答文本仅在你生成追问 / 点评时经云函数代理转发给 AI 服务商，不留存、不记录；页面无任何数据落盘（诊断页带入的上下文仅存于内存，刷新即失效）。
       </PrivacyNote>
     </section>
   );

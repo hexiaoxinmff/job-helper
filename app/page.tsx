@@ -551,6 +551,7 @@ export default function UploadPage() {
           jdText={jdText}
           onReset={handleReset}
           onReDiagnose={handleReDiagnose}
+          isSample={usingSample}
         />
       )}
     </main>

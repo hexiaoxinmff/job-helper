@@ -8,6 +8,7 @@ import { getJdById, JD_LOCALES, type JdLocale } from "@/lib/jd-library";
 import { useResume } from "@/lib/resume-store";
 import { useCopy } from "@/lib/use-copy";
 import PrivacyNote from "@/components/PrivacyNote";
+import BackToDiagnose from "@/components/BackToDiagnose";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { track } from "@/lib/track";
@@ -70,6 +71,8 @@ export default function VerticalClient() {
             </button>
           ))}
         </div>
+
+        <BackToDiagnose />
 
         <PrivacyNote>
           模板仅提供结构引导与占位示例，不会替你编造经历；最终简历里的所有内容都来自你自己填写。
@@ -202,6 +205,8 @@ export default function VerticalClient() {
           用此模板在编辑器中打开
         </Button>
       </section>
+
+      <BackToDiagnose />
 
       <PrivacyNote>
         模板仅提供结构引导与占位示例，不会替你编造经历；最终简历里的所有内容都来自你自己填写。
