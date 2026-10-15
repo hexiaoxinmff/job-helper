@@ -113,6 +113,13 @@ export default function CampusClient() {
         </div>
       </header>
 
+      {/* 页面说明：分清机构老师与学生两类访客的路径 */}
+      <div className="mb-10 rounded-2xl border border-primary-200 bg-primary-50/60 p-4 dark:border-primary-900 dark:bg-neutral-900">
+        <p className="text-sm leading-relaxed text-neutral-600 dark:text-neutral-300">
+          📌 本页说明：面向高校就业中心 / 院系老师，介绍「封闭试点」合作方式，并在页尾提交申请；学生无需等待合作，点上方「体验学生端工具」即可直接使用简历诊断等全部功能。
+        </p>
+      </div>
+
       {/* Why */}
       <section className="mb-10">
         <h2 className="mb-5 text-xl font-semibold text-neutral-800 dark:text-neutral-100">为什么是高校？</h2>
@@ -256,7 +263,7 @@ export default function CampusClient() {
       <BackToDiagnose />
 
       <PrivacyNote>
-        隐私承诺：本页申请表单为纯前端演示，留资仅存于你本地浏览器（localStorage），不上传任何服务器。学生端工具同样遵循「简历不落盘、档案仅本地」原则。
+        隐私说明：本页申请表单为纯前端演示，留资仅存于你本地浏览器（localStorage），不上传任何服务器。学生端工具同样遵循「简历不落盘、档案仅本地」原则。
       </PrivacyNote>
     </main>
   );

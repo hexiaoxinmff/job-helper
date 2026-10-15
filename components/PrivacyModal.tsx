@@ -103,7 +103,7 @@ export default function PrivacyModal() {
             <div>
               <p className="text-sm font-medium text-neutral-800 dark:text-neutral-100">AI 仅转发</p>
               <p className="mt-0.5 text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
-                开启 AI 增强时，文本经云函数代理转发给 AI 服务商生成建议，不留存、不记录，可随时关闭。
+                开启 AI 增强时，简历文本将发送至 AI 服务做结构化识别，不留存、不记录，可随时关闭。
               </p>
             </div>
           </li>

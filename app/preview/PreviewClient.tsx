@@ -36,6 +36,12 @@ export default function PreviewClient() {
 
   return (
     <main className="flex-1 w-full mx-auto px-4 py-10 dark:bg-neutral-950">
+      <div className="max-w-3xl mx-auto mb-6 print:hidden">
+        <h1 className="text-3xl font-bold text-neutral-900 dark:text-neutral-100">简历预览</h1>
+        <p className="mt-2 text-neutral-600 dark:text-neutral-300">
+          查看简历的 A4 排版效果；内容修改请回编辑器，定稿后在此「导出 PDF」。也可以从左侧导航随时进入本页。
+        </p>
+      </div>
       <div className="max-w-3xl mx-auto flex items-center justify-between mb-6 print:hidden">
         <Link href="/editor" className="text-sm text-primary-600 hover:underline dark:text-primary-400">
           ← 返回编辑

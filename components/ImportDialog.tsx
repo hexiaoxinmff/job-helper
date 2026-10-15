@@ -124,14 +124,14 @@ export default function ImportDialog({
     try {
       const ai = await parseResumeByAi(text);
       if (!ai) {
-        setError("AI 解析失败（可能超时或服务不可用），已保留规则解析结果。");
+        setError("AI 解析失败（可能超时或服务暂不可用），已保留规则解析结果。");
         return;
       }
       onImport(ai);
       reset();
       onClose();
-    } catch (e) {
-      setError(`AI 解析出错：${e instanceof Error ? e.message : String(e)}`);
+    } catch {
+      setError("AI 解析失败（可能超时或服务暂不可用），已保留规则解析结果。");
     } finally {
       setAiLoading(false);
     }

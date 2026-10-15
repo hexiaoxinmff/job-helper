@@ -640,8 +640,13 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
             disabled={rewriteLoading}
             className="w-full rounded-xl bg-accent-600 py-3 font-medium text-white transition-colors hover:bg-accent-700 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
-            {rewriteLoading ? "AI 改写中…" : "一键生成改写建议"}
+            {rewriteLoading ? "AI 改写中…" : "✨ AI 生成改写建议"}
           </button>
+        )}
+        {rewrites === null && !rewriteMsg && (
+          <p className="mt-2 text-[11px] leading-relaxed text-neutral-400 dark:text-neutral-500">
+            🔒 简历与 JD 文本仅用于本次生成：发送至 AI 服务做结构化识别，不留存。
+          </p>
         )}
 
         {rewriteMsg && (
@@ -717,8 +722,13 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
               disabled={optLoading}
               className="w-full rounded-xl bg-accent-600 py-3 font-medium text-white transition-colors hover:bg-accent-700 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
-              {optLoading ? "AI 优化中…" : "一键优化简历"}
+              {optLoading ? "AI 优化中…" : "✨ AI 优化简历"}
             </button>
+          )}
+          {!optResult && !optMsg && (
+            <p className="mt-2 text-[11px] leading-relaxed text-neutral-400 dark:text-neutral-500">
+              🔒 简历与 JD 文本仅用于本次生成：发送至 AI 服务做结构化识别，不留存。
+            </p>
           )}
 
           {optMsg && (
@@ -764,8 +774,13 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
               disabled={applyLoading}
               className="w-full rounded-xl bg-accent-600 py-3 font-medium text-white transition-colors hover:bg-accent-700 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
-              {applyLoading ? "AI 生成中…" : "一键生成自荐话术"}
+              {applyLoading ? "AI 生成中…" : "✨ AI 生成自荐话术"}
             </button>
+          )}
+          {!applyResult && !applyMsg && (
+            <p className="mt-2 text-[11px] leading-relaxed text-neutral-400 dark:text-neutral-500">
+              🔒 简历与 JD 文本仅用于本次生成：发送至 AI 服务做结构化识别，不留存。
+            </p>
           )}
 
           {applyMsg && (
@@ -867,16 +882,15 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
         <p className="mb-4 mt-1 text-sm text-neutral-500 dark:text-neutral-400">基于这份诊断，选一个能立刻推进的方向。</p>
         <div className="grid gap-3 sm:grid-cols-3">
           <button
-            onClick={result.aiEnhanced && aiAvailable ? runOptimize : () => router.push("/editor")}
-            disabled={optLoading}
+            onClick={() => router.push("/editor")}
             className="group rounded-xl border border-neutral-200 bg-white p-4 text-left transition-colors hover:border-primary-400 hover:bg-primary-50 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:border-primary-700 dark:hover:bg-primary-950/40"
           >
             <span className="text-xl">✍️</span>
             <p className="mt-1.5 text-sm font-semibold text-neutral-800 group-hover:text-primary-700 dark:text-neutral-100 dark:group-hover:text-primary-300">
-              {result.aiEnhanced && aiAvailable ? "优化简历" : "打开编辑器"}
+              打开编辑器
             </p>
             <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
-              {result.aiEnhanced && aiAvailable ? "一键按 JD 生成优化版" : "手动润色这份简历"}
+              手动润色这份简历；AI 定向优化见下方专属卡片
             </p>
           </button>
           <button
@@ -924,19 +938,10 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
         </Button>
         <Button
           variant="outline"
-          onClick={goInterview}
-          disabled={!aiAvailable}
-          title={!aiAvailable ? "AI 服务维护中，暂不能进入模拟面试" : undefined}
-          className="flex-1"
-        >
-          AI 模拟面试
-        </Button>
-        <Button
-          variant="outline"
           onClick={onReset}
           className="flex-1"
         >
-          再测一份
+          换简历重新诊断
         </Button>
       </div>
 

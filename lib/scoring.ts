@@ -42,7 +42,7 @@ export function analyzeResume(
   // 2. 维度评分
   const dimensions: DimensionScore[] = [];
 
-  // 维度一：技能匹配度（JD 要求的技能，简历命中比例）
+  // 维度一：技能匹配（JD 要求的技能，简历命中比例）
   const requiredSkills = SKILL_KEYWORDS.filter((kw) => jd.includes(kw));
   const skillScore = requiredSkills.length
     ? Math.round(
@@ -162,7 +162,7 @@ export function analyzeResume(
   // 维度感知的针对性建议（规则增强：无 AI 时也能给出可操作方向）
   const dimScore = (n: string) => dimensions.find((d) => d.name === n)?.score ?? 100;
   if (dimScore("技能匹配") < 60) {
-    suggestions.push("技能匹配度偏低：把 JD 最看重的技能放到简历靠前位置，并在项目/工作中用具体产出证明，而非只列名词。");
+    suggestions.push("「技能匹配」偏低：把 JD 最看重的技能放到简历靠前位置，并在项目/工作中用具体产出证明，而非只列名词。");
   }
   if (dimScore("经历与成果") < 50) {
     suggestions.push("经历与成果偏弱：用 STAR 结构（情境-任务-行动-结果）重写经历，每条写成「动词+对象+量化结果」。");

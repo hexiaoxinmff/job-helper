@@ -159,8 +159,11 @@ export default function StarGenerator() {
           title={!aiAvailable ? "AI 服务维护中，暂不能生成" : undefined}
           className="mt-4 w-full rounded-xl bg-accent-600 py-3 font-medium text-white transition-colors hover:bg-accent-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {starLoading ? "生成中…" : "生成 STAR 句式"}
+          {starLoading ? "AI 生成中…" : "✨ AI 生成 STAR 句式"}
         </button>
+        <p className="mt-2 text-[11px] leading-relaxed text-neutral-400 dark:text-neutral-500">
+          🔒 经历文本仅用于本次生成：发送至 AI 服务做结构化识别，不留存。
+        </p>
       </div>
 
       {starResult && (

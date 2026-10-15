@@ -229,6 +229,14 @@ export default function ProfileClient() {
         </p>
       </header>
 
+      {/* 功能说明：这个页面记录什么、数据在哪 */}
+      <section className="mb-6 rounded-2xl border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-800 dark:bg-neutral-800/50">
+        <p className="text-sm leading-relaxed text-neutral-600 dark:text-neutral-300">
+          📌 这里是你的求职数据台账：每次「简历诊断」后自动沉淀分数快照（近期诊断），缺失项可一键加入「90
+          天补位计划」逐项补齐，「诊断历史」长期留存；全部数据仅保存在本机浏览器，开启云端同步后可加密备份、换设备带走。
+        </p>
+      </section>
+
       {/* 云端同步（默认仅脱敏数据；开启后简历以 AES-256 加密上云） */}
       <section className="rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900">
         <div className="mb-2 flex items-center gap-2">
@@ -657,7 +665,7 @@ export default function ProfileClient() {
       </section>
 
       <PrivacyNote>
-        隐私承诺：档案数据仅保存在你本地浏览器（localStorage），不上传、不共享、不被用于任何推荐或投放。你可以随时导出或清除。
+        隐私说明：档案数据仅保存在你本地浏览器（localStorage），不上传、不共享、不被用于任何推荐或投放。你可以随时导出或清除。
       </PrivacyNote>
     </main>
   );

@@ -576,7 +576,7 @@ export default function TrackerClient() {
 
       <div className="mt-8">
         <PrivacyNote>
-          隐私承诺：投递台账仅保存在你本地浏览器（localStorage），只记录公司/岗位/状态等投递动作，不含简历正文与 JD 全文；可随时导出或清除，不上传任何服务器。
+          隐私说明：投递台账仅保存在你本地浏览器（localStorage），只记录公司/岗位/状态等投递动作，不含简历正文与 JD 全文；可随时导出或清除，不上传任何服务器。
         </PrivacyNote>
       </div>
     </main>

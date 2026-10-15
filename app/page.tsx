@@ -456,7 +456,7 @@ export default function UploadPage() {
             <div>
               <p className="text-sm font-medium text-neutral-700 dark:text-neutral-200">AI 增强诊断</p>
               <p className="text-xs text-neutral-500 mt-0.5 dark:text-neutral-400">
-                开启后简历文本将经云函数代理发送给 AI 服务商用于生成建议，不留存；关闭后仅本地规则评分
+                开启后简历文本将发送至 AI 服务做结构化识别，不留存；关闭后仅本地规则评分，不发任何外部请求
               </p>
               {aiEnabled && !aiAvailable && (
                 <p className="mt-1 text-xs font-medium text-warning-600 dark:text-warning-400">
@@ -537,11 +537,14 @@ export default function UploadPage() {
                 <span className="w-4 h-4 border-2 border-primary-600 border-t-transparent rounded-full animate-spin" />
                 <p className="text-sm text-neutral-600 dark:text-neutral-300">{PROGRESS_STEPS[progress]}</p>
               </div>
+              <p className="text-center text-xs text-neutral-400 dark:text-neutral-500">
+                AI 诊断约需 20 秒，请稍候；完成后自动展示诊断报告
+              </p>
             </div>
           )}
 
           <PrivacyNote>
-            简历默认仅本地解析、不落库不上传；云端同步、AI 增强均可随时开关（详见首次弹窗《隐私承诺》）
+            隐私说明：简历解析在本地浏览器完成，不上传任何内容；开启 AI 增强时，简历文本将发送至 AI 服务做结构化识别，不留存；云端同步、AI 增强均可随时开关（详见首次弹窗《隐私承诺》）。
           </PrivacyNote>
         </section>
       ) : (

@@ -15,7 +15,7 @@ export default function BackToDiagnose() {
         href="/"
         className="mt-3 inline-flex items-center justify-center gap-2 rounded-xl bg-linear-to-r from-primary-500 via-primary-600 to-indigo-500 px-6 py-3 text-base font-medium text-white shadow-md transition-all select-none hover:shadow-lg hover:brightness-110 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
-        去诊断简历 →
+        去做简历诊断 →
       </Link>
     </div>
   );

@@ -41,7 +41,7 @@ export default function InterviewClient() {
     if (ctx.missingKeywords.length > 0) {
       setMissingInput(ctx.missingKeywords.join("、"));
     }
-    setPrefillNotice("已带入诊断简历，确认内容后点击「生成面试追问」即可开始。");
+    setPrefillNotice("已带入诊断简历，确认内容后点击「AI 生成面试追问」即可开始。");
     track("interview_prefill_applied", { missing: ctx.missingKeywords.length });
   }, []);
 
@@ -161,8 +161,11 @@ export default function InterviewClient() {
             title={!aiAvailable ? "AI 服务维护中，暂不能出题" : undefined}
             onClick={() => void generate()}
           >
-            {loading ? "AI 正在出题…" : "生成面试追问"}
+            {loading ? "AI 出题中…" : "✨ AI 生成面试追问"}
           </Button>
+          <p className="text-[11px] leading-relaxed text-neutral-400 dark:text-neutral-500">
+            🔒 简历与 JD 文本仅用于本次生成：发送至 AI 服务做结构化识别，不留存。
+          </p>
         </div>
       )}
 
@@ -224,7 +227,7 @@ export default function InterviewClient() {
                     title={!aiAvailable ? "AI 服务维护中，暂不能点评" : undefined}
                     onClick={() => void review(i)}
                   >
-                    {rev ? "重新点评" : "AI 点评"}
+                    {rev ? "重新点评" : "✨ AI 点评"}
                   </Button>
                 </div>
                 {rev && (
@@ -272,7 +275,7 @@ export default function InterviewClient() {
       )}
 
       <PrivacyNote>
-        隐私承诺：简历与作答文本仅在你生成追问 / 点评时经云函数代理转发给 AI 服务商，不留存、不记录；页面无任何数据落盘（诊断页带入的上下文仅存于内存，刷新即失效）。
+        隐私说明：简历与作答文本仅在你生成追问 / 点评时发送至 AI 服务做结构化识别，不留存、不记录；页面无任何数据落盘（诊断页带入的上下文仅存于内存，刷新即失效）。
       </PrivacyNote>
     </section>
   );
