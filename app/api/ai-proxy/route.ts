@@ -23,10 +23,24 @@ const AI_PROXY_ALLOWED_ORIGINS = (process.env.AI_PROXY_ALLOWED_ORIGINS || "")
   .map((s) => s.trim())
   .filter(Boolean);
 
-// 每 IP 滑动窗口限流（实例内，ephemeral）
-const RATE_WINDOW_MS = 60 * 1000;
-const RATE_MAX = 30;
-const hitCounts = new Map<string, { count: number; resetAt: number }>();
+// 每 IP 滚动窗口限流（实例内，ephemeral）；先应用于所有请求，避免未授权流量绕过总闸。
+const RATE_WINDOW_MS = 5 * 60 * 1000;
+// A normal resume-to-interview loop uses about 6-10 proxy requests; allow 20 in the window for retries.
+const RATE_MAX = 20;
+// Heavy operations get lower per-action ceilings within the global IP limit.
+const ACTION_RATE_MAX: Record<string, number> = {
+  analyze: 5,
+  parseResume: 3,
+  optimizeResume: 3,
+  jdSemantics: 8,
+  rewrite: 8,
+  star: 8,
+  interview: 8,
+  reviewAnswer: 10,
+  applyMessage: 8,
+};
+const hitCounts = new Map<string, number[]>();
+let nextRateCleanupAt = 0;
 // 全局并发上限
 const MAX_CONCURRENCY = 5;
 let activeCalls = 0;
@@ -67,18 +81,34 @@ function clientIpOf(headers: Headers): string {
   return headers.get("x-real-ip") || "unknown";
 }
 
-function rateLimited(ip: string): boolean {
+function rateLimited(key: string, limit: number): boolean {
   const now = Date.now();
-  let rec = hitCounts.get(ip);
-  if (!rec || now > rec.resetAt) {
-    rec = { count: 0, resetAt: now + RATE_WINDOW_MS };
-    hitCounts.set(ip, rec);
+  const cutoff = now - RATE_WINDOW_MS;
+  const timestamps = hitCounts.get(key) ?? [];
+  let firstRecent = 0;
+  while (firstRecent < timestamps.length) {
+    const timestamp = timestamps[firstRecent];
+    if (timestamp === undefined || timestamp > cutoff) break;
+    firstRecent++;
   }
-  rec.count += 1;
-  if (hitCounts.size > 500) {
-    for (const [k, v] of hitCounts) if (now > v.resetAt) hitCounts.delete(k);
+  const recent = timestamps.slice(firstRecent);
+  if (recent.length >= limit) {
+    hitCounts.set(key, recent);
+    return true;
   }
-  return rec.count > RATE_MAX;
+  recent.push(now);
+  hitCounts.set(key, recent);
+
+  // Periodic pruning bounds stale IP/action keys without scanning the map on each request.
+  if (hitCounts.size > 1000 && now >= nextRateCleanupAt) {
+    nextRateCleanupAt = now + RATE_WINDOW_MS;
+    for (const [entryKey, entryTimes] of hitCounts) {
+      const live = entryTimes.filter((time) => time > cutoff);
+      if (live.length === 0) hitCounts.delete(entryKey);
+      else if (live.length !== entryTimes.length) hitCounts.set(entryKey, live);
+    }
+  }
+  return false;
 }
 
 // 结构化 JSON 提取（先剥围栏，再括号配对）
@@ -760,8 +790,9 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "Origin 不被允许" }, { status: 403 });
   }
 
-  // 限流（每 IP 滑动窗口）
-  if (rateLimited(clientIpOf(req.headers))) {
+  // 全局 IP 滚动窗口：覆盖未授权请求，也兜住未识别的 action。
+  const clientIp = clientIpOf(req.headers);
+  if (rateLimited(JSON.stringify(["ip", clientIp]), RATE_MAX)) {
     return NextResponse.json({ ok: false, error: "请求过于频繁，请稍后再试" }, { status: 429 });
   }
 
@@ -789,6 +820,11 @@ export async function POST(req: Request): Promise<NextResponse> {
     const payload = (await req.json().catch(() => null)) as Record<string, unknown> | null;
     if (!payload || typeof payload !== "object") {
       return NextResponse.json({ ok: false, error: "无效 JSON 请求体" }, { status: 400 });
+    }
+    const action = typeof payload.action === "string" ? payload.action : "";
+    const actionLimit = ACTION_RATE_MAX[action];
+    if (actionLimit !== undefined && rateLimited(JSON.stringify(["action", clientIp, action]), actionLimit)) {
+      return NextResponse.json({ ok: false, error: "此操作请求过于频繁，请稍后再试" }, { status: 429 });
     }
     const data = await dispatch(payload);
     return NextResponse.json({ ok: true, data });
