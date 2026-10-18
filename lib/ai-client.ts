@@ -57,9 +57,9 @@ export function useAiAvailable(): boolean {
   return useSyncExternalStore(subscribeAiAvailable, getAiAvailable, () => true);
 }
 
-// 单个 AI 请求超时：重型操作（optimizeResume / parseResume）云端上限 25s，
-// 客户端放宽到 30s 避免先于服务端超时；轻量操作实际远小于此值。
-const AI_PROXY_TIMEOUT_MS = 30000;
+// 单个 AI 请求超时：重型操作（optimizeResume / parseResume）云端上限 45s，
+// 客户端放宽到 50s，避免先于服务端超时；轻量操作实际远小于此值。
+const AI_PROXY_TIMEOUT_MS = 50000;
 
 // ===== AI 结果短时缓存（P2 修复）=====
 // 相同输入（简历+JD / JD / 经历）短时间内重复请求直接命中，避免重复付费、加快二次诊断。
