@@ -7,6 +7,7 @@
 import type { ApplicationItem } from "./tracker-store";
 import type { DiagnosisHistoryItem } from "./diagnosis-history";
 import type { PrivateProfile, ProfileSnapshot } from "./profile";
+import { fetchAiProxy } from "./ai-proxy-fetch";
 
 /** 加密简历条目：enc 为 AES-GCM 密文（服务端不可读），name/updatedAt 为明文元数据（仅用于版本合并） */
 export interface SyncResume {
@@ -86,7 +87,7 @@ async function callSyncApi(action: "sync" | "syncClear", body: Record<string, un
   try {
     const headers: Record<string, string> = { "Content-Type": "application/json" };
     if (PROXY_KEY) headers["x-api-key"] = PROXY_KEY;
-    const res = await fetch(PROXY_URL, {
+    const res = await fetchAiProxy(PROXY_URL, {
       method: "POST",
       headers,
       body: JSON.stringify({ action, ...body }),

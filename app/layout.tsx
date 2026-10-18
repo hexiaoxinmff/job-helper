@@ -4,6 +4,7 @@ import NavBar from "@/components/NavBar";
 import PrivacyModal from "@/components/PrivacyModal";
 import { ThemeProvider, THEME_INIT_SCRIPT } from "@/lib/theme";
 import { SITE_URL } from "@/lib/site-url";
+import TurnstileWidget from "@/components/TurnstileWidget";
 
 export const metadata: Metadata = {
   metadataBase: SITE_URL,
@@ -55,6 +56,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             {children}
           </div>
           <PrivacyModal />
+          <TurnstileWidget />
         </ThemeProvider>
       </body>
     </html>
