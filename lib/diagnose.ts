@@ -2,6 +2,7 @@
 // 逻辑原在 app/api/analyze/route.ts（服务端），现整体搬回浏览器，便于静态部署。
 import type { AnalysisResult } from "./types";
 import { analyzeResume } from "./scoring";
+import { createDiagnosisIssue } from "./issue-anchors";
 import { generateAiSuggestions, analyzeJdSemantics } from "./ai-client";
 
 /** 语义技能匹配：命中核心技能或其近义表述 */
@@ -65,7 +66,12 @@ export async function diagnoseResume(
       ...result,
       overallScore: aiResult.overallScore ?? result.overallScore,
       dimensions: dims,
-      suggestions: aiResult.suggestions,
+      suggestions: aiResult.suggestions.length > 0
+        ? aiResult.suggestions.map((candidate, index) =>
+            createDiagnosisIssue(candidate, resumeText, "ai", index)
+          )
+        : result.suggestions,
+      scoreSource: aiResult.overallScore !== undefined ? "ai_overall" : result.scoreSource,
       aiEnhanced: true,
     };
   }
@@ -95,6 +101,7 @@ export async function diagnoseResume(
             return sum + d.score * w;
           }, 0)
         );
+        result.scoreSource = "ai_semantic_weighted";
       }
       result.matchedKeywords = [
         ...matched,

@@ -182,10 +182,9 @@ ${dataBlock("简历内容", trimmedResume)}
 输出要求：
 1. overallScore：0-100 整数，综合匹配度。评分要准不要虚高；关键信息（如量化成果、核心技能）缺失应明显扣分。
 2. dimensions：固定 5 个维度（技能匹配 / 关键词覆盖 / 经历与成果 / 教育背景 / 表达规范），每项 score 为 0-100 整数；description 用一句话点出判断依据或证据（引用简历 / JD 中的事实），不要空话。
-3. suggestions：3-5 条中文改进建议，按重要性从高到低排列。每条必须：
-   - 指出简历里具体哪段 / 哪点有问题（引用真实片段或明确位置，不要凭空）；
-   - 给出改法，并尽量提供「改写前 → 改写后」对照句（改写后须真实、不编造）；
-   - 若需要量化，提示应补充哪类数字。
+3. suggestions：3-5 个诊断对象，按重要性从高到低排列。candidateExcerpt 只能逐字复制上面截取的简历内容中、位于同一文本行的一段；找不到就填空字符串。不要输出行号或字符偏移，位置由客户端核验。
+   - 给出具体问题、依据、改法；可提供真实的「改写前 → 改写后」对照。
+   - 缺少真实数字时把要向用户确认的事实放进 missingFacts；after 不得编造数字或经历。
    严禁出现"建议多补充经历""注意排版"这类空泛话。
 
 严格按以下 JSON 格式输出（不输出其他内容）：
@@ -198,17 +197,36 @@ ${dataBlock("简历内容", trimmedResume)}
     {"name": "教育背景", "score": 0-100, "description": "判断依据"},
     {"name": "表达规范", "score": 0-100, "description": "判断依据"}
   ],
-  "suggestions": ["建议1（含改写前→改写后）", "建议2", "建议3"]
+  "suggestions": [{"type":"missing_metric","severity":"medium","dimension":"经历与成果","suggestion":"具体改法","evidence":"依据","section":"项目经历","candidateExcerpt":"与上方简历完全一致的原文片段","before":"原句或空字符串","after":"真实可用的候选句或空字符串","rewriteReason":"改写理由","missingFacts":["需要用户确认的真实指标"]}]
 }`;
 
   const content = await callDeepSeek("你只输出合法的 JSON，不做任何解释。", prompt, 2000, UPSTREAM_TIMEOUT_HEAVY_MS);
   const parsed = parseJsonObject(content);
 
+  const issueTypes = new Set(["missing_keyword", "missing_metric", "weak_expression", "experience_gap", "structure", "other"]);
+  const severities = new Set(["high", "medium", "low"]);
+  const short = (v: unknown, limit = 500) => typeof v === "string" ? v.trim().slice(0, limit) : "";
   const suggestions = Array.isArray(parsed.suggestions)
-    ? (parsed.suggestions as unknown[])
-        .filter((s) => typeof s === "string")
-        .map((s) => String(s))
-        .slice(0, 5)
+    ? (parsed.suggestions as unknown[]).slice(0, 5).map((item) => {
+        const o = item && typeof item === "object" ? item as Record<string, unknown> : { suggestion: item };
+        const type = short(o.type);
+        const severity = short(o.severity);
+        return {
+          type: issueTypes.has(type) ? type : "other",
+          severity: severities.has(severity) ? severity : "medium",
+          dimension: short(o.dimension, 60) || "综合建议",
+          suggestion: short(o.suggestion),
+          evidence: short(o.evidence),
+          section: short(o.section, 60),
+          candidateExcerpt: short(o.candidateExcerpt, 300),
+          before: short(o.before, 500),
+          after: short(o.after, 500),
+          rewriteReason: short(o.rewriteReason, 500),
+          missingFacts: Array.isArray(o.missingFacts)
+            ? o.missingFacts.filter((v): v is string => typeof v === "string").slice(0, 5).map((v) => v.trim().slice(0, 120))
+            : [],
+        };
+      }).filter((item) => item.suggestion)
     : [];
   const dimensions = Array.isArray(parsed.dimensions)
     ? (parsed.dimensions as unknown[])

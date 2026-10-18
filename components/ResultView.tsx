@@ -11,6 +11,7 @@ import {
 } from "recharts";
 import { toPng } from "html-to-image";
 import KeywordChip from "./KeywordChip";
+import DiagnosisAnnotations from "./DiagnosisAnnotations";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
@@ -26,6 +27,8 @@ import {
   type ApplyMessageResult,
 } from "@/lib/ai-client";
 import { analyzeAtsFriendly } from "@/lib/ats";
+import { analyzeResume } from "@/lib/scoring";
+import { approveRepair, createRepairSession, dismissRepair, restoreRepair } from "@/lib/repair-session";
 import { useProfile } from "@/lib/profile";
 import { useDiagnosisHistory } from "@/lib/diagnosis-history";
 import { useRemediation } from "@/lib/remediation-store";
@@ -78,6 +81,22 @@ function scoreLabel(score: number): string {
 }
 
 export default function ResultView({ result, resumeText, jdText, onReset, onReDiagnose, isSample }: Props) {
+  const [repairSession, setRepairSession] = useState(() => createRepairSession(resumeText, result.suggestions));
+  const [ruleRecheck, setRuleRecheck] = useState<{ baseline: number; draft: number } | null>(null);
+  const approveIssue = (issueId: string, replacement: string, facts: string[]): string | null => {
+    const outcome = approveRepair(repairSession, issueId, replacement, facts);
+    if (outcome.error) return outcome.error;
+    setRepairSession(outcome.session);
+    setRuleRecheck(null);
+    return null;
+  };
+  const dismissIssue = (issueId: string) => {
+    setRepairSession((current) => dismissRepair(current, issueId));
+  };
+  const restoreIssue = (issueId: string) => {
+    setRepairSession((current) => restoreRepair(current, issueId));
+    setRuleRecheck(null);
+  };
   const { profile, appendSnapshot } = useProfile();
   const { append: appendDiagnosis } = useDiagnosisHistory();
   const { items: remediationItems, add: addRemediation } = useRemediation();
@@ -265,7 +284,7 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
       ...result.dimensions.map((d) => `- ${d.name}：${d.score}/100`),
       "",
       "改进建议：",
-      ...result.suggestions.map((s, i) => `${i + 1}. ${s}`),
+      ...result.suggestions.map((s, i) => `${i + 1}. ${s.suggestion}`),
       "",
       "由求职在线助手生成（免费）",
     ];
@@ -445,8 +464,14 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
                   </div>
                 </div>
               ))}
-              <p className="border-t border-neutral-100 pt-2 text-xs text-neutral-400 dark:border-neutral-800 dark:text-neutral-500">
-                总分 = 各维度得分 × 权重 之和（{result.overallScore} 分）
+              <p className="border-t border-neutral-100 pt-2 text-xs text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                {result.scoreSource === "ai_overall"
+                  ? "总分来源：AI 单独给出的综合匹配分；下方五维仍展示固定权重，当前总分不一定等于加权和。匹配分不等于录用概率。"
+                  : result.scoreSource === "ai_semantic_weighted"
+                    ? "总分来源：AI 语义技能修正后的五维加权结果；匹配分不等于录用概率。"
+                    : result.aiEnhanced
+                      ? "总分来源：规则基线五维加权；AI 可能另行更新展示维度，因此当前展示的五维不一定重现该总分。匹配分不等于录用概率。"
+                      : "总分来源：规则五维得分按固定权重加权；匹配分不等于录用概率。"}
               </p>
             </div>
           </div>
@@ -484,18 +509,41 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
 
         {/* 建议 */}
         <div className="rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900">
-          <h2 className="mb-4 font-semibold text-neutral-800 dark:text-neutral-100">改进建议</h2>
+          <h2 className="mb-4 font-semibold text-neutral-800 dark:text-neutral-100">改进建议摘要</h2>
           <ol className="space-y-3">
             {result.suggestions.map((s, i) => (
               <li key={i} className="flex gap-3 text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-100 text-xs font-semibold text-primary-700 dark:bg-primary-950 dark:text-primary-300">
                   {i + 1}
                 </span>
-                {s}
+                {s.suggestion}
               </li>
             ))}
           </ol>
         </div>
+      </div>
+
+      {/* 原文仅显示在当前页面，放在报告图片导出范围之外。 */}
+      <DiagnosisAnnotations
+        sourceText={repairSession.draftText}
+        issues={repairSession.issues}
+        logs={repairSession.logs}
+        onApprove={approveIssue}
+        onDismiss={dismissIssue}
+        onRestore={restoreIssue}
+      />
+      <div className="rounded-2xl border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900 sm:p-6">
+        <h2 className="font-semibold text-neutral-800 dark:text-neutral-100">本次建议稿重测</h2>
+        <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">只在本机内存中用原有规则重新评分，不调用 AI；与上方 AI 总分可能不是同一口径。刷新后建议稿和修复日志消失。</p>
+        <button type="button" onClick={() => {
+          setRuleRecheck({
+            baseline: analyzeResume(resumeText, jdText).overallScore,
+            draft: analyzeResume(repairSession.draftText, jdText).overallScore,
+          });
+        }} className="mt-3 rounded-lg border border-primary-300 px-3 py-2 text-sm font-medium text-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:text-primary-300">
+          按当前建议稿重测规则分
+        </button>
+        {ruleRecheck && <p className="mt-3 text-sm text-neutral-700 dark:text-neutral-200" aria-live="polite">规则基线 {ruleRecheck.baseline} 分 → 当前建议稿 {ruleRecheck.draft} 分</p>}
       </div>
 
       {/* 反向岗位推荐：基于这份简历，你可能适合（复用 JD 库 + 规则评分，点击即换 JD 重新诊断） */}
