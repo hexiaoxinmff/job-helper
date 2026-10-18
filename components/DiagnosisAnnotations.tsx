@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { DiagnosisIssue, RepairLogEntry } from "@/lib/types";
 import { getLogicalBullets, isIssueAnchorValid } from "@/lib/issue-anchors";
+import { approvalQuestions } from "@/lib/repair-session";
 
 const ISSUE_LABEL: Record<DiagnosisIssue["type"], string> = {
   missing_keyword: "关键词缺口",
@@ -55,13 +56,17 @@ interface Props {
   sourceText: string;
   issues: DiagnosisIssue[];
   logs?: RepairLogEntry[];
-  onApprove?: (issueId: string) => void;
+  onApprove?: (issueId: string, replacement: string, facts: string[]) => string | null;
   onDismiss?: (issueId: string) => void;
   onRestore?: (issueId: string) => void;
 }
 
 export default function DiagnosisAnnotations({ sourceText, issues, logs = [], onApprove, onDismiss, onRestore }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [replacement, setReplacement] = useState("");
+  const [answers, setAnswers] = useState<string[]>([]);
+  const [approvalError, setApprovalError] = useState("");
   const bullets = useMemo(() => getLogicalBullets(sourceText), [sourceText]);
   const exactIssues = useMemo(
     () => issues.filter((issue) => isIssueAnchorValid(issue, sourceText)),
@@ -74,6 +79,18 @@ export default function DiagnosisAnnotations({ sourceText, issues, logs = [], on
     const target = document.getElementById(`diagnosis-bullet-${issue.logicalBulletIndex}`);
     target?.scrollIntoView({ behavior: "smooth", block: "center" });
     target?.focus({ preventScroll: true });
+  };
+
+  const beginApproval = (issue: DiagnosisIssue) => {
+    if (!isIssueAnchorValid(issue, sourceText) || issue.logicalBulletIndex === null) return;
+    const line = bullets[issue.logicalBulletIndex];
+    if (!line) return;
+    const prefix = line.text.match(/^([•·●▪*\-]\s*)/)?.[1] ?? "";
+    const proposal = issue.after || line.text;
+    setReplacement(prefix && !proposal.startsWith(prefix.trim()) ? prefix + proposal : proposal);
+    setAnswers([]);
+    setApprovalError("");
+    setEditingId(issue.issueId);
   };
 
   return (
@@ -89,15 +106,16 @@ export default function DiagnosisAnnotations({ sourceText, issues, logs = [], on
           <h3 className="mb-2 text-sm font-semibold text-neutral-700 dark:text-neutral-200">简历提取文本</h3>
           <ol className="max-h-[34rem] space-y-1 overflow-y-auto pr-1">
             {bullets.map((line) => {
-              const lineIssues = exactIssues.filter((issue) => issue.logicalBulletIndex === line.index);
+              const lineIssues = exactIssues.filter((issue) => issue.logicalBulletIndex === line.index && issue.status !== "dismissed");
               const active = lineIssues.some((issue) => issue.issueId === selectedId);
+              const pendingCount = lineIssues.filter((issue) => issue.status === "proposed").length;
               return (
                 <li key={line.index} id={`diagnosis-bullet-${line.index}`} tabIndex={-1}
                   className={`diagnosis-line flex scroll-mt-24 items-start gap-2 rounded-lg px-2 py-1.5 text-sm leading-relaxed outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${active ? "bg-primary-100 dark:bg-primary-950" : ""}`}>
                   <span className="w-6 shrink-0 select-none text-right text-xs text-neutral-400" aria-hidden="true">{line.index + 1}</span>
                   <span className="min-w-0 flex-1 whitespace-pre-wrap break-words text-neutral-700 dark:text-neutral-200">{markedText(line, lineIssues)}</span>
-                  {lineIssues.length > 0 && <span className="shrink-0 rounded-full bg-danger-100 px-2 py-0.5 text-[11px] font-medium text-danger-700 dark:bg-danger-950 dark:text-danger-300" aria-label={`第 ${line.index + 1} 条有 ${lineIssues.length} 个诊断问题`}>
-                    {lineIssues.length} 个问题
+                  {lineIssues.length > 0 && <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${pendingCount > 0 ? "bg-danger-100 text-danger-700 dark:bg-danger-950 dark:text-danger-300" : "bg-success-100 text-success-700 dark:bg-success-950 dark:text-success-300"}`} aria-label={pendingCount > 0 ? `第 ${line.index + 1} 条有 ${pendingCount} 个诊断问题` : `第 ${line.index + 1} 条已修复`}>
+                    {pendingCount > 0 ? `${pendingCount} 个问题` : "已修复 ✓"}
                   </span>}
                 </li>
               );
@@ -113,6 +131,7 @@ export default function DiagnosisAnnotations({ sourceText, issues, logs = [], on
                 <span className="rounded-full bg-danger-100 px-2 py-0.5 text-xs font-medium text-danger-700 dark:bg-danger-950 dark:text-danger-300">{ISSUE_LABEL[issue.type]}</span>
                 <span className="text-xs text-neutral-500 dark:text-neutral-400">{issue.dimension} · {issue.origin === "ai" ? "AI 建议" : "规则检查"}</span>
                 {issue.status === "approved" && <span className="text-xs text-success-700 dark:text-success-300">已修复 ✓</span>}
+                {issue.status === "stale" && <span className="text-xs text-warning-700 dark:text-warning-300">位置已失效</span>}
               </div>
               <p className="mt-2 text-sm leading-relaxed text-neutral-800 dark:text-neutral-100">{issue.suggestion}</p>
               {issue.evidence && <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">依据：{issue.evidence}</p>}
@@ -127,10 +146,31 @@ export default function DiagnosisAnnotations({ sourceText, issues, logs = [], on
               </div>}
               {issue.missingFacts.length > 0 && <p className="mt-2 text-xs text-warning-700 dark:text-warning-300">应用前请确认：{issue.missingFacts.join("；")}</p>}
               {(onApprove || onDismiss || onRestore) && <div className="mt-3 flex flex-wrap gap-2">
-                {issue.status === "proposed" && onApprove && <button type="button" onClick={() => onApprove(issue.issueId)} className="rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500">批准应用</button>}
-                {issue.status === "proposed" && onDismiss && <button type="button" onClick={() => onDismiss(issue.issueId)} className="rounded-lg border border-neutral-300 px-3 py-1.5 text-xs text-neutral-700 dark:text-neutral-200">不采纳</button>}
-                {issue.status === "approved" && onRestore && <button type="button" onClick={() => onRestore(issue.issueId)} className="rounded-lg border border-neutral-300 px-3 py-1.5 text-xs text-neutral-700 dark:text-neutral-200">撤销修改</button>}
+                {issue.status === "proposed" && exact && onApprove && <button type="button" onClick={() => beginApproval(issue)} className="rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500">预览并批准</button>}
+                {issue.status === "proposed" && onDismiss && <button type="button" onClick={() => { onDismiss(issue.issueId); setEditingId(null); }} className="rounded-lg border border-neutral-300 px-3 py-1.5 text-xs text-neutral-700 dark:text-neutral-200">撤销建议 · 不采纳</button>}
+                {issue.status === "approved" && onRestore && <button type="button" onClick={() => onRestore(issue.issueId)} className="rounded-lg border border-neutral-300 px-3 py-1.5 text-xs text-neutral-700 dark:text-neutral-200">撤销修改 · 恢复原文</button>}
               </div>}
+              {editingId === issue.issueId && exact && onApprove && issue.logicalBulletIndex !== null && (() => {
+                const line = bullets[issue.logicalBulletIndex];
+                if (!line) return null;
+                const questions = approvalQuestions(issue, line.text, replacement);
+                return <div className="mt-3 space-y-2 rounded-lg border border-primary-200 bg-primary-50/40 p-3 text-xs dark:border-primary-900 dark:bg-primary-950/20">
+                  <p className="font-medium text-neutral-700 dark:text-neutral-200">即将替换的整条原文：</p>
+                  <p className="whitespace-pre-wrap break-words text-neutral-600 dark:text-neutral-300">{line.text}</p>
+                  <label className="block font-medium text-neutral-700 dark:text-neutral-200" htmlFor={`repair-draft-${issue.issueId}`}>本次建议稿，确认或修改后批准</label>
+                  <textarea id={`repair-draft-${issue.issueId}`} value={replacement} onChange={(event) => { setReplacement(event.target.value); setApprovalError(""); }} rows={3} className="w-full rounded-lg border border-neutral-300 bg-white p-2 text-sm text-neutral-800 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100" />
+                  {questions.map((question, index) => <label key={`${issue.issueId}-${index}`} className="block text-warning-800 dark:text-warning-200">
+                    {question}
+                    <input value={answers[index] ?? ""} onChange={(event) => setAnswers((current) => { const next = [...current]; next[index] = event.target.value; return next; })} className="mt-1 block w-full rounded-lg border border-warning-300 bg-white p-2 text-sm text-neutral-800 dark:border-warning-800 dark:bg-neutral-900 dark:text-neutral-100" />
+                  </label>)}
+                  <p className="text-neutral-500 dark:text-neutral-400">只更新本次页面内存；刷新后恢复原报告。</p>
+                  {approvalError && <p role="alert" className="text-danger-700 dark:text-danger-300">{approvalError}</p>}
+                  <div className="flex flex-wrap gap-2">
+                    <button type="button" onClick={() => { const error = onApprove(issue.issueId, replacement, answers); if (error) setApprovalError(error); else setEditingId(null); }} className="rounded-lg bg-primary-600 px-3 py-2 font-medium text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500">确认批准并应用</button>
+                    <button type="button" onClick={() => setEditingId(null)} className="rounded-lg border border-neutral-300 px-3 py-2 text-neutral-700 dark:text-neutral-200">先不处理</button>
+                  </div>
+                </div>;
+              })()}
             </article>;
           })}
           <div className="rounded-xl border border-neutral-200 p-4 dark:border-neutral-700">

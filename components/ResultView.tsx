@@ -27,6 +27,8 @@ import {
   type ApplyMessageResult,
 } from "@/lib/ai-client";
 import { analyzeAtsFriendly } from "@/lib/ats";
+import { analyzeResume } from "@/lib/scoring";
+import { approveRepair, createRepairSession, dismissRepair, restoreRepair } from "@/lib/repair-session";
 import { useProfile } from "@/lib/profile";
 import { useDiagnosisHistory } from "@/lib/diagnosis-history";
 import { useRemediation } from "@/lib/remediation-store";
@@ -79,6 +81,22 @@ function scoreLabel(score: number): string {
 }
 
 export default function ResultView({ result, resumeText, jdText, onReset, onReDiagnose, isSample }: Props) {
+  const [repairSession, setRepairSession] = useState(() => createRepairSession(resumeText, result.suggestions));
+  const [ruleRecheck, setRuleRecheck] = useState<{ baseline: number; draft: number } | null>(null);
+  const approveIssue = (issueId: string, replacement: string, facts: string[]): string | null => {
+    const outcome = approveRepair(repairSession, issueId, replacement, facts);
+    if (outcome.error) return outcome.error;
+    setRepairSession(outcome.session);
+    setRuleRecheck(null);
+    return null;
+  };
+  const dismissIssue = (issueId: string) => {
+    setRepairSession((current) => dismissRepair(current, issueId));
+  };
+  const restoreIssue = (issueId: string) => {
+    setRepairSession((current) => restoreRepair(current, issueId));
+    setRuleRecheck(null);
+  };
   const { profile, appendSnapshot } = useProfile();
   const { append: appendDiagnosis } = useDiagnosisHistory();
   const { items: remediationItems, add: addRemediation } = useRemediation();
@@ -506,7 +524,27 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
       </div>
 
       {/* 原文仅显示在当前页面，放在报告图片导出范围之外。 */}
-      <DiagnosisAnnotations sourceText={resumeText} issues={result.suggestions} />
+      <DiagnosisAnnotations
+        sourceText={repairSession.draftText}
+        issues={repairSession.issues}
+        logs={repairSession.logs}
+        onApprove={approveIssue}
+        onDismiss={dismissIssue}
+        onRestore={restoreIssue}
+      />
+      <div className="rounded-2xl border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900 sm:p-6">
+        <h2 className="font-semibold text-neutral-800 dark:text-neutral-100">本次建议稿重测</h2>
+        <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">只在本机内存中用原有规则重新评分，不调用 AI；与上方 AI 总分可能不是同一口径。刷新后建议稿和修复日志消失。</p>
+        <button type="button" onClick={() => {
+          setRuleRecheck({
+            baseline: analyzeResume(resumeText, jdText).overallScore,
+            draft: analyzeResume(repairSession.draftText, jdText).overallScore,
+          });
+        }} className="mt-3 rounded-lg border border-primary-300 px-3 py-2 text-sm font-medium text-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:text-primary-300">
+          按当前建议稿重测规则分
+        </button>
+        {ruleRecheck && <p className="mt-3 text-sm text-neutral-700 dark:text-neutral-200" aria-live="polite">规则基线 {ruleRecheck.baseline} 分 → 当前建议稿 {ruleRecheck.draft} 分</p>}
+      </div>
 
       {/* 反向岗位推荐：基于这份简历，你可能适合（复用 JD 库 + 规则评分，点击即换 JD 重新诊断） */}
       {recommendations.length > 0 && onReDiagnose && (
