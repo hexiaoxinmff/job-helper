@@ -1,5 +1,21 @@
 @import "tailwindcss";
 
+/* 仅标记已经过原文偏移核验的问题片段。 */
+.diagnosis-wavy {
+  color: inherit;
+  background: transparent;
+  text-decoration-line: underline;
+  text-decoration-style: wavy;
+  text-decoration-color: var(--jh-danger-600);
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1.5px;
+}
+
+.diagnosis-line:focus {
+  outline: 2px solid var(--jh-primary-500);
+  outline-offset: 1px;
+}
+
 /* 启用基于 class 的暗色模式（Tailwind v4 语法）
    截图捕获态（html.export-capture）下 dark: 变体整体失效，
    用于 html-to-image 导出卡片时强制亮色主题（仅捕获阶段生效） */

@@ -55,6 +55,15 @@ export interface DiagnosisIssueCandidate {
   missingFacts: string[];
 }
 
+/** 页面内的修复操作记录，刷新即丢失。 */
+export interface RepairLogEntry {
+  eventId: string;
+  issueId: string;
+  action: "approved" | "dismissed" | "restored";
+  at: number;
+  label: string;
+}
+
 /** 简历分析结果 */
 export interface AnalysisResult {
   /** 解析出的简历文本（截断预览） */

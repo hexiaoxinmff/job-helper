@@ -11,6 +11,7 @@ import {
 } from "recharts";
 import { toPng } from "html-to-image";
 import KeywordChip from "./KeywordChip";
+import DiagnosisAnnotations from "./DiagnosisAnnotations";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
@@ -445,8 +446,14 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
                   </div>
                 </div>
               ))}
-              <p className="border-t border-neutral-100 pt-2 text-xs text-neutral-400 dark:border-neutral-800 dark:text-neutral-500">
-                总分 = 各维度得分 × 权重 之和（{result.overallScore} 分）
+              <p className="border-t border-neutral-100 pt-2 text-xs text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                {result.scoreSource === "ai_overall"
+                  ? "总分来源：AI 单独给出的综合匹配分；下方五维仍展示固定权重，当前总分不一定等于加权和。匹配分不等于录用概率。"
+                  : result.scoreSource === "ai_semantic_weighted"
+                    ? "总分来源：AI 语义技能修正后的五维加权结果；匹配分不等于录用概率。"
+                    : result.aiEnhanced
+                      ? "总分来源：规则基线五维加权；AI 可能另行更新展示维度，因此当前展示的五维不一定重现该总分。匹配分不等于录用概率。"
+                      : "总分来源：规则五维得分按固定权重加权；匹配分不等于录用概率。"}
               </p>
             </div>
           </div>
@@ -484,7 +491,7 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
 
         {/* 建议 */}
         <div className="rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900">
-          <h2 className="mb-4 font-semibold text-neutral-800 dark:text-neutral-100">改进建议</h2>
+          <h2 className="mb-4 font-semibold text-neutral-800 dark:text-neutral-100">改进建议摘要</h2>
           <ol className="space-y-3">
             {result.suggestions.map((s, i) => (
               <li key={i} className="flex gap-3 text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">
@@ -497,6 +504,9 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
           </ol>
         </div>
       </div>
+
+      {/* 原文仅显示在当前页面，放在报告图片导出范围之外。 */}
+      <DiagnosisAnnotations sourceText={resumeText} issues={result.suggestions} />
 
       {/* 反向岗位推荐：基于这份简历，你可能适合（复用 JD 库 + 规则评分，点击即换 JD 重新诊断） */}
       {recommendations.length > 0 && onReDiagnose && (
