@@ -1,19 +1,28 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import dynamic from "next/dynamic";
 import type { AnalysisResult } from "@/lib/types";
-import ResultView from "@/components/ResultView";
 import PrivacyNote from "@/components/PrivacyNote";
-import { extractTextFromPdf, looksLikePdf } from "@/lib/pdf";
-import { diagnoseResume } from "@/lib/diagnose";
 import { track } from "@/lib/track";
 import { JD_LIBRARY, JD_LOCALES, getJdById, type JdLocale } from "@/lib/jd-library";
 import { SAMPLE_RESUME_TEXT } from "@/lib/sample-resume";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { AI_ENABLED_KEY, useAiAvailable } from "@/lib/ai-client";
+import { ResumeProvider } from "@/lib/resume-store";
+import { ProfileProvider } from "@/lib/profile";
+import { DiagnosisHistoryProvider } from "@/lib/diagnosis-history";
+import { RemediationProvider } from "@/lib/remediation-store";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const ResultView = dynamic(() => import("@/components/ResultView"), {
+  loading: () => (
+    <div role="status" className="mx-auto w-full max-w-3xl px-4 py-10 text-center text-sm text-neutral-600 dark:text-neutral-300">
+      正在加载诊断报告…
+    </div>
+  ),
+});
 // 示例体验默认载入的 JD：与 JD 库 fe（前端开发工程师）一致，让示例诊断跑出有区分度的结果
 const SAMPLE_JD = getJdById("fe")?.jd["zh-CN"] ?? "";
 
@@ -53,7 +62,7 @@ const PROGRESS_STEPS = [
 // 首页流程引导步骤（体验优化：步骤条 + 每步校验提示）
 const FLOW_STEPS = ["上传简历", "粘贴目标 JD", "查看诊断报告"];
 
-export default function UploadPage() {
+function UploadPageContent() {
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [resumeText, setResumeText] = useState("");
   const [usingSample, setUsingSample] = useState(false);
@@ -131,6 +140,7 @@ export default function UploadPage() {
       }, 1400);
 
       try {
+        const { diagnoseResume } = await import("@/lib/diagnose");
         const analysis = await diagnoseResume(text, jd, { aiEnabled });
         setResumeText(text);
         setResult(analysis);
@@ -165,7 +175,8 @@ export default function UploadPage() {
     try {
       // 1) 浏览器端读取并校验 PDF
       const buf = new Uint8Array(await resumeFile.arrayBuffer());
-      if (!looksLikePdf(buf)) {
+      const pdfHeader = new TextDecoder().decode(buf.subarray(0, 5));
+      if (pdfHeader !== "%PDF-") {
         setError("文件格式不正确，请上传 PDF 格式的简历");
         track("diagnose_error", { reason: "not_pdf" });
         return;
@@ -174,6 +185,7 @@ export default function UploadPage() {
       // 2) 浏览器端解析 PDF 文本
       let parsed = "";
       try {
+        const { extractTextFromPdf } = await import("@/lib/pdf");
         parsed = (await extractTextFromPdf(buf)).trim();
       } catch {
         setError("PDF 解析失败：可能是扫描件（图片型 PDF），请先转为文字版 PDF 再上传");
@@ -558,5 +570,19 @@ export default function UploadPage() {
         />
       )}
     </main>
+  );
+}
+
+export default function UploadPage() {
+  return (
+    <ResumeProvider>
+      <ProfileProvider>
+        <DiagnosisHistoryProvider>
+          <RemediationProvider>
+            <UploadPageContent />
+          </RemediationProvider>
+        </DiagnosisHistoryProvider>
+      </ProfileProvider>
+    </ResumeProvider>
   );
 }

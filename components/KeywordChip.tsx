@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { getKeywordDescription } from "@/lib/keywords";
 
 interface Props {
@@ -18,6 +18,7 @@ const VARIANT_STYLES = {
 export default function KeywordChip({ keyword, variant }: Props) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const tooltipId = useId();
   const description = getKeywordDescription(keyword);
 
   // 点击外部关闭
@@ -43,16 +44,24 @@ export default function KeywordChip({ keyword, variant }: Props) {
       <button
         type="button"
         onClick={() => description && setOpen((o) => !o)}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") setOpen(false);
+        }}
         className={VARIANT_STYLES[variant]}
+        aria-expanded={description ? open : undefined}
+        aria-controls={description ? tooltipId : undefined}
+        aria-describedby={open && description ? tooltipId : undefined}
         title={title}
       >
         {keyword}
         {description && <span className="ml-1 opacity-60">ⓘ</span>}
       </button>
-      {open && description && (
+      {description && (
         <div
+          id={tooltipId}
           className="absolute left-0 top-full mt-1.5 z-20 max-w-[260px] p-2.5 text-xs text-neutral-700 bg-white border border-neutral-200 rounded-lg shadow-md leading-relaxed"
           role="tooltip"
+          hidden={!open}
         >
           <span className="font-medium text-neutral-900">{keyword}</span>
           <span className="mx-1 text-neutral-300">·</span>
