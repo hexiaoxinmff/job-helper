@@ -296,7 +296,7 @@ ${dataBlock("简历内容", trimmedResume)}
   "suggestions": [{"type":"missing_metric","severity":"medium","dimension":"经历与成果","suggestion":"具体改法","evidence":"依据","section":"项目经历","candidateExcerpt":"与上方简历完全一致的原文片段","before":"原句或空字符串","after":"真实可用的候选句或空字符串","rewriteReason":"改写理由","missingFacts":["需要用户确认的真实指标"]}]
 }`;
 
-  const content = await callDeepSeek("你只输出合法的 JSON，不做任何解释。", prompt, 2000, UPSTREAM_TIMEOUT_HEAVY_MS);
+  const content = await callDeepSeek("你只输出合法的 JSON，不做任何解释。", prompt, 3500, UPSTREAM_TIMEOUT_HEAVY_MS);
   const parsed = parseJsonObject(content);
 
   const issueTypes = new Set(["missing_keyword", "missing_metric", "weak_expression", "experience_gap", "structure", "other"]);
@@ -341,6 +341,15 @@ ${dataBlock("简历内容", trimmedResume)}
     typeof parsed.overallScore === "number"
       ? Math.max(0, Math.min(100, Math.round(parsed.overallScore)))
       : undefined;
+
+  if (suggestions.length === 0) {
+    console.warn("[ai-proxy] analyze 成功解析但 suggestions 为空", {
+      hasOverallScore: overallScore !== undefined,
+      dimensionsLength: dimensions.length,
+      suggestionsLength: suggestions.length,
+      contentLength: content.length,
+    });
+  }
 
   if (suggestions.length === 0 && dimensions.length === 0)
     throw new Error("AI 未返回有效建议");
