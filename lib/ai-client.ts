@@ -5,6 +5,7 @@ import { useSyncExternalStore } from "react";
 import type { DiagnosisIssueCandidate } from "./types";
 
 import type { ParsedResumeInput } from "./resume-import";
+import { fetchAiProxy } from "./ai-proxy-fetch";
 
 // 同源 AI 代理（Vercel 上为 app/api/ai-proxy 路由，本地 dev 亦同源）。
 // 仍可用 NEXT_PUBLIC_AI_PROXY_URL 覆盖（如指向其它独立部署）。
@@ -106,7 +107,7 @@ async function callAiProxy<T>(action: string, payload: Record<string, unknown>):
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), AI_PROXY_TIMEOUT_MS);
   try {
-    const res = await fetch(AI_PROXY_URL, {
+    const res = await fetchAiProxy(AI_PROXY_URL, {
       method: "POST",
       headers: buildHeaders(),
       body: JSON.stringify({ action, ...payload }),

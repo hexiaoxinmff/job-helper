@@ -41,6 +41,14 @@ const ACTION_RATE_MAX: Record<string, number> = {
 };
 const hitCounts = new Map<string, number[]>();
 let nextRateCleanupAt = 0;
+const TURNSTILE_SECRET_KEY = process.env.TURNSTILE_SECRET_KEY || "";
+const TURNSTILE_TTL_MS = 30 * 60 * 1000;
+// Like rate limiting, this cache lives only in one serverless instance. Users behind
+// the same NAT share an IP verification; Vercel instances do not share this Map.
+const verifiedIps = new Map<string, number>();
+const pendingVerifications = new Map<string, Promise<boolean>>();
+let nextTurnstileCleanupAt = 0;
+let warnedMissingTurnstileSecret = false;
 // 全局并发上限
 const MAX_CONCURRENCY = 5;
 let activeCalls = 0;
@@ -109,6 +117,64 @@ function rateLimited(key: string, limit: number): boolean {
     }
   }
   return false;
+}
+
+async function verifyTurnstileToken(token: string, clientIp: string): Promise<boolean> {
+  try {
+    const body = new URLSearchParams({ secret: TURNSTILE_SECRET_KEY, response: token });
+    if (clientIp !== "unknown") body.set("remoteip", clientIp);
+    const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+      method: "POST",
+      body,
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!response.ok) return false;
+    const result = (await response.json()) as { success?: boolean };
+    return result.success === true;
+  } catch (error) {
+    console.warn("[ai-proxy] Turnstile siteverify 请求失败", error);
+    return false;
+  }
+}
+
+async function turnstileError(clientIp: string, token: string | null): Promise<"turnstile_required" | "turnstile_failed" | null> {
+  if (!TURNSTILE_SECRET_KEY) {
+    if (!warnedMissingTurnstileSecret) {
+      warnedMissingTurnstileSecret = true;
+      console.warn("[ai-proxy] 未配置 TURNSTILE_SECRET_KEY，跳过人机验证");
+    }
+    return null;
+  }
+
+  const now = Date.now();
+  const expiresAt = verifiedIps.get(clientIp);
+  if (expiresAt && expiresAt > now) return null;
+  if (expiresAt) verifiedIps.delete(clientIp);
+  if (!token) return "turnstile_required";
+  if (token.length > 2048) return "turnstile_failed";
+
+  // Parallel diagnosis calls can present the same single-use token. Coalesce their
+  // verification so Cloudflare receives it only once.
+  const pendingKey = JSON.stringify([clientIp, token]);
+  let verification = pendingVerifications.get(pendingKey);
+  if (!verification) {
+    verification = verifyTurnstileToken(token, clientIp);
+    pendingVerifications.set(pendingKey, verification);
+  }
+  try {
+    if (!(await verification)) return "turnstile_failed";
+    // An unknown IP must not grant a shared bypass to unrelated visitors.
+    if (clientIp !== "unknown") verifiedIps.set(clientIp, Date.now() + TURNSTILE_TTL_MS);
+    if (verifiedIps.size > 1000 && now >= nextTurnstileCleanupAt) {
+      nextTurnstileCleanupAt = now + TURNSTILE_TTL_MS;
+      for (const [ip, expiry] of verifiedIps) {
+        if (expiry <= now) verifiedIps.delete(ip);
+      }
+    }
+    return null;
+  } finally {
+    if (pendingVerifications.get(pendingKey) === verification) pendingVerifications.delete(pendingKey);
+  }
 }
 
 // 结构化 JSON 提取（先剥围栏，再括号配对）
@@ -796,6 +862,12 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "请求过于频繁，请稍后再试" }, { status: 429 });
   }
 
+  // Origin → rate limit → Turnstile → shared key. Only this proxy POST is gated.
+  const challengeError = await turnstileError(clientIp, req.headers.get("cf-turnstile-token"));
+  if (challengeError) {
+    return NextResponse.json({ error: challengeError }, { status: 403 });
+  }
+
   // 共享密钥校验
   if (AI_PROXY_SECRET) {
     const headerKey = req.headers.get("x-api-key") || (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
@@ -847,7 +919,7 @@ export async function OPTIONS(): Promise<NextResponse> {
     status: 204,
     headers: {
       "Access-Control-Allow-Methods": "POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, x-api-key, Authorization",
+      "Access-Control-Allow-Headers": "Content-Type, x-api-key, Authorization, cf-turnstile-token",
     },
   });
 }
