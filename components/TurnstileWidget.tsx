@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 
 // Public site key by Cloudflare design; only TURNSTILE_SECRET_KEY is secret.
-const SITE_KEY = "0x4AAAAAAAFaPP-y13X-H03y6";
+const SITE_KEY = "0x4AAAAAAFaPP-y13X-H03y6";
 const LOCAL_TEST_SITE_KEY = "1x00000000000000000000AA";
 const TOKEN_REFRESH_MS = 4 * 60 * 1000; // Cloudflare tokens expire after five minutes.
 
