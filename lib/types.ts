@@ -3,6 +3,58 @@
 /** 诊断置信度 */
 export type Confidence = "low" | "medium" | "high";
 
+export type IssueStatus = "proposed" | "approved" | "dismissed" | "stale";
+export type IssueLocationStatus = "exact" | "section" | "unlocated";
+export type IssueLocationFailure =
+  | "no_excerpt"
+  | "not_found"
+  | "ambiguous"
+  | "not_single_bullet"
+  | "outside_ai_scope"
+  | "text_changed";
+
+/** 只随本次报告存在；不得写入诊断历史或本地存储。偏移量是原始提取文本的 UTF-16 索引。 */
+export interface DiagnosisIssue {
+  issueId: string;
+  type: "missing_keyword" | "missing_metric" | "weak_expression" | "experience_gap" | "structure" | "other";
+  severity: "high" | "medium" | "low";
+  dimension: string;
+  suggestion: string;
+  evidence: string;
+  origin: "rule" | "ai";
+  sourceType: "extracted_text";
+  section: string;
+  logicalBulletIndex: number | null;
+  startOffset: number | null;
+  endOffset: number | null;
+  occurrence: number | null;
+  excerpt: string;
+  textFingerprint: string;
+  locationStatus: IssueLocationStatus;
+  locationFailureReason?: IssueLocationFailure;
+  before: string;
+  after: string;
+  rewriteReason: string;
+  missingFacts: string[];
+  status: IssueStatus;
+  updatedAt: number | null;
+}
+
+/** AI 只交付候选证据；位置由浏览器根据本次原文独立核验。 */
+export interface DiagnosisIssueCandidate {
+  type: DiagnosisIssue["type"];
+  severity: DiagnosisIssue["severity"];
+  dimension: string;
+  suggestion: string;
+  evidence: string;
+  section: string;
+  candidateExcerpt: string;
+  before: string;
+  after: string;
+  rewriteReason: string;
+  missingFacts: string[];
+}
+
 /** 简历分析结果 */
 export interface AnalysisResult {
   /** 解析出的简历文本（截断预览） */
@@ -20,7 +72,9 @@ export interface AnalysisResult {
   /** 缺失关键词（JD 要求但简历未包含） */
   missingKeywords: string[];
   /** 可执行改进建议 */
-  suggestions: string[];
+  suggestions: DiagnosisIssue[];
+  /** 总分的实际来源；仅用于说明，不改变评分算法或权重。 */
+  scoreSource: "rule_weighted" | "ai_overall" | "ai_semantic_weighted";
   /** 是否使用了 AI 增强（false 表示规则降级） */
   aiEnhanced: boolean;
   /** 诊断置信度：低/中/高，基于输入信号质量（简历长度、JD 关键词数量等） */

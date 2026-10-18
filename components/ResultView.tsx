@@ -265,7 +265,7 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
       ...result.dimensions.map((d) => `- ${d.name}：${d.score}/100`),
       "",
       "改进建议：",
-      ...result.suggestions.map((s, i) => `${i + 1}. ${s}`),
+      ...result.suggestions.map((s, i) => `${i + 1}. ${s.suggestion}`),
       "",
       "由求职在线助手生成（免费）",
     ];
@@ -491,7 +491,7 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-100 text-xs font-semibold text-primary-700 dark:bg-primary-950 dark:text-primary-300">
                   {i + 1}
                 </span>
-                {s}
+                {s.suggestion}
               </li>
             ))}
           </ol>

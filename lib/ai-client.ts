@@ -2,6 +2,7 @@
 // 失败时返回 null，由调用方降级为规则结果。
 
 import { useSyncExternalStore } from "react";
+import type { DiagnosisIssueCandidate } from "./types";
 
 import type { ParsedResumeInput } from "./resume-import";
 
@@ -228,7 +229,7 @@ export function parseResumeByAi(text: string): Promise<AiParsedResume | null> {
 export interface AiSuggestionResult {
   overallScore?: number;
   dimensions: { name: string; score: number; description: string; weight?: number }[];
-  suggestions: string[];
+  suggestions: DiagnosisIssueCandidate[];
 }
 
 export interface JdSemantics {

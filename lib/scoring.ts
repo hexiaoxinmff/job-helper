@@ -1,4 +1,5 @@
-import type { AnalysisResult, DimensionScore, GapRemediation } from "./types";
+import type { AnalysisResult, DiagnosisIssueCandidate, DimensionScore, GapRemediation } from "./types";
+import { createDiagnosisIssue } from "./issue-anchors";
 import {
   SKILL_KEYWORDS,
   EDUCATION_KEYWORDS,
@@ -197,10 +198,36 @@ export function analyzeResume(
     weights,
     matchedKeywords: matched.slice(0, 20),
     missingKeywords: missing.slice(0, 20),
-    suggestions,
+    suggestions: suggestions.map((suggestion, index) =>
+      createDiagnosisIssue(ruleIssueCandidate(suggestion), resumeText, "rule", index)
+    ),
+    scoreSource: "rule_weighted",
     aiEnhanced: false,
     confidence,
     gapRemediation,
+  };
+}
+
+/** 规则只发现全局信号，不凭关键词命中伪造一条原文的位置。 */
+function ruleIssueCandidate(suggestion: string): DiagnosisIssueCandidate {
+  const metric = suggestion.includes("量化") || suggestion.includes("成果偏弱");
+  const keyword = suggestion.includes("关键词") || suggestion.includes("技能匹配");
+  const structure = suggestion.includes("分段") || suggestion.includes("单薄") || suggestion.includes("表达规范");
+  const type: DiagnosisIssueCandidate["type"] = metric
+    ? "missing_metric" : keyword ? "missing_keyword" : structure ? "structure" : "other";
+  const dimension = metric ? "经历与成果" : keyword ? "关键词覆盖" : structure ? "表达规范" : "综合建议";
+  return {
+    type,
+    severity: metric || keyword ? "medium" : "low",
+    dimension,
+    suggestion,
+    evidence: "规则扫描得到的整体信号，尚未核验到单条简历原文。",
+    section: dimension,
+    candidateExcerpt: "",
+    before: "",
+    after: "",
+    rewriteReason: "",
+    missingFacts: metric ? ["相关经历的真实结果与指标口径"] : [],
   };
 }
 
