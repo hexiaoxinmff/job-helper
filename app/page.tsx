@@ -550,7 +550,7 @@ function UploadPageContent() {
                 <p className="text-sm text-neutral-600 dark:text-neutral-300">{PROGRESS_STEPS[progress]}</p>
               </div>
               <p className="text-center text-xs text-neutral-400 dark:text-neutral-500">
-                AI 诊断约需 20 秒，请稍候；完成后自动展示诊断报告
+                AI 诊断约需 30 秒，请稍候；完成后自动展示诊断报告
               </p>
             </div>
           )}

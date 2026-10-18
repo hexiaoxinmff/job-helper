@@ -222,7 +222,7 @@ function dataBlock(label: string, content: string): string {
 // 上游调用默认超时：轻量操作（analyze / rewrite 等）12s 足够
 const UPSTREAM_TIMEOUT_MS = 12000;
 // 重型操作（optimizeResume / parseResume）需要更长超时
-const UPSTREAM_TIMEOUT_HEAVY_MS = 25000;
+const UPSTREAM_TIMEOUT_HEAVY_MS = 45000;
 
 async function callDeepSeek(
   systemPrompt: string,
