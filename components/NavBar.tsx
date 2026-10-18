@@ -121,13 +121,13 @@ export default function NavBar() {
             求职在线助手
           </Link>
           <div className="flex items-center gap-1">
-            <ThemeToggle className="h-9 w-9" />
+            <ThemeToggle className="h-11 w-11" />
             <button
               type="button"
               aria-expanded={menuOpen}
               aria-label={menuOpen ? "关闭导航菜单" : "打开导航菜单"}
               onClick={() => setMenuOpen((v) => !v)}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-neutral-600 transition-colors hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-neutral-600 transition-colors hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800"
             >
               <svg
                 width="20"

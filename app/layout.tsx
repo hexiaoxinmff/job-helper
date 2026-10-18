@@ -2,19 +2,11 @@ import type { Metadata } from "next";
 import "./globals.css";
 import NavBar from "@/components/NavBar";
 import PrivacyModal from "@/components/PrivacyModal";
-import { ResumeProvider } from "@/lib/resume-store";
-import { ProfileProvider } from "@/lib/profile";
-import { DiagnosisHistoryProvider } from "@/lib/diagnosis-history";
-import { TrackerProvider } from "@/lib/tracker-store";
-import { RemediationProvider } from "@/lib/remediation-store";
 import { ThemeProvider, THEME_INIT_SCRIPT } from "@/lib/theme";
+import { SITE_URL } from "@/lib/site-url";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.VERCEL_PROJECT_PRODUCTION_URL
-      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-      : "https://job-helper.vercel.app"
-  ),
+  metadataBase: SITE_URL,
   title: {
     default: "求职在线助手 - AI 简历诊断工具",
     template: "%s",
@@ -58,21 +50,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           跳到主内容
         </a>
         <ThemeProvider>
-          <ResumeProvider>
-            <ProfileProvider>
-              <DiagnosisHistoryProvider>
-                <TrackerProvider>
-                  <RemediationProvider>
-                    <NavBar />
-                    <div id="main-content" tabIndex={-1} className="flex-1 flex flex-col outline-none">
-                      {children}
-                    </div>
-                    <PrivacyModal />
-                  </RemediationProvider>
-                </TrackerProvider>
-              </DiagnosisHistoryProvider>
-            </ProfileProvider>
-          </ResumeProvider>
+          <NavBar />
+          <div id="main-content" tabIndex={-1} className="flex-1 flex flex-col outline-none">
+            {children}
+          </div>
+          <PrivacyModal />
         </ThemeProvider>
       </body>
     </html>
