@@ -116,7 +116,9 @@ async function callAiProxy<T>(action: string, payload: Record<string, unknown>):
     const data = await res.json().catch(() => null);
     if (!res.ok || !data || data.ok === false) {
       console.warn(`[ai-proxy] ${action} 失败:`, data?.error || res.status);
-      if (isAiEnabledByUser()) setAiAvailable(false);
+      // Turnstile 403 是"需人机验证"而非"AI 宕机"，不触发维护模式锁存
+      const isTurnstileError = data?.error === "turnstile_required" || data?.error === "turnstile_failed";
+      if (isAiEnabledByUser() && !isTurnstileError) setAiAvailable(false);
       return null;
     }
     const value = (data.data as T) ?? null;

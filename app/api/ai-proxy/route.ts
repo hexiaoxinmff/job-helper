@@ -222,7 +222,7 @@ function dataBlock(label: string, content: string): string {
 // 上游调用默认超时：轻量操作（analyze / rewrite 等）12s 足够
 const UPSTREAM_TIMEOUT_MS = 12000;
 // 重型操作（optimizeResume / parseResume）需要更长超时
-const UPSTREAM_TIMEOUT_HEAVY_MS = 45000;
+const UPSTREAM_TIMEOUT_HEAVY_MS = 28000; // Vercel Hobby 30s 上限内，给网关留 2s
 
 async function callDeepSeek(
   systemPrompt: string,
