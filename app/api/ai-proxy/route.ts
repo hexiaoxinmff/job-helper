@@ -269,31 +269,25 @@ async function callDeepSeek(
 async function actionAnalyze(resumeText: string, jdText: string) {
   const trimmedResume = (resumeText || "").slice(0, 6000);
   const trimmedJd = (jdText || "").slice(0, 3000);
-  const prompt = `你是一位资深 HR 与简历优化专家，擅长把模糊的简历诊断转化为可落地动作。请分析以下简历与目标岗位 JD 的匹配情况。
+  const prompt = `请分析简历与目标岗位 JD 的匹配情况，并只输出符合下方结构的 JSON。
 
 ${dataBlock("目标岗位JD", trimmedJd)}
 
 ${dataBlock("简历内容", trimmedResume)}
 
-输出要求：
-1. overallScore：0-100 整数，综合匹配度。评分要准不要虚高；关键信息（如量化成果、核心技能）缺失应明显扣分。
-2. dimensions：固定 5 个维度（技能匹配 / 关键词覆盖 / 经历与成果 / 教育背景 / 表达规范），每项 score 为 0-100 整数；description 用一句话点出判断依据或证据（引用简历 / JD 中的事实），不要空话。
-3. suggestions：3-5 个诊断对象，按重要性从高到低排列。candidateExcerpt 只能逐字复制上面截取的简历内容中、位于同一文本行的一段；找不到就填空字符串。不要输出行号或字符偏移，位置由客户端核验。
-   - 给出具体问题、依据、改法；可提供真实的「改写前 → 改写后」对照。
-   - 缺少真实数字时把要向用户确认的事实放进 missingFacts；after 不得编造数字或经历。
-   严禁出现"建议多补充经历""注意排版"这类空泛话。
+字段要求：overallScore 为 0-100 整数；dimensions 固定按下列五个名称和顺序，各含 0-100 整数 score 与基于输入事实的一句 description。suggestions 按重要性排序，最多 3 条；只写最关键且可执行的问题。suggestion 不超过 60 字。candidateExcerpt 必须逐字摘录简历同一原文行中的连续片段，不超过 30 字；无法准确定位时填空字符串。不得编造经历、数字或证据；缺少事实时写入 missingFacts。type 仅选 missing_keyword、missing_metric、weak_expression、experience_gap、structure、other 之一；severity 仅选 high、medium、low 之一。无明确问题时 suggestions 可为空数组。
 
-严格按以下 JSON 格式输出（不输出其他内容）：
+严格按以下 JSON 结构输出，不得添加其他字段或说明：
 {
-  "overallScore": 0-100,
+  "overallScore": 0,
   "dimensions": [
-    {"name": "技能匹配", "score": 0-100, "description": "判断依据"},
-    {"name": "关键词覆盖", "score": 0-100, "description": "判断依据"},
-    {"name": "经历与成果", "score": 0-100, "description": "判断依据"},
-    {"name": "教育背景", "score": 0-100, "description": "判断依据"},
-    {"name": "表达规范", "score": 0-100, "description": "判断依据"}
+    {"name": "技能匹配", "score": 0, "description": ""},
+    {"name": "关键词覆盖", "score": 0, "description": ""},
+    {"name": "经历与成果", "score": 0, "description": ""},
+    {"name": "教育背景", "score": 0, "description": ""},
+    {"name": "表达规范", "score": 0, "description": ""}
   ],
-  "suggestions": [{"type":"missing_metric","severity":"medium","dimension":"经历与成果","suggestion":"具体改法","evidence":"依据","section":"项目经历","candidateExcerpt":"与上方简历完全一致的原文片段","before":"原句或空字符串","after":"真实可用的候选句或空字符串","rewriteReason":"改写理由","missingFacts":["需要用户确认的真实指标"]}]
+  "suggestions": [{"type":"other","severity":"medium","dimension":"","suggestion":"","evidence":"","section":"","candidateExcerpt":"","before":"","after":"","rewriteReason":"","missingFacts":[]}]
 }`;
 
   const content = await callDeepSeek("你只输出合法的 JSON，不做任何解释。", prompt, 3000, UPSTREAM_TIMEOUT_HEAVY_MS);
