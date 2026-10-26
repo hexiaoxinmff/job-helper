@@ -524,14 +524,16 @@ export default function ResultView({ result, resumeText, jdText, onReset, onReDi
       </div>
 
       {/* 原文仅显示在当前页面，放在报告图片导出范围之外。 */}
-      <DiagnosisAnnotations
-        sourceText={repairSession.draftText}
-        issues={repairSession.issues}
-        logs={repairSession.logs}
-        onApprove={approveIssue}
-        onDismiss={dismissIssue}
-        onRestore={restoreIssue}
-      />
+      <div className="xl:relative xl:left-1/2 xl:w-[calc(100vw-16rem)] xl:max-w-7xl xl:[transform:translateX(-50%)]">
+        <DiagnosisAnnotations
+          sourceText={repairSession.draftText}
+          issues={repairSession.issues}
+          logs={repairSession.logs}
+          onApprove={approveIssue}
+          onDismiss={dismissIssue}
+          onRestore={restoreIssue}
+        />
+      </div>
       <div className="rounded-2xl border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900 sm:p-6">
         <h2 className="font-semibold text-neutral-800 dark:text-neutral-100">本次建议稿重测</h2>
         <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">只在本机内存中用原有规则重新评分，不调用 AI；与上方 AI 总分可能不是同一口径。刷新后建议稿和修复日志消失。</p>
