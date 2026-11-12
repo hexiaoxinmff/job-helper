@@ -101,10 +101,10 @@ export default function DiagnosisAnnotations({ sourceText, issues, logs = [], on
           这里的“行”指 PDF 提取文本中的逻辑条目，不代表 PDF 页面坐标。仅精确核验的片段显示红波浪线；定位失败会明确说明。
         </p>
       </div>
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <div className="min-w-0 rounded-xl border border-neutral-200 bg-neutral-50 p-3 dark:border-neutral-700 dark:bg-neutral-950/40" aria-label="本次简历提取文本">
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] xl:grid-cols-[minmax(0,6fr)_minmax(0,5fr)]">
+        <div className="min-w-0 rounded-xl border border-neutral-200 bg-neutral-50 p-3 dark:border-neutral-700 dark:bg-neutral-950/40 lg:sticky lg:top-24 lg:self-start" aria-label="本次简历提取文本">
           <h3 className="mb-2 text-sm font-semibold text-neutral-700 dark:text-neutral-200">简历提取文本</h3>
-          <ol className="max-h-[34rem] space-y-1 overflow-y-auto pr-1">
+          <ol className="max-h-[34rem] space-y-1 overflow-y-auto pr-1 lg:max-h-[calc(100vh-8rem)]">
             {bullets.map((line) => {
               const lineIssues = exactIssues.filter((issue) => issue.logicalBulletIndex === line.index && issue.status !== "dismissed");
               const active = lineIssues.some((issue) => issue.issueId === selectedId);
@@ -113,7 +113,7 @@ export default function DiagnosisAnnotations({ sourceText, issues, logs = [], on
                 <li key={line.index} id={`diagnosis-bullet-${line.index}`} tabIndex={-1}
                   className={`diagnosis-line flex scroll-mt-24 items-start gap-2 rounded-lg px-2 py-1.5 text-sm leading-relaxed outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${active ? "bg-primary-100 dark:bg-primary-950" : ""}`}>
                   <span className="w-6 shrink-0 select-none text-right text-xs text-neutral-400" aria-hidden="true">{line.index + 1}</span>
-                  <span className="min-w-0 flex-1 whitespace-pre-wrap break-words text-neutral-700 dark:text-neutral-200">{markedText(line, lineIssues)}</span>
+                  <span className="min-w-0 flex-1 whitespace-pre-wrap break-words text-neutral-700 dark:text-neutral-200 xl:break-normal">{markedText(line, lineIssues)}</span>
                   {lineIssues.length > 0 && <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${pendingCount > 0 ? "bg-danger-100 text-danger-700 dark:bg-danger-950 dark:text-danger-300" : "bg-success-100 text-success-700 dark:bg-success-950 dark:text-success-300"}`} aria-label={pendingCount > 0 ? `第 ${line.index + 1} 条有 ${pendingCount} 个诊断问题` : `第 ${line.index + 1} 条已修复`}>
                     {pendingCount > 0 ? `${pendingCount} 个问题` : "已修复 ✓"}
                   </span>}
